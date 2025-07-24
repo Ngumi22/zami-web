@@ -19,7 +19,7 @@ export default function NewArrivals({
         </div>
 
         {newArrivals.length > 0 ? (
-          <ProductGrid products={newArrivals} />
+          <ProductGrid products={newArrivals} viewMode={"grid"} />
         ) : (
           <div className="text-center py-12">
             <h2 className="text-xl font-medium mb-4">No new arrivals</h2>

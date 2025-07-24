@@ -72,7 +72,11 @@ export function SiteHeader({
       <header className="sticky top-0 z-40 w-full bg-background">
         <div className="border-b">
           <div className="md:container grid grid-flow-col gap-2 items-center h-20">
-            <MobileMenu categories={categories} />
+            <MobileMenu
+              mainCategories={categories}
+              subCategories={categories}
+              featuredProducts={products}
+            />
 
             <Link prefetch href="/" className="flex items-center">
               <span className="text-xl font-bold text-center">

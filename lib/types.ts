@@ -68,11 +68,25 @@ export interface Customer {
   name: string;
   phone?: string;
   email: string;
-  address?: string;
+  addresses?: CustomerAddress[];
   status: "active" | "inactive";
   joinDate: Date;
   totalSpent: number;
   orders?: Order[];
+}
+
+export interface CustomerAddress {
+  id: string;
+  customerId: string;
+  fullName: string;
+  addressLine1: string;
+  addressLine2?: string;
+  city: string;
+  state: string;
+  country: string;
+  phone?: string;
+  isDefault: boolean;
+  preferredCourier?: string;
 }
 
 export interface Review {
@@ -449,3 +463,17 @@ export type OrdersResponse = {
     paymentStatusCounts: Record<Order["paymentStatus"], number>;
   };
 };
+
+export interface CustomerAddress {
+  id: string;
+  customerId: string;
+  fullName: string;
+  addressLine1: string;
+  addressLine2?: string;
+  city: string;
+  state: string;
+  country: string;
+  phone?: string;
+  isDefault: boolean;
+  preferredCourier?: string;
+}

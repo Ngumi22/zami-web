@@ -19,7 +19,7 @@ export default function TopRatedComponent({
         </div>
 
         {topRated.length > 0 ? (
-          <ProductGrid products={topRated} />
+          <ProductGrid products={topRated} viewMode={"grid"} />
         ) : (
           <div className="text-center py-12">
             <h2 className="text-xl font-medium mb-4">No products rated yet</h2>

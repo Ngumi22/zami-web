@@ -31,7 +31,6 @@ export async function getOrderById(id: string, withCustomer?: boolean) {
             id: true,
             name: true,
             email: true,
-            address: true,
           },
         },
       },
@@ -91,7 +90,7 @@ export async function getOrderWithCustomer(id: string) {
           id: true,
           name: true,
           email: true,
-          address: true,
+          addresses: true,
         },
       },
     },
@@ -118,8 +117,8 @@ export async function getOrderWithCustomer(id: string) {
           id: order.customer.id,
           name: order.customer.name,
           email: order.customer.email,
-          ...(order.customer.address
-            ? { address: order.customer.address }
+          ...(order.customer.addresses
+            ? { address: order.customer.addresses }
             : {}),
         }
       : undefined,

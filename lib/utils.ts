@@ -42,17 +42,45 @@ export function slugify(text: string): string {
 }
 
 export function mapSpecifications(product: any) {
-  const productSpecs = product.specifications as Record<string, any>;
-  const categorySpecs = product.category?.specifications || [];
+  try {
+    const productSpecs = product.specifications || {};
+    const categorySpecs = product.category?.specifications || [];
 
-  return categorySpecs.map((spec: any) => {
-    const value = productSpecs?.[spec.name] ?? productSpecs?.[spec.id] ?? null;
-    return {
-      ...spec,
-      value:
-        value !== null && value !== undefined ? String(value) : "Not specified",
-    };
-  });
+    return categorySpecs.map((spec: any) => {
+      const rawValue = productSpecs[spec.name] ?? productSpecs[spec.id];
+
+      const value =
+        rawValue !== null && rawValue !== undefined
+          ? String(rawValue)
+          : "Not specified";
+
+      return {
+        ...spec,
+        value,
+      };
+    });
+  } catch (error) {
+    console.error("Error mapping specifications:", error);
+    return [];
+  }
+}
+
+export function extractFacetSpecifications(products: any[]) {
+  const specs: Record<string, Set<string>> = {};
+
+  for (const product of products) {
+    const specList = product.specifications || [];
+
+    for (const spec of specList) {
+      if (!specs[spec.name]) specs[spec.name] = new Set();
+      if (spec.value) specs[spec.name].add(spec.value);
+    }
+  }
+
+  return Object.entries(specs).map(([name, values]) => ({
+    name,
+    values: Array.from(values),
+  }));
 }
 
 export function getCategoryMap(categories: Category[]) {

@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { Menu, X, ChevronRight } from "lucide-react";
+import { Menu, ChevronRight, X, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -19,22 +19,32 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { Category } from "@prisma/client";
+import { Category, Product } from "@prisma/client";
+import { formatCurrency } from "@/lib/utils";
 
 interface MobileMenuProps {
-  categories: Category[];
+  mainCategories: Category[];
+  subCategories: Category[];
+  featuredProducts: Product[];
 }
 
-export function MobileMenu({ categories }: MobileMenuProps) {
+export function MobileMenu({
+  mainCategories,
+  subCategories,
+  featuredProducts,
+}: MobileMenuProps) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const [activeCategoryId, setActiveCategoryId] = useState<string | null>(null);
 
-  // Skip rendering on admin pages
-  if (pathname.startsWith("/admin")) {
-    return null;
-  }
+  useEffect(() => {
+    if (open && mainCategories.length > 0 && activeCategoryId === null) {
+      setActiveCategoryId(mainCategories[mainCategories.length - 1].id);
+    }
+  }, [open, mainCategories, activeCategoryId]);
 
-  // Special links
+  if (pathname.startsWith("/admin")) return null;
+
   const specialLinks = [
     { href: "/deals", label: "Deals" },
     { href: "/new-arrivals", label: "New Arrivals" },
@@ -48,169 +58,122 @@ export function MobileMenu({ categories }: MobileMenuProps) {
     { href: "/settings", label: "Settings" },
   ];
 
+  const getCategoryFeaturedProducts = (categoryId: string) => {
+    const subIds = subCategories
+      .filter((s) => s.parentId === categoryId)
+      .map((s) => s.id);
+    return featuredProducts.filter(
+      (p) => p.categoryId === categoryId || subIds.includes(p.categoryId)
+    );
+  };
+
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <Button variant="ghost" size="sm" className="md:hidden">
-          <Menu className="h-8 w-8" />
+        <Button variant="ghost" size="icon" className="md:hidden">
+          <Menu className="h-6 w-6" />
           <span className="sr-only">Open menu</span>
         </Button>
       </SheetTrigger>
+
       <SheetContent side="left" className="w-[85%] sm:w-[350px] p-0">
-        <SheetHeader className="border-b h-16 px-4 flex flex-row items-center justify-between">
-          <SheetTitle className="text-left">Menu</SheetTitle>
+        <SheetHeader className="flex items-center justify-between border-b py-2">
+          <SheetTitle className="text-sm">Zami Tech Solutions</SheetTitle>
         </SheetHeader>
 
-        <div className="overflow-y-auto h-[calc(100vh-4rem)]">
-          <div className="px-6 py-4">
-            <nav className="space-y-6">
-              <div className="space-y-3">
-                <h3 className="text-sm font-medium text-muted-foreground">
-                  Shop
-                </h3>
-                <ul className="space-y-3">
-                  <li>
-                    <Link
-                      href="/"
-                      className="flex items-center justify-between py-2 text-base font-medium"
-                      onClick={() => setOpen(false)}>
-                      Home
-                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                    </Link>
-                  </li>
-                  {specialLinks.map((link) => (
-                    <li key={link.href}>
-                      <Link
-                        href={link.href}
-                        className="flex items-center justify-between py-2 text-base font-medium"
-                        onClick={() => setOpen(false)}>
-                        {link.label}
-                        <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <div className="space-y-3">
-                <h3 className="text-sm font-medium text-muted-foreground">
-                  Categories
-                </h3>
-                <Accordion type="single" collapsible className="w-full">
-                  {categories.map((category) => (
-                    <AccordionItem key={category.id} value={category.id}>
-                      <AccordionTrigger className="py-2 text-base font-medium">
-                        {category.name}
-                      </AccordionTrigger>
-                      <AccordionContent>
-                        <div className="pl-4 space-y-2">
-                          <Link
-                            href={`/products?category=${category.id}`}
-                            className="block py-2"
-                            onClick={() => setOpen(false)}>
-                            All {category.name}
-                          </Link>
-                          {getMockSubcategories(category.id).map(
-                            (subcategory) => (
-                              <Link
-                                key={subcategory.id}
-                                href={`/products?category=${category.id}&subcategory=${subcategory.id}`}
-                                className="block py-2 text-sm"
-                                onClick={() => setOpen(false)}>
-                                {subcategory.name}
-                              </Link>
-                            )
-                          )}
-                        </div>
-                      </AccordionContent>
-                    </AccordionItem>
-                  ))}
-                </Accordion>
-              </div>
-
-              {/* Featured products in mobile menu */}
-              <div className="space-y-3">
-                <h3 className="text-sm font-medium text-muted-foreground">
-                  Featured Products
-                </h3>
-                <div className="grid grid-cols-2 gap-3">
-                  {getFeaturedProducts().map((product) => (
-                    <Link
-                      key={product.id}
-                      href={`/products/${product.id}`}
-                      className="block"
-                      onClick={() => setOpen(false)}>
-                      <div className="relative aspect-square rounded-md overflow-hidden mb-1">
-                        <Image
-                          src={product.image || "/placeholder.svg"}
-                          alt={product.name}
-                          height={300}
-                          width={300}
-                          className="object-contain h-auto w-auto"
-                          sizes="150px"
-                        />
-                      </div>
-                      <h4 className="text-xs font-medium truncate">
-                        {product.name}
-                      </h4>
-                      <p className="text-xs text-muted-foreground">
-                        ${product.price.toFixed(2)}
-                      </p>
-                    </Link>
-                  ))}
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                <h3 className="text-sm font-medium text-muted-foreground">
-                  Account
-                </h3>
-                <ul className="space-y-3">
-                  {accountLinks.map((link) => (
-                    <li key={link.href}>
-                      <Link
-                        href={link.href}
-                        className="flex items-center justify-between py-2 text-base font-medium"
-                        onClick={() => setOpen(false)}>
-                        {link.label}
-                        <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </nav>
+        <div className="overflow-y-auto h-[calc(100vh-4rem)] px-3 py-2 space-y-4">
+          <div className="space-y-2">
+            <ul className="space-y-2">
+              <li>
+                <Link
+                  href="/"
+                  className="flex justify-between py-2 text-xs"
+                  onClick={() => setOpen(false)}>
+                  Home
+                  <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                </Link>
+              </li>
+              {specialLinks.map((link) => (
+                <li key={link.href}>
+                  <Link
+                    href={link.href}
+                    className="flex justify-between py-2 text-xs"
+                    onClick={() => setOpen(false)}>
+                    {link.label}
+                    <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                  </Link>
+                </li>
+              ))}
+            </ul>
           </div>
+          <div className="space-y-2">
+            <h3 className="text-sm font-semibold text-muted-foreground">
+              Categories
+            </h3>
+            <Accordion
+              type="single"
+              collapsible
+              className="w-full"
+              value={activeCategoryId ?? undefined}
+              onValueChange={(val) => setActiveCategoryId(val ?? null)}>
+              {mainCategories
+                .filter((category) => category.parentId === null)
+                .map((cat) => (
+                  <AccordionItem key={cat.id} value={cat.id}>
+                    <AccordionTrigger className="py-2 text-xs">
+                      {cat.name}
+                    </AccordionTrigger>
+                    <AccordionContent>
+                      <div className="space-y-2">
+                        <h4 className="text-xs font-semibold text-muted-foreground">
+                          Featured Products
+                        </h4>
+                        <div className="grid grid-cols-2 gap-2">
+                          {getCategoryFeaturedProducts(cat.id).map((p) => (
+                            <Link
+                              key={p.id}
+                              href={`/${p.slug}`}
+                              className="block"
+                              onClick={() => setOpen(false)}>
+                              <div className="relative aspect-square rounded-md overflow-hidden mb-1">
+                                <Image
+                                  src={p.mainImage || "/placeholder.svg"}
+                                  alt={p.name}
+                                  fill
+                                  className="object-contain"
+                                />
+                              </div>
+                              <p className="text-xs font-medium truncate">
+                                {p.name}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                {formatCurrency(p.price)}
+                              </p>
+                            </Link>
+                          ))}
+                        </div>
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                ))}
+            </Accordion>
+          </div>
+
+          <ul className="space-y-2">
+            {accountLinks.map((link) => (
+              <li key={link.href}>
+                <Link
+                  href={link.href}
+                  className="flex justify-between py-2 text-xs"
+                  onClick={() => setOpen(false)}>
+                  {link.label}
+                  <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                </Link>
+              </li>
+            ))}
+          </ul>
         </div>
       </SheetContent>
     </Sheet>
   );
-}
-
-// Helper functions to generate mock data
-function getMockSubcategories(categoryId: string) {
-  const baseName = categoryId.charAt(0).toUpperCase() + categoryId.slice(1);
-  return [
-    { id: `${categoryId}-sub-1`, name: `${baseName} Type 1` },
-    { id: `${categoryId}-sub-2`, name: `${baseName} Type 2` },
-    { id: `${categoryId}-sub-3`, name: `${baseName} Type 3` },
-    { id: `${categoryId}-sub-4`, name: `${baseName} Type 4` },
-  ];
-}
-
-function getFeaturedProducts() {
-  return [
-    {
-      id: "featured-1",
-      name: "Latest Smartphone",
-      image: "/placeholder.svg",
-      price: 799,
-    },
-    {
-      id: "featured-2",
-      name: "Wireless Headphones",
-      image: "/placeholder.svg",
-      price: 199,
-    },
-  ];
 }

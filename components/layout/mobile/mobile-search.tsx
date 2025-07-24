@@ -30,7 +30,6 @@ export function MobileSearch({ categories, products }: MobileSearchProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const debouncedQuery = useDebounce(query, 300);
 
-  // Load recent searches from localStorage
   useEffect(() => {
     const storedSearches = localStorage.getItem("recentSearches");
     if (storedSearches) {
@@ -157,7 +156,7 @@ export function MobileSearch({ categories, products }: MobileSearchProps) {
                 {results.map((product) => (
                   <Link
                     key={product.id}
-                    href={`/products/${product.id}`}
+                    href={`/products/${product.slug}`}
                     onClick={() => handleSearch(query)}
                     className="flex items-center p-3 hover:bg-muted rounded-md transition-colors">
                     <div className="relative h-16 w-16 rounded overflow-hidden mr-3">

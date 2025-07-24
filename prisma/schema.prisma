@@ -130,7 +130,6 @@ model Customer {
   name       String
   phone      String?
   email      String         @unique
-  address    String?
   status     CustomerStatus @default(ACTIVE)
   joinDate   DateTime       @default(now())
   totalSpent Float          @default(0)
@@ -138,8 +137,29 @@ model Customer {
   reviews    Review[]
   cart       Cart?
 
+  addresses  CustomerAddress[] @relation("CustomerAddresses")
+
   @@index([status])
 }
+
+model CustomerAddress {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  customerId      String   @db.ObjectId
+  customer        Customer @relation("CustomerAddresses", fields: [customerId], references: [id])
+  fullName        String
+  addressLine1    String
+  addressLine2    String?
+  city            String
+  state           String
+  postalCode      String
+  country         String
+  phone           String?
+  isDefault       Boolean  @default(false)
+  preferredCourier String?
+
+  @@index([customerId])
+}
+
 
 model Brand {
   id          String    @id @default(auto()) @map("_id") @db.ObjectId
@@ -207,6 +227,8 @@ model Product {
   @@index([price])
   @@index([averageRating])
   @@fulltext([name, description, tags])
+  @@index([featured])
+  @@index([createdAt])
 }
 
 model Review {

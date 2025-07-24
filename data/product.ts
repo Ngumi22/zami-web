@@ -3,8 +3,133 @@
 import { cache } from "react";
 import prisma from "@/lib/prisma";
 import { Prisma, Product } from "@prisma/client";
-import { ProductFilters } from "@/lib/types";
 import { mapSpecifications } from "@/lib/utils";
+
+export interface ProductFilters {
+  minPrice?: string;
+  maxPrice?: string;
+  category?: string;
+  brand?: string;
+  search?: string;
+  limit?: string | number;
+  specifications?: Record<string, string>;
+  averageRating?: string | number;
+  sort?: string;
+  stock?: string | number;
+}
+
+export async function getAllProducts() {
+  const products = await prisma.product.findMany({
+    include: {
+      brand: true,
+      category: {
+        select: {
+          name: true,
+          specifications: true,
+        },
+      },
+    },
+  });
+
+  if (!products.length) return [];
+
+  const productIds = products.map((p: Product) => p.id);
+
+  const reviews = await prisma.review.findMany({
+    where: {
+      productId: { in: productIds },
+    },
+    include: {
+      customer: true,
+    },
+  });
+
+  const reviewsByProductId = reviews.reduce((acc: any, review: any) => {
+    (acc[review.productId] ||= []).push(review);
+    return acc;
+  }, {} as Record<string, typeof reviews>);
+
+  return products.map((product: Product) => ({
+    ...product,
+    reviews: reviewsByProductId[product.id] || [],
+    specifications: mapSpecifications(product),
+  }));
+}
+
+export const getProductsWithFilters = cache(
+  async (filters: ProductFilters): Promise<Product[]> => {
+    try {
+      const {
+        minPrice,
+        maxPrice,
+        category,
+        brand,
+        specifications,
+        search,
+        averageRating,
+        sort,
+        stock,
+      } = filters;
+      const where: Prisma.ProductWhereInput = {};
+      const orderBy: Prisma.ProductOrderByWithRelationInput = {};
+
+      if (category) {
+        where.categoryId = category;
+      }
+      if (brand) {
+        where.brandId = brand;
+      }
+      if (specifications) {
+        where.specifications = {
+          equals: specifications,
+        };
+      }
+      if (
+        averageRating !== undefined &&
+        averageRating !== null &&
+        averageRating !== ""
+      ) {
+        const avgRatingNum =
+          typeof averageRating === "string"
+            ? parseFloat(averageRating)
+            : averageRating;
+        if (!isNaN(avgRatingNum)) {
+          where.averageRating = {
+            gte: avgRatingNum,
+          };
+        }
+      }
+      if (search) {
+        where.OR = [
+          { name: { contains: search, mode: "insensitive" } },
+          { description: { contains: search, mode: "insensitive" } },
+          { tags: { has: search.toLowerCase() } },
+        ];
+      }
+
+      switch (sort) {
+        case "price-asc":
+          orderBy.price = "asc";
+          break;
+        case "price-desc":
+          orderBy.price = "desc";
+          break;
+        case "top-rated":
+          orderBy.averageRating = "desc";
+          break;
+        case "newest":
+        default:
+          orderBy.createdAt = "desc";
+          break;
+      }
+
+      return await prisma.product.findMany({ where, orderBy });
+    } catch (error) {
+      console.error("Failed to fetch products with filters:", error);
+      return [];
+    }
+  }
+);
 
 export async function getProductById(id: string) {
   const product = await prisma.product.findUnique({
@@ -49,70 +174,135 @@ export async function getProductBySlug(slug: string) {
 
   const reviews = await prisma.review.findMany({
     where: { productId: product.id },
-    include: {
-      customer: true,
-    },
+    include: { customer: true },
   });
+
+  const mapped = mapSpecifications(product);
 
   return {
     ...product,
     reviews,
-    specifications: mapSpecifications(product),
+    mappedSpecifications: mapped,
   };
-}
-
-export async function getAllProducts() {
-  try {
-    return await prisma.product.findMany({
-      orderBy: { createdAt: "desc" },
-      include: {
-        category: {
-          select: {
-            name: true,
-            specifications: true,
-          },
-        },
-        brand: {
-          select: {
-            name: true,
-          },
-        },
-        reviews: true,
-        _count: {
-          select: { reviews: true },
-        },
-      },
-    });
-  } catch (error) {
-    console.error("Failed to fetch all products:", error);
-    return [];
-  }
 }
 
 export async function getProductsByCategory(
   categoryId: string
 ): Promise<Product[]> {
-  try {
-    return await prisma.product.findMany({
-      where: { categoryId },
-      orderBy: { createdAt: "desc" },
-    });
-  } catch (error) {
-    console.error("Failed to fetch products by category:", error);
-    return [];
-  }
+  const products = await prisma.product.findMany({
+    where: { categoryId },
+    include: {
+      brand: true,
+      category: {
+        select: {
+          name: true,
+          specifications: true,
+        },
+      },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+
+  if (!products.length) return [];
+
+  const productIds = products.map((p: Product) => p.id);
+
+  const reviews = await prisma.review.findMany({
+    where: {
+      productId: { in: productIds },
+    },
+    include: {
+      customer: true,
+    },
+  });
+
+  const reviewsByProductId = reviews.reduce((acc: any, review: any) => {
+    (acc[review.productId] ||= []).push(review);
+    return acc;
+  }, {} as Record<string, typeof reviews>);
+
+  return products.map((product: Product) => ({
+    ...product,
+    reviews: reviewsByProductId[product.id] || [],
+    specifications: mapSpecifications(product),
+  }));
+}
+
+export async function getProductsByBrand(brandId: string): Promise<Product[]> {
+  const products = await prisma.product.findMany({
+    where: { brandId },
+    include: {
+      brand: {
+        select: {
+          name: true,
+        },
+      },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+
+  if (!products.length) return [];
+
+  const productIds = products.map((p: Product) => p.id);
+
+  const reviews = await prisma.review.findMany({
+    where: {
+      productId: { in: productIds },
+    },
+    include: {
+      customer: true,
+    },
+  });
+
+  const reviewsByProductId = reviews.reduce((acc: any, review: any) => {
+    (acc[review.productId] ||= []).push(review);
+    return acc;
+  }, {} as Record<string, typeof reviews>);
+
+  return products.map((product: Product) => ({
+    ...product,
+    reviews: reviewsByProductId[product.id] || [],
+    specifications: mapSpecifications(product),
+  }));
 }
 
 export async function getFeaturedProducts(): Promise<Product[]> {
-  try {
-    return await prisma.product.findMany({
-      where: { featured: true },
-      orderBy: { createdAt: "desc" },
-    });
-  } catch (error) {
-    console.error("Failed to fetch featured products:", error);
-    return [];
-  }
+  const products = await prisma.product.findMany({
+    where: { featured: true },
+    include: {
+      brand: true,
+      category: {
+        select: {
+          name: true,
+          specifications: true,
+        },
+      },
+    },
+  });
+
+  if (!products.length) return [];
+
+  const productIds = products.map((p: Product) => p.id);
+
+  const reviews = await prisma.review.findMany({
+    where: {
+      productId: { in: productIds },
+    },
+    include: {
+      customer: true,
+    },
+  });
+
+  const reviewsByProductId = reviews.reduce((acc: any, review: any) => {
+    (acc[review.productId] ||= []).push(review);
+    return acc;
+  }, {} as Record<string, typeof reviews>);
+
+  return products.map((product: Product) => ({
+    ...product,
+    reviews: reviewsByProductId[product.id] || [],
+    specifications: mapSpecifications(product),
+  }));
 }
 
 export async function getLowStockProducts(threshold = 10): Promise<Product[]> {
@@ -185,72 +375,6 @@ export async function getProductsStats() {
     };
   }
 }
-
-export const getProductsWithFilters = cache(
-  async (filters: ProductFilters): Promise<Product[]> => {
-    try {
-      const { category, brand, specifications, search, averageRating, sort } =
-        filters;
-      const where: Prisma.ProductWhereInput = {};
-      const orderBy: Prisma.ProductOrderByWithRelationInput = {};
-
-      if (category) {
-        where.categoryId = category;
-      }
-      if (brand) {
-        where.brandId = brand;
-      }
-      if (specifications) {
-        where.specifications = {
-          equals: specifications,
-        };
-      }
-      if (
-        averageRating !== undefined &&
-        averageRating !== null &&
-        averageRating !== ""
-      ) {
-        const avgRatingNum =
-          typeof averageRating === "string"
-            ? parseFloat(averageRating)
-            : averageRating;
-        if (!isNaN(avgRatingNum)) {
-          where.averageRating = {
-            gte: avgRatingNum,
-          };
-        }
-      }
-      if (search) {
-        where.OR = [
-          { name: { contains: search, mode: "insensitive" } },
-          { description: { contains: search, mode: "insensitive" } },
-          { tags: { has: search.toLowerCase() } },
-        ];
-      }
-
-      switch (sort) {
-        case "price-asc":
-          orderBy.price = "asc";
-          break;
-        case "price-desc":
-          orderBy.price = "desc";
-          break;
-        case "top-rated":
-          orderBy.averageRating = "desc";
-          break;
-        case "newest":
-        default:
-          orderBy.createdAt = "desc";
-          break;
-      }
-
-      return await prisma.product.findMany({ where, orderBy });
-    } catch (error) {
-      console.error("Failed to fetch products with filters:", error);
-      return [];
-    }
-  }
-);
 
 export async function getTopProduct(id: string): Promise<Product | null> {
   return await prisma.product.findUnique({
@@ -400,12 +524,10 @@ export async function discountedProducts() {
 
   if (!discounted.length) return [];
 
-  // Filter every second product
   const filtered = discounted.filter(
     (_: any, index: number) => index % 2 === 0
   );
 
-  // Fetch reviews for all filtered products
   const productIds = filtered.map((p: any) => p.id);
   const reviews = await prisma.review.findMany({
     where: {

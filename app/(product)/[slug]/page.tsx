@@ -3,9 +3,10 @@ import type { Metadata } from "next";
 import { ProductDetails } from "@/components/products/product-details";
 import { FrequentlyBoughtTogether } from "@/components/products/frequently-bought-together";
 import {
-  getAllFullProducts,
+  getAllProducts,
   getFrequentlyBoughtTogetherProducts,
   getFullProductBySlug,
+  getProductBySlug,
   getRelatedProducts,
 } from "@/data/product";
 import RelatedProducts from "@/components/products/related-products";
@@ -15,7 +16,7 @@ interface ProductPageProps {
 }
 
 export async function generateStaticParams() {
-  const products = await getAllFullProducts();
+  const products = await getAllProducts();
   return products.map((product) => ({
     slug: product.slug,
   }));
@@ -23,7 +24,7 @@ export async function generateStaticParams() {
 
 export default async function ProductPage({ params }: ProductPageProps) {
   const { slug } = await params;
-  const product = await getFullProductBySlug(slug);
+  const product = await getProductBySlug(slug);
   if (!product) notFound();
   const filteredRelatedProducts = await getRelatedProducts(product.id);
   const suggestedProducts = await getFrequentlyBoughtTogetherProducts(

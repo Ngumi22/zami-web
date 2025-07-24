@@ -1,3 +1,11 @@
+import {
+  Camera,
+  Gamepad2,
+  Headphones,
+  Monitor,
+  Smartphone,
+  Watch,
+} from "lucide-react";
 export const WhatsappPhoneNumber = +254757011738;
 
 export const SPEC_CATEGORIES = {
@@ -42,4 +50,14 @@ export const SPEC_CATEGORIES = {
     "fingerprint",
     "webcam",
   ],
+};
+
+// Icon mapping for categories
+export const categoryIcons = {
+  phones: Smartphone,
+  computers: Monitor,
+  smartwatch: Watch,
+  camera: Camera,
+  headphones: Headphones,
+  gaming: Gamepad2,
 };

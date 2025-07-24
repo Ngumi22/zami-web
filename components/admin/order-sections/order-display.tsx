@@ -41,7 +41,7 @@ interface OrderDisplayProps {
       id: string;
       name: string;
       email: string;
-      address?: string;
+      addresses?: string[];
     };
     items: Array<{
       sku?: string;
@@ -192,11 +192,11 @@ export function OrderDisplay({ order }: OrderDisplayProps) {
                 </p>
               </div>
             </div>
-            {order.customer.address && (
+            {order.customer.addresses && (
               <div>
                 <p className="text-sm font-medium">Address</p>
                 <p className="text-sm text-muted-foreground">
-                  {order.customer.address}
+                  {order.customer.addresses}
                 </p>
               </div>
             )}

@@ -37,8 +37,9 @@ import { PaymentStatusBadge } from "@/components/payment-status-badge";
 import { CustomerDetailSkeleton } from "@/components/admin/customer-sections/customer-detail-skeleton";
 import OrderStatusBadge from "@/components/home/order-status-badge";
 import { formatCurrency } from "@/lib/utils";
-import { PaymentStatus } from "@/generated/prisma/client";
 import { getCustomerWithOrders } from "@/data/customer";
+
+import { CustomerAddress, PaymentStatus } from "@prisma/client";
 
 interface CustomerPageProps {
   params: Promise<{ id: string }>;
@@ -241,17 +242,52 @@ export default async function CustomerPage({ params }: CustomerPageProps) {
                   )}
                 </div>
 
-                {customer.address && (
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-muted-foreground">
-                      Address
-                    </label>
-                    <div className="flex items-start gap-2">
-                      <MapPin className="h-4 w-4 text-muted-foreground mt-0.5" />
-                      <span className="font-medium">{customer.address}</span>
+                <div className="grid gap-6 sm:grid-cols-2">
+                  {customer.addresses?.map((address: CustomerAddress) => (
+                    <div key={address.id} className="border rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="font-medium">{address.fullName}</h4>
+                        {address.isDefault && (
+                          <Badge variant="outline">Default</Badge>
+                        )}
+                      </div>
+                      <div className="text-sm text-muted-foreground space-y-1">
+                        <p>{address.addressLine1}</p>
+                        {address.addressLine2 && <p>{address.addressLine2}</p>}
+                        <p>
+                          {address.city}, {address.state}
+                        </p>
+                        <p>{address.country}</p>
+                        {address.phone && (
+                          <p className="pt-1">{address.phone}</p>
+                        )}
+                        {address.preferredCourier && (
+                          <p className="pt-1 text-xs">
+                            <span className="font-medium">
+                              Preferred Courier:
+                            </span>{" "}
+                            {address.preferredCourier}
+                          </p>
+                        )}
+                      </div>
                     </div>
+                  )) || (
+                    <div className="col-span-2 text-center py-8">
+                      <p className="text-muted-foreground">
+                        No addresses found
+                      </p>
+                    </div>
+                  )}
+                  <div className="border rounded-lg border-dashed p-4 flex flex-col items-center justify-center text-center hover:border-muted-foreground/50 transition-colors cursor-pointer">
+                    <div className="h-12 w-12 rounded-full border-2 border-dashed flex items-center justify-center mb-3">
+                      <span className="text-2xl">+</span>
+                    </div>
+                    <h4 className="font-medium">Add New Address</h4>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Add a new shipping or billing address
+                    </p>
                   </div>
-                )}
+                </div>
               </CardContent>
             </Card>
 

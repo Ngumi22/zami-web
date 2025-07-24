@@ -1,6 +1,5 @@
 "use client";
 
-import dynamic from "next/dynamic";
 import type React from "react";
 import { useState } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -17,6 +16,8 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
+
+import dynamic from "next/dynamic";
 import ClientSEO from "@/components/client-seo";
 import { UserAccountNav } from "@/components/home/user-account-nav";
 

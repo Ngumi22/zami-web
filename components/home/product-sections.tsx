@@ -6,6 +6,10 @@ import { Brand, Category, Product } from "@prisma/client";
 import { PromotionalBanner } from "./promotional-banner";
 import Image from "next/image";
 import Link from "next/link";
+import { Button } from "../ui/button";
+import { ChevronLeft, ChevronRight, Smartphone } from "lucide-react";
+import { categoryIcons } from "@/lib/constants";
+import { useRef } from "react";
 
 function buildCategoryDescendantsMap(categories: Category[]) {
   const childrenMap = new Map<string, string[]>();
@@ -169,27 +173,84 @@ export function BrandsSection({ brands }: { brands: Brand[] }) {
 }
 
 export function CategoriesSection({ categories }: { categories: Category[] }) {
-  return (
-    <section className="container max-w-7xl py-8">
-      <h2 className="text-2xl font-bold mb-6">Browse by Category</h2>
-      <div className="flex items-center justify-center flex-wrap gap-4">
-        {categories.map((category) => (
-          <div
-            key={category.slug}
-            className="aspect-square h-24 flex-col items-center justify-center">
-            <Image
-              src={category.image || "/placeholder.svg"}
-              alt={category.slug}
-              height={50}
-              width={50}
-              className="w-auto h-full"
-            />
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-            <Link href={`/products?category=${category.slug}`}>
-              {category.name}
+  const scrollLeft = () => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollBy({
+        left: -200,
+        behavior: "smooth",
+      });
+    }
+  };
+
+  const scrollRight = () => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollBy({
+        left: 200,
+        behavior: "smooth",
+      });
+    }
+  };
+
+  const displayCategories = categories.length > 0 ? categories : categories;
+
+  return (
+    <section className="md:container md:max-w-7xl py-8">
+      <div className="flex items-center justify-between mb-8">
+        <h2 className="text-2xl font-bold text-gray-900">Browse By Category</h2>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-h-8 w-h-8 rounded-full bg-transparent"
+            onClick={scrollLeft}>
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-h-8 w-h-8 rounded-full bg-transparent"
+            onClick={scrollRight}>
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+
+      <div
+        ref={scrollContainerRef}
+        className="flex items-center justify-center gap-6 overflow-x-auto pb-4 scroll-smooth [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+        {displayCategories.map((category) => {
+          const IconComponent =
+            categoryIcons[category.slug as keyof typeof categoryIcons] ||
+            Smartphone;
+
+          return (
+            <Link
+              key={category.slug}
+              href={`/products?category=${category.slug}`}
+              className="group flex-shrink-0">
+              <div className="flex flex-col items-center justify-center gap-3 p-4 border border-gray-200 rounded-lg hover:shadow-md transition-all duration-200 hover:border-red-500 w-32 h-32">
+                <div className="flex items-center justify-center w-12 h-12">
+                  {category.image ? (
+                    <Image
+                      src={category.image || "/placeholder.svg"}
+                      alt={category.name}
+                      width={48}
+                      height={48}
+                      className="w-12 h-12 object-contain"
+                    />
+                  ) : (
+                    <IconComponent className="w-8 h-8 text-gray-700 group-hover:text-red-500 transition-colors" />
+                  )}
+                </div>
+                <span className="text-sm font-medium text-gray-900 text-center">
+                  {category.name}
+                </span>
+              </div>
             </Link>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </section>
   );

@@ -2,6 +2,10 @@
 @tailwind components;
 @tailwind utilities;
 
+.logo-font {
+  font-family: Oakes Grotesk Regular, sans-serif;
+}
+
 @layer base {
   :root {
     --background: 0 0% 100%;

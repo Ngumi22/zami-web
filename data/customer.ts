@@ -103,6 +103,7 @@ export async function getAllCustomers(
         _count: {
           select: { orders: true },
         },
+        addresses: true,
       },
     });
 
@@ -294,17 +295,20 @@ export function getPaymentStatusColor(status: PaymentStatus) {
 export async function getCustomerWithOrders(id: string) {
   return prisma.customer.findUnique({
     where: { id },
-    include: { orders: true },
+    include: { addresses: true, orders: true },
   });
 }
 
-export async function getCustomersWithOrders() {
+export async function getCustomersAndOrders() {
   return prisma.customer.findMany({
-    include: { orders: true },
+    include: {
+      addresses: true,
+      orders: true,
+    },
   });
 }
 
-export async function getOrdersWithCustomers() {
+export async function getOrdersAndCustomers() {
   return prisma.order.findMany({
     include: { customer: true },
   });
@@ -313,9 +317,46 @@ export async function getOrdersWithCustomers() {
 export async function getCustomer(id: string) {
   return prisma.customer.findUnique({
     where: { id },
+    include: {
+      addresses: true,
+      orders: true,
+    },
   });
 }
 
 export async function getCustomers() {
   return prisma.customer.findMany({ orderBy: { joinDate: "desc" } });
+}
+
+export async function getCustomerWithAddressesAndCart(customerId: string) {
+  try {
+    const customer = await prisma.customer.findUnique({
+      where: { id: customerId },
+      include: {
+        addresses: true,
+        cart: true,
+      },
+    });
+
+    return customer;
+  } catch (error) {
+    console.error("Failed to fetch customer:", error);
+    throw new Error("Could not load customer data");
+  }
+}
+
+export async function getCustomerOrdersWithItems(customerId: string) {
+  try {
+    const orders = await prisma.order.findMany({
+      where: { customerId },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+    return orders;
+  } catch (error) {
+    console.error("Failed to fetch orders:", error);
+    throw new Error("Could not load customer orders");
+  }
 }

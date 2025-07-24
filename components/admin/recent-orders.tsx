@@ -1,7 +1,7 @@
-import { getOrdersWithCustomers } from "@/data/customer";
+import { getOrdersAndCustomers } from "@/data/customer";
 
 export async function RecentOrders() {
-  const orders = await getOrdersWithCustomers();
+  const orders = await getOrdersAndCustomers();
   return (
     <div className="bg-white rounded-lg p-6 shadow-sm">
       <h3 className="text-lg font-semibold mb-4">Recent Orders</h3>
