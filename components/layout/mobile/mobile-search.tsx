@@ -116,7 +116,7 @@ export function MobileSearch({ categories, products }: MobileSearchProps) {
           <span>Search</span>
         </div>
       </SheetTrigger>
-      <SheetContent side="top" className="h-[90vh] w-full p-0 search-dropdown">
+      <SheetContent side="top" className="h-[60vh] w-full p-0 search-dropdown">
         <SheetHeader className="border-b h-16 px-4 flex flex-row items-center justify-between">
           <SheetTitle>Search</SheetTitle>
           <div className="flex items-center justify-between w-full">
@@ -222,16 +222,10 @@ export function MobileSearch({ categories, products }: MobileSearchProps) {
 
               <div className="space-y-3">
                 <h3 className="font-medium text-sm text-muted-foreground">
-                  Popular Searches
+                  Recent Searches
                 </h3>
                 <div className="space-y-2">
-                  {[
-                    "iPhone",
-                    "Laptop",
-                    "Headphones",
-                    "Smart Watch",
-                    "Camera",
-                  ].map((term, index) => (
+                  {recentSearches.map((term, index) => (
                     <button
                       key={index}
                       className="flex items-center w-full p-3 hover:bg-muted rounded-md transition-colors text-left"
