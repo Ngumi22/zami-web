@@ -25,7 +25,7 @@ export default function RelatedProducts({ products }: RelatedProductsProps) {
           {products.map((product) => (
             <Link
               key={product.id}
-              href={`/${product.slug}`}
+              href={`/products/${product.slug}`}
               className="flex-shrink-0 w-40 group">
               <div className="bg-gray-50 rounded-lg p-3 group-hover:bg-gray-100 transition-colors">
                 <div className="aspect-square bg-white rounded-md mb-2 overflow-hidden">
@@ -70,7 +70,7 @@ export default function RelatedProducts({ products }: RelatedProductsProps) {
         {products.map((product) => (
           <Link
             key={product.id}
-            href={`/${product.slug}`}
+            href={`/products/${product.slug}`}
             className="flex gap-3 p-3 hover:bg-gray-50 transition-colors group border border-transparent hover:border-gray-200">
             <div className="w-16 h-16 bg-gray-100 rounded-md overflow-hidden flex-shrink-0">
               <Image

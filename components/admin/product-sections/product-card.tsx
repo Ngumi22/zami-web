@@ -82,7 +82,9 @@ export function ProductCard({
   return (
     <div className="group relative overflow-hidden rounded-lg border bg-background shadow-sm hover:shadow-lg transition-shadow duration-300 w-full h-[340px] flex flex-col">
       <div className="relative w-full h-60 overflow-hidden bg-muted flex-shrink-0">
-        <Link href={`/${product.slug}`} className="absolute inset-0 z-10">
+        <Link
+          href={`/products/${product.slug}`}
+          className="absolute inset-0 z-10">
           <span className="sr-only">View {displayName}</span>
         </Link>
         <Image
@@ -133,7 +135,7 @@ export function ProductCard({
 
       <div className="p-2 flex flex-col flex-1 justify-between">
         <div className="flex-1">
-          <Link href={`/${product.slug}`} className="block">
+          <Link href={`/products/${product.slug}`} className="block">
             <h3 className="font-medium line-clamp-2 text-sm leading-tight min-h-[2rem] hover:text-blue-600 transition-colors">
               {displayName}
             </h3>

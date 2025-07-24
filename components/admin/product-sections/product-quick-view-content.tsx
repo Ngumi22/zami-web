@@ -299,7 +299,7 @@ export function ProductQuickViewContent({
                 size="sm"
                 className="w-full h-8 text-xs"
                 asChild>
-                <a href={`/${product.slug}`}>View Full Details</a>
+                <a href={`/products/${product.slug}`}>View Full Details</a>
               </Button>
             </div>
           </div>
