@@ -5,7 +5,6 @@ import { FrequentlyBoughtTogether } from "@/components/products/frequently-bough
 import {
   getAllProducts,
   getFrequentlyBoughtTogetherProducts,
-  getFullProductBySlug,
   getProductBySlug,
   getRelatedProducts,
 } from "@/data/product";
@@ -37,7 +36,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
         <div className="bg-white rounded-lg shadow-sm mb-8">
           <div className="flex flex-col lg:flex-row min-h-[600px]">
             <div className="lg:w-1/4 border-b lg:border-b-0 lg:border-r border-gray-200 order-2 lg:order-1">
-              <div className="p-4 lg:p-6 h-full">
+              <div className="p-4 lg:p-6 h-">
                 <RelatedProducts products={filteredRelatedProducts} />
               </div>
             </div>
@@ -78,7 +77,7 @@ export async function generateMetadata({
 }: ProductPageProps): Promise<Metadata> {
   const { slug } = await params;
 
-  const product = await getFullProductBySlug(slug);
+  const product = await getProductBySlug(slug);
 
   if (!product) {
     return {

@@ -1,10 +1,11 @@
+
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "mongodb"
-  url      = env("DATABASE_URL")
+  provider  = "mongodb"
+  url       = env("DATABASE_URL")
   directUrl = env("DIRECT_DATABASE_URL")
 }
 
@@ -27,7 +28,6 @@ enum OrderStatus {
   CANCELLED
   REFUNDED
 }
-
 
 enum PaymentStatus {
   PENDING
@@ -64,7 +64,7 @@ type CategorySpecification {
   id       String
   name     String
   type     CategorySpecificationType
-  required Boolean  @default(false)
+  required Boolean                   @default(false)
   options  String[]
   unit     String?
 }
@@ -88,14 +88,14 @@ type OrderItem {
 }
 
 type ShippingAddress {
-  fullName      String
-  addressLine1  String
-  addressLine2  String?
-  city          String
-  state         String
-  postalCode    String
-  country       String
-  phone         String?
+  fullName     String
+  addressLine1 String
+  addressLine2 String?
+  city         String
+  state        String
+  postalCode   String
+  country      String
+  phone        String?
 }
 
 type InvoiceCustomer {
@@ -122,7 +122,14 @@ model User {
   createdAt DateTime   @default(now())
   posts     BlogPost[] @relation("BlogAuthor")
 
+  emailVerified Boolean
+  image         String?
+  updatedAt     DateTime
+  sessions      Session[]
+  accounts      Account[]
+
   @@index([role])
+  @@map("user")
 }
 
 model Customer {
@@ -130,6 +137,7 @@ model Customer {
   name       String
   phone      String?
   email      String         @unique
+  password   String
   status     CustomerStatus @default(ACTIVE)
   joinDate   DateTime       @default(now())
   totalSpent Float          @default(0)
@@ -137,29 +145,28 @@ model Customer {
   reviews    Review[]
   cart       Cart?
 
-  addresses  CustomerAddress[] @relation("CustomerAddresses")
+  addresses CustomerAddress[] @relation("CustomerAddresses")
 
   @@index([status])
 }
 
 model CustomerAddress {
-  id              String   @id @default(auto()) @map("_id") @db.ObjectId
-  customerId      String   @db.ObjectId
-  customer        Customer @relation("CustomerAddresses", fields: [customerId], references: [id])
-  fullName        String
-  addressLine1    String
-  addressLine2    String?
-  city            String
-  state           String
-  postalCode      String
-  country         String
-  phone           String?
-  isDefault       Boolean  @default(false)
+  id               String   @id @default(auto()) @map("_id") @db.ObjectId
+  customerId       String   @db.ObjectId
+  customer         Customer @relation("CustomerAddresses", fields: [customerId], references: [id])
+  fullName         String
+  addressLine1     String
+  addressLine2     String?
+  city             String
+  state            String
+  postalCode       String
+  country          String
+  phone            String?
+  isDefault        Boolean  @default(false)
   preferredCourier String?
 
   @@index([customerId])
 }
-
 
 model Brand {
   id          String    @id @default(auto()) @map("_id") @db.ObjectId
@@ -175,8 +182,6 @@ model Brand {
   @@index([name])
   @@index([isActive])
 }
-
-
 
 model Category {
   id             String                  @id @default(auto()) @map("_id") @db.ObjectId
@@ -218,7 +223,7 @@ model Product {
   brandId          String           @db.ObjectId
   brand            Brand            @relation(fields: [brandId], references: [id])
   reviews          Review[]
-  sales            Int?              @default(0)
+  sales            Int?             @default(0)
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
 
@@ -349,4 +354,65 @@ model BlogPost {
   @@index([status])
   @@index([publishedAt])
   @@fulltext([title, excerpt, content, tags])
+}
+
+model Session {
+  id        String     @id @default(auto()) @map("_id") @db.ObjectId
+  expiresAt DateTime
+  token     String
+  createdAt DateTime
+  updatedAt DateTime
+  ipAddress String?
+  userAgent String?
+  userId    String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([token])
+  @@map("session")
+}
+
+model Account {
+  id        String     @id @default(auto()) @map("_id") @db.ObjectId
+  accountId             String
+  providerId            String
+  userId                String   @db.ObjectId
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime
+  updatedAt             DateTime
+
+  @@map("account")
+}
+
+model Verification {
+  id        String     @id @default(auto()) @map("_id") @db.ObjectId
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime?
+  updatedAt  DateTime?
+
+  @@map("verification")
+}
+
+model AllowedAdmin {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  email      String   @unique
+  tokenHash  String   @unique
+  used       Boolean  @default(false)
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  sentAt     DateTime?
+}
+
+model SeedLog {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  name      String   @unique
+  createdAt DateTime @default(now())
 }

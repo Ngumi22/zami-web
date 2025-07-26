@@ -2,8 +2,8 @@ import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { BlogFormSkeleton } from "@/components/admin/blog-sections/blog-form-skelton";
 import { getAllBlogCategories, getBlogPost } from "@/data/blog";
-import { getAllUsers } from "@/lib/user-actions";
 import BlogPostForm from "@/components/admin/blog-sections/blog-post-form";
+import { getAllUsers } from "@/data/users";
 
 export default async function EditBlogPostPage({
   params,

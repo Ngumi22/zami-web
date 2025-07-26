@@ -12,8 +12,11 @@ import {
   toPrismaStatus,
 } from "./blog-schema";
 import { ActionResult } from "./types";
+import { requireAuth } from "./auth-action";
 
 export async function createBlogCategoryAction(formData: FormData) {
+  await requireAuth();
+
   const name = formData.get("name") as string;
   const slug = formData.get("slug") as string;
   const description = formData.get("description") as string;
@@ -44,6 +47,7 @@ export async function createBlogCategoryAction(formData: FormData) {
 }
 
 export async function updateBlogCategoryAction(id: string, formData: FormData) {
+  await requireAuth();
   const name = formData.get("name") as string;
   const slug = formData.get("slug") as string;
   const description = formData.get("description") as string;
@@ -77,6 +81,7 @@ export async function updateBlogCategoryAction(id: string, formData: FormData) {
 }
 
 export async function deleteBlogCategoryAction(id: string) {
+  await requireAuth();
   try {
     await prisma.blogCategory.delete({ where: { id } });
     revalidatePath("/admin/blog/categories");
@@ -90,6 +95,7 @@ export async function createBlogPostAction(
   prevState: BlogActionState,
   formData: FormData
 ): Promise<BlogActionState> {
+  await requireAuth();
   try {
     const rawData = {
       title: formData.get("title") as string,
@@ -188,6 +194,7 @@ export async function updateBlogPostAction(
   prevState: BlogActionState,
   formData: FormData
 ): Promise<BlogActionState> {
+  await requireAuth();
   try {
     const rawData = {
       title: formData.get("title") as string,
@@ -318,6 +325,7 @@ export async function saveDraftAction(
   postId: string | null,
   formData: FormData
 ): Promise<BlogActionState> {
+  await requireAuth();
   try {
     const title = formData.get("title") as string;
     const content = formData.get("content") as string;
@@ -367,6 +375,7 @@ export async function saveDraftAction(
 }
 
 export async function deleteBlogPost(id: string): Promise<ActionResult<null>> {
+  await requireAuth();
   try {
     await prisma.blogPost.delete({ where: { id } });
     revalidatePath("/admin/blogPosts");

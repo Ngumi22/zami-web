@@ -75,6 +75,7 @@ const baseCustomerSchema = z.object({
       // Enhanced phone validation for international numbers
       return /^[+]?[1-9][\d\s\-()]{7,20}$/.test(val.replace(/[\s\-()]/g, ""));
     }, "Please enter a valid phone number"),
+  password: z.string(),
   status: z
     .enum(["ACTIVE", "INACTIVE"], {
       errorMap: () => ({ message: "Please select a valid status" }),
@@ -212,6 +213,7 @@ export function transformFormDataToCustomer(
     name: formData.get("name")?.toString(),
     email: formData.get("email")?.toString(),
     phone: formData.get("phone")?.toString() || undefined,
+    password: formData.get("password")?.toString(),
     status:
       (formData.get("status")?.toString() as "ACTIVE" | "INACTIVE") || "ACTIVE",
   };

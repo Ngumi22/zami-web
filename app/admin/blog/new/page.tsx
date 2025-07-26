@@ -1,9 +1,9 @@
 import { Suspense } from "react";
 
 import { BlogFormSkeleton } from "@/components/admin/blog-sections/blog-form-skelton";
-import { getAllUsers } from "@/lib/user-actions";
 import { getAllBlogCategories } from "@/data/blog";
 import BlogPostForm from "@/components/admin/blog-sections/blog-post-form";
+import { getAllUsers } from "@/data/users";
 
 export default async function NewBlogPostPage() {
   const categories = await getAllBlogCategories();

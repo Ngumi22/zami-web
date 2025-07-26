@@ -11,8 +11,8 @@ import {
 } from "@/components/home/product-sections";
 
 import {
-  getAllFullProducts,
-  getFullFeaturedProducts,
+  getAllProducts,
+  getFeaturedProducts,
   newArrivals,
 } from "@/data/product";
 import { getAllBrands } from "@/data/brands";
@@ -21,9 +21,9 @@ import { getAllCategories } from "@/data/category";
 export default async function HomePage() {
   const [products, newProducts, featuredProducts, brands, categories] =
     await Promise.all([
-      getAllFullProducts(),
+      getAllProducts(),
       newArrivals(),
-      getFullFeaturedProducts(),
+      getFeaturedProducts(),
       getAllBrands(),
       getAllCategories(),
     ]);

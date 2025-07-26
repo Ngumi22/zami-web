@@ -13,6 +13,7 @@ import {
   type CustomerCreateInput,
   type CustomerUpdateInput,
 } from "./customer-schemas";
+import { requireAuth } from "./auth-action";
 
 export type ActionState = {
   success?: boolean;
@@ -20,35 +21,19 @@ export type ActionState = {
   errors?: Record<string, string[]>;
 };
 
-interface AddressData {
-  id?: string;
-  fullName: string;
-  addressLine1: string;
-  addressLine2?: string;
-  city: string;
-  state: string;
-  postalCode: string;
-  country: string;
-  phone?: string;
-  isDefault: boolean;
-  preferredCourier?: string;
-}
-
 export async function createCustomerAction(
   formData: FormData
 ): Promise<ActionState> {
+  await requireAuth();
   try {
-    // Transform form data
     const customerData = transformFormDataToCustomer(formData);
     const addresses = transformFormDataToAddresses(formData);
 
-    // Combine customer and address data for validation
     const fullCustomerData: CustomerCreateInput = {
       ...customerData,
       addresses,
     } as CustomerCreateInput;
 
-    // Validate the complete data
     const validated = customerCreateSchema.safeParse(fullCustomerData);
 
     if (!validated.success) {
@@ -62,10 +47,11 @@ export async function createCustomerAction(
     const { addresses: validatedAddresses, ...validatedCustomer } =
       validated.data;
 
-    // Create customer with addresses in a transaction
     await prisma.$transaction(async (tx) => {
       const customer = await tx.customer.create({
-        data: validatedCustomer,
+        data: {
+          ...validatedCustomer,
+        },
       });
 
       // Create addresses
@@ -248,6 +234,7 @@ export async function updateCustomerAction(
 export async function deleteCustomerAction(
   customerId: string
 ): Promise<ActionState> {
+  await requireAuth();
   try {
     // Validate customer ID
     if (!customerId || customerId.trim() === "") {
@@ -442,6 +429,7 @@ export async function setDefaultAddressAction(
 export async function archiveCustomerAction(
   customerId: string
 ): Promise<ActionState> {
+  await requireAuth();
   try {
     if (!customerId || customerId.trim() === "") {
       return {
@@ -496,6 +484,7 @@ export async function bulkUpdateAddressesAction(
     preferredCourier?: string;
   }>
 ): Promise<ActionState> {
+  await requireAuth();
   try {
     // Validate addresses using the schema
     const validated = customerUpdateSchema

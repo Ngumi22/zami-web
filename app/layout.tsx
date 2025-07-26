@@ -58,9 +58,9 @@ export default function RootLayout({
       <body className={`${inter.className} pb-16 md:pb-0`}>
         <Header />
         {children}
+        <Toaster />
         <SiteFooter />
         <BottomNav />
-        <Toaster />
       </body>
     </html>
   );

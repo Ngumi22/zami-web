@@ -43,7 +43,14 @@ export function MobileMenu({
     }
   }, [open, mainCategories, activeCategoryId]);
 
-  if (pathname.startsWith("/admin")) return null;
+  if (
+    pathname.startsWith("/admin") ||
+    pathname.startsWith("/login") ||
+    pathname.startsWith("/signup") ||
+    pathname.startsWith("/unauthorized")
+  ) {
+    return null;
+  }
 
   const specialLinks = [
     { href: "/deals", label: "Deals" },

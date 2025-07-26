@@ -4,6 +4,7 @@ import { Loader2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { searchBlogPosts } from "@/data/blog";
 import { BlogSearchParams } from "@/lib/types";
+import { requireAuth } from "@/lib/auth-action";
 
 const BlogPostsClient = dynamic(
   () => import("@/components/admin/blog-sections/blog-post-client"),

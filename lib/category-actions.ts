@@ -6,6 +6,7 @@ import prisma from "./prisma";
 import { Category } from "@prisma/client";
 import { ActionResult } from "./types";
 import DOMPurify from "isomorphic-dompurify";
+import { requireAuth } from "./auth-action";
 
 function prepareSpecifications(specs: any[]) {
   return specs.map((spec) => ({
@@ -18,10 +19,10 @@ function prepareSpecifications(specs: any[]) {
   }));
 }
 
-// CREATE
 export async function createCategory(
   formData: FormData
 ): Promise<ActionResult<Category>> {
+  await requireAuth();
   try {
     const rawData = {
       name: DOMPurify.sanitize((formData.get("name") as string) || ""),
@@ -91,11 +92,11 @@ export async function createCategory(
   }
 }
 
-// UPDATE
 export async function updateCategory(
   categoryId: string,
   formData: FormData
 ): Promise<ActionResult<Category>> {
+  await requireAuth();
   try {
     const rawData = {
       id: categoryId,
@@ -167,8 +168,8 @@ export async function updateCategory(
   }
 }
 
-// DELETE
 export async function deleteCategory(id: string): Promise<ActionResult<null>> {
+  await requireAuth();
   try {
     await prisma.category.delete({ where: { id } });
     revalidatePath("/admin/categories");

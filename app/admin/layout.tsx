@@ -7,19 +7,21 @@ import { Toaster } from "@/components/ui/toaster";
 import { Navbar } from "@/components/admin/dashboard/admin-navbar";
 
 import "./dashboard.css";
+import { requireAuth } from "@/lib/auth-action";
 
-export default function AdminLayout({
+export default async function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const user = await requireAuth();
   return (
     <main>
       <NextSSRPlugin routerConfig={extractRouterConfig(ourFileRouter)} />
       <div className="min-h-screen bg-slate-50 dark:bg-slate-950 grid grid-cols-1 md:grid-cols-[16rem_1fr]">
-        <AdminSidebar />
+        <AdminSidebar user={user} />
         <div className="min-h-screen flex">
-          <Navbar />
+          <Navbar user={user} />
           <section className="mt-16 flex-1 p-2 text-sm">{children}</section>
         </div>
       </div>

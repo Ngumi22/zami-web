@@ -3,17 +3,14 @@
 import React, { useEffect, useState } from "react";
 import { Search } from "lucide-react";
 import UserDropdownMenu from "./user";
-import { User } from "@/lib/types";
-import { getCurrentUser } from "@/data/users/getUser";
 import { Notifications } from "./notifications";
+import { User } from "@prisma/client";
 
-export function Navbar() {
-  const [user, setUser] = useState<User | undefined>(undefined);
+interface NavbarProps {
+  user: User;
+}
 
-  useEffect(() => {
-    getCurrentUser("1").then(setUser);
-  }, []);
-
+export function Navbar({ user }: NavbarProps) {
   return (
     <header className="fixed top-0 right-0 left-0 z-20 h-16 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 shadow-sm">
       <div className="flex h-full items-center justify-between px-4 ml-20 md:ml-64">

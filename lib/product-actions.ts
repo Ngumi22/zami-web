@@ -5,6 +5,7 @@ import prisma from "@/lib/prisma";
 import { productFormSchema, type ProductFormData } from "./schema";
 import { Prisma } from "@prisma/client";
 import z from "zod";
+import { requireAuth } from "./auth-action";
 
 type ActionResult = {
   success: boolean;
@@ -17,6 +18,7 @@ async function validateProductData(data: ProductFormData): Promise<{
   data?: ProductFormData;
   errors?: Record<string, string[]>;
 }> {
+  await requireAuth();
   try {
     const validatedData = productFormSchema.parse(data);
 
@@ -127,6 +129,7 @@ async function validateProductData(data: ProductFormData): Promise<{
 export async function createProduct(
   data: ProductFormData
 ): Promise<ActionResult> {
+  await requireAuth();
   try {
     const validation = await validateProductData(data);
     if (!validation.success) {
@@ -199,6 +202,7 @@ export async function updateProduct(
   id: string,
   data: ProductFormData
 ): Promise<ActionResult> {
+  await requireAuth();
   try {
     if (!id) {
       console.error("[UPDATE PRODUCT] Invalid product ID provided");
@@ -280,8 +284,8 @@ export async function updateProduct(
   }
 }
 
-// DELETE
 export async function deleteProduct(id: string) {
+  await requireAuth();
   try {
     await prisma.product.delete({ where: { id } });
     revalidatePath("/admin/products");

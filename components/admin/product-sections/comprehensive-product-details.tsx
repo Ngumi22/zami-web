@@ -18,19 +18,19 @@ import { ProductSEO } from "./product-seo";
 import { Brand, Category, Product } from "@prisma/client";
 import { formatCurrency } from "@/lib/utils";
 import { deleteProduct } from "@/lib/product-actions";
-import { getAllFullProducts } from "@/data/product";
 
-interface ComprehensiveProductDetailsProps {
+interface ProductDetailsProps {
+  products: Product[];
   product: Product;
   categories: Category[];
   brands: Brand[];
 }
 
-export function ComprehensiveProductDetails({
+export function ProductDetails({
   product,
   categories,
   brands,
-}: ComprehensiveProductDetailsProps) {
+}: ProductDetailsProps) {
   const router = useRouter();
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
@@ -75,7 +75,6 @@ export function ComprehensiveProductDetails({
           description: result.message,
         });
         setIsEditing(false);
-        await getAllFullProducts();
       }
     } catch (error) {
       toast({
@@ -272,7 +271,7 @@ export function ComprehensiveProductDetails({
 
       {/* Main Content Tabs */}
       <Tabs defaultValue="basic" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w- grid-cols-6">
           <TabsTrigger value="basic">Basic Info</TabsTrigger>
           <TabsTrigger value="images">Images</TabsTrigger>
           <TabsTrigger value="variants">Variants</TabsTrigger>

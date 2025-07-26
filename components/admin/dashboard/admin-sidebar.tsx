@@ -31,6 +31,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Logout } from "@/components/account/logout";
+import { User as PrismaUser } from "@prisma/client";
 
 type MenuItem = {
   title: string;
@@ -209,14 +211,10 @@ const MenuItemComponent = ({ item, activeHref }: MenuItemProps) => {
 };
 
 interface NavbarProps {
-  user: {
-    name: string;
-    email: string;
-    avatar: string;
-  } | null;
+  user: PrismaUser;
 }
 
-export function AdminSidebar() {
+export function AdminSidebar({ user }: NavbarProps) {
   const pathname = usePathname();
   const [openSubmenus, setOpenSubmenus] = useState<string[]>([]);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
@@ -319,7 +317,7 @@ export function AdminSidebar() {
                 className="w-full justify-start h-12 px-3 hover:bg-slate-100 dark:hover:bg-slate-800">
                 <Avatar className="h-8 w-8 mr-3">
                   <AvatarImage
-                    src={user.avatar || "/placeholder.svg"}
+                    src={user.image || "/placeholder.svg"}
                     alt={user.name}
                   />
                   <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white text-sm">
@@ -356,8 +354,7 @@ export function AdminSidebar() {
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem className="text-red-600 focus:text-red-600 cursor-pointer">
-                <LogOut className="mr-2 h-4 w-4" />
-                Sign Out
+                <Logout />
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

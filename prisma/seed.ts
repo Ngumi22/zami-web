@@ -1,61 +1,56 @@
-import { PrismaClient } from "@prisma/client";
+import { sendAdminInvite } from "@/lib/mail/invite";
+import prisma from "@/lib/prisma";
 
-const prisma = new PrismaClient();
+const SEED_KEY = process.env.ADMIN_SEED_KEY;
 
-async function main() {
-  await prisma.customer.createMany({
-    data: [
-      {
-        name: "Alice Mwangi",
-        email: "alice@example.com",
-        phone: "+254712345678",
-        status: "ACTIVE",
-        joinDate: new Date("2023-01-10T10:00:00Z"),
-        totalSpent: 150000,
-      },
-      {
-        name: "Brian Otieno",
-        email: "brian@example.com",
-        phone: "+254722334455",
-        status: "INACTIVE",
-        joinDate: new Date("2022-11-05T09:30:00Z"),
-        totalSpent: 23000.5,
-      },
-      {
-        name: "Caroline Njeri",
-        email: "caroline@example.com",
-        phone: "+254733445566",
-        status: "ACTIVE",
-        joinDate: new Date("2023-06-20T14:20:00Z"),
-        totalSpent: 78999.99,
-      },
-      {
-        name: "David Kiptoo",
-        email: "david@example.com",
-        phone: "+254701223344",
-        status: "ACTIVE",
-        joinDate: new Date("2024-01-15T08:00:00Z"),
-        totalSpent: 0,
-      },
-      {
-        name: "Esther Wambui",
-        email: "esther@example.com",
-        phone: "+254745667788",
-        status: "ACTIVE",
-        joinDate: new Date("2023-12-01T16:45:00Z"),
-        totalSpent: 15000,
-      },
-    ],
-  });
+const ADMIN_EMAILS = [
+  process.env.ADMIN_EMAIL_1,
+  process.env.ADMIN_EMAIL_2,
+  process.env.ADMIN_EMAIL_3,
+]
+  .filter((email): email is string => !!email?.trim())
+  .map((email) => email.trim().toLowerCase());
 
-  console.log("✅ Customers seeded successfully");
+if (ADMIN_EMAILS.length === 0) {
+  throw new Error("No valid ADMIN_EMAIL_X entries found in .env");
 }
 
-main()
-  .catch((e) => {
-    console.error("❌ Seeding error:", e);
+async function seedAdminInvites() {
+  const existing = await prisma.seedLog.findUnique({
+    where: { name: SEED_KEY },
+  });
+
+  if (existing) {
+    console.log(`⚠️ Seed "${SEED_KEY}" already applied. Skipping.`);
+    return;
+  }
+
+  console.log("📨 Seeding admin invites...");
+  for (const email of ADMIN_EMAILS) {
+    try {
+      await sendAdminInvite(email);
+      console.log(`Invite processed for ${email}`);
+    } catch (error) {
+      const e = error as Error;
+      console.error(`Failed to send invite to ${email}: ${e.message}`);
+      process.exit(1);
+    }
+  }
+
+  if (!SEED_KEY) {
+    throw new Error("Missing required env variable: ADMIN_SEED_KEY");
+  }
+
+  await prisma.seedLog.create({
+    data: { name: SEED_KEY },
+  });
+
+  console.log(`Seed "${SEED_KEY}" completed and logged.`);
+}
+
+seedAdminInvites()
+  .then(() => process.exit(0))
+  .catch((err) => {
+    console.error("Seed script failed:", err);
     process.exit(1);
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
   });

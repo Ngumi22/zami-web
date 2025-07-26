@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import prisma from "@/lib/prisma";
 import { Prisma, Invoice, Order, PaymentStatus } from "@prisma/client";
+import { requireAuth } from "./auth-action";
 
 export type InvoiceActionState = {
   success?: boolean;
@@ -14,6 +15,7 @@ export async function createInvoiceAction(
   prevState: InvoiceActionState,
   formData: FormData
 ): Promise<InvoiceActionState> {
+  await requireAuth();
   try {
     // Extract and parse data
     const invoiceNumber = formData.get("invoiceNumber") as string;
@@ -96,6 +98,7 @@ export async function updateInvoiceAction(
   prevState: InvoiceActionState,
   formData: FormData
 ): Promise<InvoiceActionState> {
+  await requireAuth();
   try {
     const invoiceNumber = formData.get("invoiceNumber") as string;
     const orderNumber = formData.get("orderNumber") as string;
@@ -177,6 +180,7 @@ export async function updateInvoiceAction(
 export async function deleteInvoiceAction(
   invoiceId: string
 ): Promise<InvoiceActionState> {
+  await requireAuth();
   try {
     await prisma.invoice.delete({ where: { id: invoiceId } });
 
@@ -196,6 +200,7 @@ export async function deleteInvoiceAction(
 }
 
 export async function createInvoiceFromOrder(order: Order): Promise<Invoice> {
+  await requireAuth();
   const invoiceDate = order.completedAt || order.createdAt;
   const dueDate = new Date(invoiceDate);
   dueDate.setDate(dueDate.getDate() + 30);

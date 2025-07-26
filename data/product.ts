@@ -5,135 +5,9 @@ import prisma from "@/lib/prisma";
 import { Prisma, Product } from "@prisma/client";
 import { mapSpecifications } from "@/lib/utils";
 
-export interface ProductFilters {
-  minPrice?: string;
-  maxPrice?: string;
-  category?: string;
-  brand?: string;
-  search?: string;
-  limit?: string | number;
-  specifications?: Record<string, string>;
-  averageRating?: string | number;
-  sort?: string;
-  stock?: string | number;
-}
-
-export async function getAllProducts() {
-  const products = await prisma.product.findMany({
-    include: {
-      brand: true,
-      category: {
-        select: {
-          name: true,
-          specifications: true,
-        },
-      },
-    },
-  });
-
-  if (!products.length) return [];
-
-  const productIds = products.map((p: Product) => p.id);
-
-  const reviews = await prisma.review.findMany({
-    where: {
-      productId: { in: productIds },
-    },
-    include: {
-      customer: true,
-    },
-  });
-
-  const reviewsByProductId = reviews.reduce((acc: any, review: any) => {
-    (acc[review.productId] ||= []).push(review);
-    return acc;
-  }, {} as Record<string, typeof reviews>);
-
-  return products.map((product: Product) => ({
-    ...product,
-    reviews: reviewsByProductId[product.id] || [],
-    specifications: mapSpecifications(product),
-  }));
-}
-
-export const getProductsWithFilters = cache(
-  async (filters: ProductFilters): Promise<Product[]> => {
-    try {
-      const {
-        minPrice,
-        maxPrice,
-        category,
-        brand,
-        specifications,
-        search,
-        averageRating,
-        sort,
-        stock,
-      } = filters;
-      const where: Prisma.ProductWhereInput = {};
-      const orderBy: Prisma.ProductOrderByWithRelationInput = {};
-
-      if (category) {
-        where.categoryId = category;
-      }
-      if (brand) {
-        where.brandId = brand;
-      }
-      if (specifications) {
-        where.specifications = {
-          equals: specifications,
-        };
-      }
-      if (
-        averageRating !== undefined &&
-        averageRating !== null &&
-        averageRating !== ""
-      ) {
-        const avgRatingNum =
-          typeof averageRating === "string"
-            ? parseFloat(averageRating)
-            : averageRating;
-        if (!isNaN(avgRatingNum)) {
-          where.averageRating = {
-            gte: avgRatingNum,
-          };
-        }
-      }
-      if (search) {
-        where.OR = [
-          { name: { contains: search, mode: "insensitive" } },
-          { description: { contains: search, mode: "insensitive" } },
-          { tags: { has: search.toLowerCase() } },
-        ];
-      }
-
-      switch (sort) {
-        case "price-asc":
-          orderBy.price = "asc";
-          break;
-        case "price-desc":
-          orderBy.price = "desc";
-          break;
-        case "top-rated":
-          orderBy.averageRating = "desc";
-          break;
-        case "newest":
-        default:
-          orderBy.createdAt = "desc";
-          break;
-      }
-
-      return await prisma.product.findMany({ where, orderBy });
-    } catch (error) {
-      console.error("Failed to fetch products with filters:", error);
-      return [];
-    }
-  }
-);
-
-export async function getProductById(id: string) {
+export async function getProductById(productId: string) {
   const product = await prisma.product.findUnique({
-    where: { id },
+    where: { id: productId },
     include: {
       brand: true,
       category: true,
@@ -184,6 +58,44 @@ export async function getProductBySlug(slug: string) {
     reviews,
     mappedSpecifications: mapped,
   };
+}
+
+export async function getAllProducts() {
+  const products = await prisma.product.findMany({
+    include: {
+      brand: true,
+      category: {
+        select: {
+          name: true,
+          specifications: true,
+        },
+      },
+    },
+  });
+
+  if (!products.length) return [];
+
+  const productIds = products.map((p: Product) => p.id);
+
+  const reviews = await prisma.review.findMany({
+    where: {
+      productId: { in: productIds },
+    },
+    include: {
+      customer: true,
+    },
+  });
+
+  const reviewsByProductId = reviews.reduce((acc: any, review: any) => {
+    (acc[review.productId] ||= []).push(review);
+    return acc;
+  }, {} as Record<string, typeof reviews>);
+
+  return products.map((product: Product) => ({
+    ...product,
+    reviews: reviewsByProductId[product.id] || [],
+    specifications: mapSpecifications(product),
+  }));
 }
 
 export async function getProductsByCategory(
@@ -445,61 +357,6 @@ export async function getTopProductsWithRevenue(): Promise<
     );
 }
 
-export async function getFullProductById(productId: string) {
-  const product = await prisma.product.findUnique({
-    where: { id: productId },
-    include: {
-      brand: true,
-      category: true,
-    },
-  });
-
-  if (!product) return null;
-
-  const reviews = await prisma.review.findMany({
-    where: { productId: product.id },
-    include: {
-      customer: true,
-    },
-  });
-
-  return {
-    ...product,
-    reviews,
-    specifications: mapSpecifications(product),
-  };
-}
-
-export async function getFullProductBySlug(slug: string) {
-  const product = await prisma.product.findUnique({
-    where: { slug },
-    include: {
-      brand: true,
-      category: {
-        select: {
-          name: true,
-          specifications: true,
-        },
-      },
-    },
-  });
-
-  if (!product) return null;
-
-  const reviews = await prisma.review.findMany({
-    where: { productId: product.id },
-    include: { customer: true },
-  });
-
-  const mapped = mapSpecifications(product);
-
-  return {
-    ...product,
-    reviews,
-    mappedSpecifications: mapped,
-  };
-}
-
 export async function discountedProducts() {
   const discounted = await prisma.product.findMany({
     where: {
@@ -598,83 +455,6 @@ export async function getTopRatedProducts() {
       averageRating: "desc",
     },
     take: 2,
-    include: {
-      brand: true,
-      category: {
-        select: {
-          name: true,
-          specifications: true,
-        },
-      },
-    },
-  });
-
-  if (!products.length) return [];
-
-  const productIds = products.map((p: Product) => p.id);
-
-  const reviews = await prisma.review.findMany({
-    where: {
-      productId: { in: productIds },
-    },
-    include: {
-      customer: true,
-    },
-  });
-
-  const reviewsByProductId = reviews.reduce((acc: any, review: any) => {
-    (acc[review.productId] ||= []).push(review);
-    return acc;
-  }, {} as Record<string, typeof reviews>);
-
-  return products.map((product: Product) => ({
-    ...product,
-    reviews: reviewsByProductId[product.id] || [],
-    specifications: mapSpecifications(product),
-  }));
-}
-
-export async function getAllFullProducts() {
-  const products = await prisma.product.findMany({
-    include: {
-      brand: true,
-      category: {
-        select: {
-          name: true,
-          specifications: true,
-        },
-      },
-    },
-  });
-
-  if (!products.length) return [];
-
-  const productIds = products.map((p: Product) => p.id);
-
-  const reviews = await prisma.review.findMany({
-    where: {
-      productId: { in: productIds },
-    },
-    include: {
-      customer: true,
-    },
-  });
-
-  const reviewsByProductId = reviews.reduce((acc: any, review: any) => {
-    (acc[review.productId] ||= []).push(review);
-    return acc;
-  }, {} as Record<string, typeof reviews>);
-
-  return products.map((product: Product) => ({
-    ...product,
-    reviews: reviewsByProductId[product.id] || [],
-    specifications: mapSpecifications(product),
-  }));
-}
-
-export async function getFullFeaturedProducts() {
-  const products = await prisma.product.findMany({
-    where: { featured: true },
     include: {
       brand: true,
       category: {

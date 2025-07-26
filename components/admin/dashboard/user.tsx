@@ -9,8 +9,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "../../ui/avatar";
-import { User } from "@/lib/types";
 import { ChevronDown, Settings, User as UserIcon } from "lucide-react";
+import { Logout } from "@/components/account/logout";
+import { User } from "@prisma/client";
 
 type UserDropdownMenuProps = {
   user: User;
@@ -50,7 +51,9 @@ export default function UserDropdownMenu({ user }: UserDropdownMenuProps) {
           Settings
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem className="text-red-600">Log out</DropdownMenuItem>
+        <DropdownMenuItem className="text-red-600">
+          <Logout />
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );

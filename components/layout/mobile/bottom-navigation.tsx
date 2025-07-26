@@ -26,7 +26,12 @@ export function BottomNavigation({
   const compareItems = useCompareStore((state) => state.items);
   const cartItems = useCartStore((state) => state.items);
 
-  if (pathname.startsWith("/admin")) {
+  if (
+    pathname.startsWith("/admin") ||
+    pathname.startsWith("/login") ||
+    pathname.startsWith("/signup") ||
+    pathname.startsWith("/unauthorized")
+  ) {
     return null;
   }
 

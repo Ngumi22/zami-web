@@ -30,8 +30,14 @@ export function SiteHeader({
   const cartItemCount = useCartStore((state) => state.items.length);
   const compareItems = useCompareStore((state) => state.items);
   const wishItems = useWishlistStore((state) => state.items);
-
-  if (pathname.startsWith("/admin")) return null;
+  if (
+    pathname.startsWith("/admin") ||
+    pathname.startsWith("/login") ||
+    pathname.startsWith("/signup") ||
+    pathname.startsWith("/unauthorized")
+  ) {
+    return null;
+  }
 
   const navItems = [
     {

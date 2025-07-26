@@ -6,10 +6,12 @@ import { Brand } from "@prisma/client";
 import { createBrandSchema, updateBrandSchema } from "./brand-schema";
 import prisma from "./prisma";
 import DOMPurify from "isomorphic-dompurify";
+import { requireAuth } from "./auth-action";
 
 export async function createBrand(
   formData: FormData
 ): Promise<ActionResult<Brand>> {
+  await requireAuth();
   try {
     const rawData = {
       name: DOMPurify.sanitize((formData.get("name") as string) || ""),
@@ -74,6 +76,7 @@ export async function updateBrand(
   brandId: string,
   formData: FormData
 ): Promise<ActionResult<Brand>> {
+  await requireAuth();
   try {
     const existingBrand = await prisma.brand.findUnique({
       where: { id: brandId },
@@ -150,8 +153,8 @@ export async function updateBrand(
   }
 }
 
-// DELETE
 export async function deleteBrand(id: string): Promise<ActionResult<null>> {
+  await requireAuth();
   try {
     await prisma.brand.delete({ where: { id } });
     revalidatePath("/admin/brands");

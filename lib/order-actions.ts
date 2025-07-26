@@ -17,6 +17,7 @@ const nanoid = customAlphabet("1234567890ABCDEFGHJKLMNPQRSTUVWXYZ", 8);
 const generateOrderNumber = () => `ORD-${nanoid()}`;
 
 import DOMPurify from "isomorphic-dompurify";
+import { requireAuth } from "./auth-action";
 
 function isValidStatusTransition(from: string, to: string): boolean {
   const transitions: Record<string, string[]> = {
@@ -52,6 +53,7 @@ export async function updateOrder(
   orderId: string,
   formData: FormData
 ): Promise<ActionResult<Order>> {
+  await requireAuth();
   try {
     const existingOrder = await prisma.order.findUnique({
       where: { id: orderId },
@@ -183,6 +185,7 @@ export async function updateOrderStatus(
   newStatus: string,
   reason?: string
 ): Promise<ActionResult<Order>> {
+  await requireAuth();
   try {
     const existingOrder = await prisma.order.findUnique({
       where: { id: orderId },
@@ -238,6 +241,7 @@ export async function updateOrderStatus(
 }
 
 export async function createOrder(input: CreateOrderInput) {
+  await requireAuth();
   const parsed = createOrderSchema.safeParse(input);
   if (!parsed.success) throw new Error("Invalid order data");
 
@@ -286,6 +290,7 @@ export async function refundOrder(
   orderId: string,
   reason: string
 ): Promise<ActionResult<Order>> {
+  await requireAuth();
   try {
     const order = await prisma.order.findUnique({ where: { id: orderId } });
     if (!order) return { success: false, message: "Order not found" };
