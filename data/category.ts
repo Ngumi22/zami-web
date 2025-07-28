@@ -13,6 +13,11 @@ export async function getAllCategories(): Promise<Category[]> {
     include: {
       children: true,
     },
+    cacheStrategy: {
+      ttl: 60 * 60 * 24 * 7,
+      swr: 60 * 60 * 24 * 2,
+      tags: [`categories`],
+    },
   });
 }
 
@@ -21,6 +26,11 @@ export async function getCategoryById(id: string): Promise<Category | null> {
     where: { id },
     include: {
       children: true,
+    },
+    cacheStrategy: {
+      ttl: 60 * 60 * 24 * 7,
+      swr: 60 * 60 * 24 * 2,
+      tags: [`category_${id}`],
     },
   });
 }
@@ -73,6 +83,11 @@ export async function getMegaMenuCategories() {
         where: { featured: true },
         take: 3,
       },
+    },
+    cacheStrategy: {
+      ttl: 60 * 60 * 24 * 7,
+      swr: 60 * 60 * 24 * 2,
+      tags: [`categories`],
     },
   });
 

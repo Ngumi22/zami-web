@@ -6,6 +6,7 @@ import "./globals.css";
 import { SiteFooter } from "@/components/layout/footer";
 import Header from "@/components/layout/header-server";
 import BottomNav from "@/components/layout/mobile/bottom-nav";
+import { Providers } from "./providers";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -56,11 +57,13 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.className} pb-16 md:pb-0`}>
-        <Header />
-        {children}
-        <Toaster />
-        <SiteFooter />
-        <BottomNav />
+        <Providers>
+          <Header />
+          {children}
+          <Toaster />
+          <SiteFooter />
+          <BottomNav />
+        </Providers>
       </body>
     </html>
   );

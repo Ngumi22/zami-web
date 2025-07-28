@@ -9,6 +9,11 @@ export async function getAllBrands(): Promise<Brand[]> {
       orderBy: {
         createdAt: "desc",
       },
+      cacheStrategy: {
+        ttl: 60 * 60 * 24 * 7,
+        swr: 60 * 60 * 24 * 2,
+        tags: ["brands_list"],
+      },
     });
     return brands;
   } catch (error) {
@@ -21,6 +26,11 @@ export async function getBrandById(id: string): Promise<Brand | null> {
   try {
     const brand = await prisma.brand.findUnique({
       where: { id },
+      cacheStrategy: {
+        ttl: 60 * 60 * 24 * 7,
+        swr: 60 * 60 * 24 * 2,
+        tags: [`brand_${id}`],
+      },
     });
 
     return brand;

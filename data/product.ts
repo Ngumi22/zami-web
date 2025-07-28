@@ -12,6 +12,11 @@ export async function getProductById(productId: string) {
       brand: true,
       category: true,
     },
+    cacheStrategy: {
+      ttl: 60 * 60 * 24 * 7,
+      swr: 60 * 60 * 24 * 2,
+      tags: [`product_${productId}`],
+    },
   });
 
   if (!product) return null;
@@ -20,6 +25,10 @@ export async function getProductById(productId: string) {
     where: { productId: product.id },
     include: {
       customer: true,
+    },
+    cacheStrategy: {
+      ttl: 60 * 60 * 24 * 7, // 7 days
+      swr: 60 * 60 * 24 * 2, // 2 days stale-while-revalidate
     },
   });
 
@@ -42,6 +51,11 @@ export async function getProductBySlug(slug: string) {
         },
       },
     },
+    cacheStrategy: {
+      ttl: 60 * 60 * 24 * 7,
+      swr: 60 * 60 * 24 * 2,
+      tags: [`product_${slug}`],
+    },
   });
 
   if (!product) return null;
@@ -60,7 +74,7 @@ export async function getProductBySlug(slug: string) {
   };
 }
 
-export async function getAllProducts() {
+export async function getAllProducts(limit?: number) {
   const products = await prisma.product.findMany({
     include: {
       brand: true,
@@ -70,6 +84,12 @@ export async function getAllProducts() {
           specifications: true,
         },
       },
+    },
+    take: limit,
+    cacheStrategy: {
+      ttl: 60 * 60 * 24 * 7,
+      swr: 60 * 60 * 24 * 2,
+      tags: [`products`],
     },
   });
 
@@ -83,6 +103,10 @@ export async function getAllProducts() {
     },
     include: {
       customer: true,
+    },
+    cacheStrategy: {
+      ttl: 60 * 60 * 24 * 7, // 7 days
+      swr: 60 * 60 * 24 * 2, // 2 days stale-while-revalidate
     },
   });
 
@@ -99,7 +123,8 @@ export async function getAllProducts() {
 }
 
 export async function getProductsByCategory(
-  categoryId: string
+  categoryId: string,
+  limit?: number
 ): Promise<Product[]> {
   const products = await prisma.product.findMany({
     where: { categoryId },
@@ -112,7 +137,13 @@ export async function getProductsByCategory(
         },
       },
     },
+    take: limit,
     orderBy: { createdAt: "desc" },
+    cacheStrategy: {
+      ttl: 60 * 60 * 24 * 7,
+      swr: 60 * 60 * 24 * 2,
+      tags: [`product_${categoryId}`],
+    },
   });
 
   if (!products.length) return [];
@@ -125,6 +156,10 @@ export async function getProductsByCategory(
     },
     include: {
       customer: true,
+    },
+    cacheStrategy: {
+      ttl: 60 * 60 * 24 * 7, // 7 days
+      swr: 60 * 60 * 24 * 2, // 2 days stale-while-revalidate
     },
   });
 
@@ -151,6 +186,11 @@ export async function getProductsByBrand(brandId: string): Promise<Product[]> {
       },
     },
     orderBy: { createdAt: "desc" },
+    cacheStrategy: {
+      ttl: 60 * 60 * 24 * 7,
+      swr: 60 * 60 * 24 * 2,
+      tags: [`product_${brandId}`],
+    },
   });
 
   if (!products.length) return [];
@@ -163,6 +203,10 @@ export async function getProductsByBrand(brandId: string): Promise<Product[]> {
     },
     include: {
       customer: true,
+    },
+    cacheStrategy: {
+      ttl: 60 * 60 * 24 * 7, // 7 days
+      swr: 60 * 60 * 24 * 2, // 2 days stale-while-revalidate
     },
   });
 
@@ -178,7 +222,7 @@ export async function getProductsByBrand(brandId: string): Promise<Product[]> {
   }));
 }
 
-export async function getFeaturedProducts(): Promise<Product[]> {
+export async function getFeaturedProducts(limit?: number): Promise<Product[]> {
   const products = await prisma.product.findMany({
     where: { featured: true },
     include: {
@@ -189,6 +233,12 @@ export async function getFeaturedProducts(): Promise<Product[]> {
           specifications: true,
         },
       },
+    },
+    take: limit,
+    cacheStrategy: {
+      ttl: 60 * 60 * 24 * 7, // 7 days
+      swr: 60 * 60 * 24 * 2, // 2 days stale-while-revalidate
+      tags: ["products", "featured"],
     },
   });
 
@@ -202,6 +252,10 @@ export async function getFeaturedProducts(): Promise<Product[]> {
     },
     include: {
       customer: true,
+    },
+    cacheStrategy: {
+      ttl: 60 * 60 * 24 * 7, // 7 days
+      swr: 60 * 60 * 24 * 2, // 2 days stale-while-revalidate
     },
   });
 
@@ -222,6 +276,10 @@ export async function getLowStockProducts(threshold = 10): Promise<Product[]> {
     return await prisma.product.findMany({
       where: { stock: { lte: threshold } },
       orderBy: { stock: "asc" },
+      cacheStrategy: {
+        ttl: 60 * 60 * 24 * 7,
+        swr: 60 * 60 * 24 * 2,
+      },
     });
   } catch (error) {
     console.error("Failed to fetch low stock products:", error);
@@ -275,7 +333,6 @@ export async function getProductsStats() {
       totalVariants,
     };
   } catch (error) {
-    console.error("Failed to fetch product stats:", error);
     return {
       totalProducts: 0,
       featuredProducts: 0,
@@ -291,6 +348,11 @@ export async function getProductsStats() {
 export async function getTopProduct(id: string): Promise<Product | null> {
   return await prisma.product.findUnique({
     where: { id },
+    cacheStrategy: {
+      ttl: 60 * 60 * 24 * 7,
+      swr: 60 * 60 * 24 * 2,
+      tags: [`product_${id}`],
+    },
   });
 }
 
@@ -298,6 +360,10 @@ export async function getTopProducts(): Promise<Product[]> {
   return await prisma.product.findMany({
     orderBy: { sales: "desc" },
     take: 10,
+    cacheStrategy: {
+      ttl: 60 * 60 * 24 * 7,
+      swr: 60 * 60 * 24 * 2,
+    },
   });
 }
 
@@ -357,7 +423,7 @@ export async function getTopProductsWithRevenue(): Promise<
     );
 }
 
-export async function discountedProducts() {
+export async function discountedProducts(limit?: number) {
   const discounted = await prisma.product.findMany({
     where: {
       originalPrice: {
@@ -377,6 +443,11 @@ export async function discountedProducts() {
         },
       },
     },
+    take: limit,
+    cacheStrategy: {
+      ttl: 60 * 60 * 24 * 7,
+      swr: 60 * 60 * 24 * 2,
+    },
   });
 
   if (!discounted.length) return [];
@@ -393,6 +464,10 @@ export async function discountedProducts() {
     include: {
       customer: true,
     },
+    cacheStrategy: {
+      ttl: 60 * 60 * 24 * 7, // 7 days
+      swr: 60 * 60 * 24 * 2, // 2 days stale-while-revalidate
+    },
   });
 
   const reviewsByProductId = reviews.reduce((acc: any, review: any) => {
@@ -407,7 +482,7 @@ export async function discountedProducts() {
   }));
 }
 
-export async function newArrivals() {
+export async function newArrivals(limit?: number) {
   const products = await prisma.product.findMany({
     orderBy: {
       createdAt: "desc",
@@ -421,7 +496,12 @@ export async function newArrivals() {
         },
       },
     },
-    take: 6,
+    take: limit,
+    cacheStrategy: {
+      ttl: 60 * 60 * 24 * 7,
+      swr: 60 * 60 * 24 * 2,
+      tags: ["products", "new"],
+    },
   });
 
   if (!products.length) return [];
@@ -434,6 +514,10 @@ export async function newArrivals() {
     },
     include: {
       customer: true,
+    },
+    cacheStrategy: {
+      ttl: 60 * 60 * 24 * 7, // 7 days
+      swr: 60 * 60 * 24 * 2, // 2 days stale-while-revalidate
     },
   });
 
@@ -449,12 +533,12 @@ export async function newArrivals() {
   }));
 }
 
-export async function getTopRatedProducts() {
+export async function getTopRatedProducts(limit?: number) {
   const products = await prisma.product.findMany({
     orderBy: {
       averageRating: "desc",
     },
-    take: 2,
+    take: limit,
     include: {
       brand: true,
       category: {
@@ -463,6 +547,10 @@ export async function getTopRatedProducts() {
           specifications: true,
         },
       },
+    },
+    cacheStrategy: {
+      ttl: 60 * 60 * 24 * 7,
+      swr: 60 * 60 * 24 * 2,
     },
   });
 
@@ -476,6 +564,10 @@ export async function getTopRatedProducts() {
     },
     include: {
       customer: true,
+    },
+    cacheStrategy: {
+      ttl: 60 * 60 * 24 * 7, // 7 days
+      swr: 60 * 60 * 24 * 2, // 2 days stale-while-revalidate
     },
   });
 
@@ -497,6 +589,10 @@ export async function getFrequentlyBoughtTogetherProducts(productId: string) {
     include: {
       category: true,
       brand: true,
+    },
+    cacheStrategy: {
+      ttl: 60 * 60 * 24 * 7,
+      swr: 60 * 60 * 24 * 2,
     },
   });
 
@@ -549,13 +645,17 @@ export async function getFrequentlyBoughtTogetherProducts(productId: string) {
   return suggestedProducts;
 }
 
-export async function getRelatedProducts(productId: string) {
+export async function getRelatedProducts(productId: string, limit?: number) {
   const currentProduct = await prisma.product.findUnique({
     where: { id: productId },
     select: {
       id: true,
       categoryId: true,
       brandId: true,
+    },
+    cacheStrategy: {
+      ttl: 60 * 60 * 24 * 7,
+      swr: 60 * 60 * 24 * 2,
     },
   });
 
@@ -573,7 +673,7 @@ export async function getRelatedProducts(productId: string) {
       category: true,
       reviews: true,
     },
-    take: 5,
+    take: limit,
   });
 
   return related.map((product: any) => {

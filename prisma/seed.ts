@@ -29,7 +29,7 @@ async function seedAdminInvites() {
   for (const email of ADMIN_EMAILS) {
     try {
       await sendAdminInvite(email);
-      console.log(`Invite processed for ${ADMIN_EMAILS.length}`);
+      console.log(`Invite processed for ${email}`);
     } catch (error) {
       const e = error as Error;
       console.error(`Failed to send invite to ${email}: ${e.message}`);
