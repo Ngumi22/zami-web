@@ -2,7 +2,7 @@
 
 import { ProductCarousel, ProductCarouselItem } from "./product-carousel";
 import { ProductCard } from "../admin/product-sections/product-card";
-import { Brand, Category, Product } from "@prisma/client";
+import { Category, Product } from "@prisma/client";
 import { PromotionalBanner } from "./promotional-banner";
 import Image from "next/image";
 import Link from "next/link";

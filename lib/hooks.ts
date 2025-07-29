@@ -3,6 +3,7 @@ import {
   getAllProducts,
   getFeaturedProducts,
   getProductById,
+  getProductBySlug,
   getProductsByCategory,
   newArrivals,
 } from "@/data/product";
@@ -10,13 +11,26 @@ import { getAllBrands, getBrandById } from "@/data/brands";
 import { getAllCategories, getCategoryById } from "@/data/category";
 import { Brand, Category, Product } from "@prisma/client";
 import { getQueryClient } from "@/app/get-query-client";
+import { cacheKeys } from "@/lib/cache-keys";
 
 const queryClient = getQueryClient();
 
-// PRODUCT HOOKS
+export function useProduct(productId: string) {
+  return useQuery<Product | null>({
+    queryKey: cacheKeys.product(productId),
+    queryFn: () => getProductById(productId),
+    enabled: !!productId,
+    placeholderData: (previousData) =>
+      previousData ??
+      queryClient
+        .getQueryData<Product[]>(cacheKeys.products())
+        ?.find((p) => p.id === productId),
+  });
+}
+
 export function useProducts(params: Record<string, any> = {}) {
   return useQuery<Product[]>({
-    queryKey: ["products", params],
+    queryKey: cacheKeys.products(params),
     queryFn: () => getAllProducts(),
     staleTime: 1000 * 60 * 5,
     gcTime: 1000 * 60 * 30,
@@ -24,54 +38,56 @@ export function useProducts(params: Record<string, any> = {}) {
   });
 }
 
-export function useProduct(productId: string) {
+export function useProductBySlug(slug: string) {
   return useQuery<Product | null>({
-    queryKey: ["products", productId],
-    queryFn: () => getProductById(productId),
+    queryKey: cacheKeys.productBySlug(slug),
+    queryFn: () => getProductBySlug(slug),
     staleTime: 1000 * 60 * 10,
     gcTime: 1000 * 60 * 60,
-    enabled: !!productId,
+    enabled: !!slug,
     placeholderData: (previousData) =>
       previousData ??
-      (queryClient.getQueryData<Product[]>(["products"]) || []).find(
-        (p: Product) => p.id === productId
-      ),
+      queryClient
+        .getQueryData<Product[]>(cacheKeys.products())
+        ?.find((p) => p.slug === slug) ??
+      null,
   });
 }
 
 export function useNewArrivals(limit: number = 10) {
   return useQuery<Product[]>({
-    queryKey: ["products", "new", limit],
+    queryKey: cacheKeys.newArrivals(limit),
     queryFn: () => newArrivals(limit),
     staleTime: 1000 * 60 * 60,
     gcTime: 1000 * 60 * 60 * 2,
     placeholderData: (previousData) =>
       previousData ??
-      (queryClient.getQueryData<Product[]>(["products"])?.slice(0, limit) ||
+      (queryClient
+        .getQueryData<Product[]>(cacheKeys.products())
+        ?.slice(0, limit) ||
         []),
   });
 }
 
 export function useFeaturedProducts(limit: number = 6) {
   return useQuery<Product[]>({
-    queryKey: ["products", "featured", limit],
+    queryKey: cacheKeys.featured(limit),
     queryFn: () => getFeaturedProducts(limit),
     staleTime: 1000 * 60 * 30,
     gcTime: 1000 * 60 * 60,
     placeholderData: (previousData) =>
       previousData ??
       (queryClient
-        .getQueryData<Product[]>(["products"])
+        .getQueryData<Product[]>(cacheKeys.products())
         ?.filter((p: Product) => p.featured)
         .slice(0, limit) ||
         []),
   });
 }
 
-// BRAND HOOKS
 export function useBrands() {
   return useQuery<Brand[]>({
-    queryKey: ["brands"],
+    queryKey: cacheKeys.brands(),
     queryFn: getAllBrands,
     staleTime: 1000 * 60 * 60 * 24,
     gcTime: 1000 * 60 * 60 * 48,
@@ -80,24 +96,23 @@ export function useBrands() {
 
 export function useBrand(brandId: string) {
   return useQuery<Brand | null>({
-    queryKey: ["brands", brandId],
+    queryKey: cacheKeys.brand(brandId),
     queryFn: () => getBrandById(brandId),
     staleTime: 1000 * 60 * 60 * 12,
     gcTime: 1000 * 60 * 60 * 24,
     enabled: !!brandId,
     placeholderData: (previousData) =>
       previousData ??
-      (queryClient.getQueryData<Brand[]>(["brands"]) || []).find(
+      (queryClient.getQueryData<Brand[]>(cacheKeys.brands()) || []).find(
         (b: Brand) => b.id === brandId
       ) ??
       null,
   });
 }
 
-// CATEGORY HOOKS
 export function useCategories() {
   return useQuery<Category[]>({
-    queryKey: ["categories"],
+    queryKey: cacheKeys.categories(),
     queryFn: getAllCategories,
     staleTime: 1000 * 60 * 60 * 24,
     gcTime: 1000 * 60 * 60 * 48,
@@ -106,14 +121,14 @@ export function useCategories() {
 
 export function useCategory(categoryId: string) {
   return useQuery<Category | null>({
-    queryKey: ["categories", categoryId],
+    queryKey: cacheKeys.category(categoryId),
     queryFn: () => getCategoryById(categoryId),
     staleTime: 1000 * 60 * 60 * 12,
     gcTime: 1000 * 60 * 60 * 24,
     enabled: !!categoryId,
     placeholderData: (previousData) =>
       previousData ??
-      (queryClient.getQueryData<Category[]>(["categories"]) || []).find(
+      (queryClient.getQueryData<Category[]>(cacheKeys.categories()) || []).find(
         (c: Category) => c.id === categoryId
       ) ??
       null,
@@ -122,30 +137,29 @@ export function useCategory(categoryId: string) {
 
 export function useProductsByCategory(categoryId: string, limit?: number) {
   return useQuery<Product[]>({
-    queryKey: ["categories", categoryId, "products", limit],
+    queryKey: cacheKeys.productsByCategory(categoryId, limit),
     queryFn: () => getProductsByCategory(categoryId, limit),
     staleTime: 1000 * 60 * 15,
     gcTime: 1000 * 60 * 60,
     enabled: !!categoryId,
     placeholderData: (previousData) =>
       previousData ??
-      (queryClient.getQueryData<Product[]>(["products"]) || []).filter(
+      (queryClient.getQueryData<Product[]>(cacheKeys.products()) || []).filter(
         (p: Product) => p.categoryId === categoryId
       ),
   });
 }
 
-// OPTIMIZED COMPOSITION HOOKS
 export function useStoreInitialData() {
   return useQueries({
     queries: [
       {
-        queryKey: ["categories"],
+        queryKey: cacheKeys.categories(),
         queryFn: getAllCategories,
         staleTime: 1000 * 60 * 60 * 24,
       },
       {
-        queryKey: ["products"],
+        queryKey: cacheKeys.products(),
         queryFn: () => getAllProducts(),
         staleTime: 1000 * 60 * 5,
       },
@@ -157,23 +171,23 @@ export function useHomepageData() {
   return useQueries({
     queries: [
       {
-        queryKey: ["products"],
+        queryKey: cacheKeys.products(),
         queryFn: () => getAllProducts(6),
         staleTime: 1000 * 60 * 30,
       },
       {
-        queryKey: ["products", "featured", 6],
+        queryKey: cacheKeys.featured(6),
         queryFn: () => getFeaturedProducts(6),
         staleTime: 1000 * 60 * 30,
       },
       {
-        queryKey: ["products", "new", 8],
+        queryKey: cacheKeys.newArrivals(8),
         queryFn: () => newArrivals(8),
         staleTime: 1000 * 60 * 60,
       },
       {
-        queryKey: ["categories"],
-        queryFn: () => getAllCategories,
+        queryKey: cacheKeys.categories(),
+        queryFn: getAllCategories,
         staleTime: 1000 * 60 * 60 * 6,
       },
     ],
@@ -182,14 +196,14 @@ export function useHomepageData() {
 
 export async function prefetchProduct(productId: string) {
   await queryClient.prefetchQuery({
-    queryKey: ["products", productId],
+    queryKey: cacheKeys.product(productId),
     queryFn: () => getProductById(productId),
   });
 }
 
 export async function prefetchCategoryProducts(categoryId: string) {
   await queryClient.prefetchQuery({
-    queryKey: ["categories", categoryId, "products"],
+    queryKey: cacheKeys.productsByCategory(categoryId),
     queryFn: () => getProductsByCategory(categoryId),
   });
 }

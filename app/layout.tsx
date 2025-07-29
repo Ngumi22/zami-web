@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: "https://zami.co.ke",
+    url: "https://www.zami.co.ke",
     title: "Zami Tech Solutions - Premium Electronics",
     description:
       "Your one-stop shop for phones, laptops, printers, and software",
@@ -46,7 +46,6 @@ export const metadata: Metadata = {
       "max-snippet": -1,
     },
   },
-  generator: "v0.dev",
 };
 
 export default function RootLayout({

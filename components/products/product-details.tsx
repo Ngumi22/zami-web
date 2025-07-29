@@ -34,7 +34,7 @@ interface VariantOption {
 
 interface ProductDetailsProps {
   product: Product & {
-    reviews: {
+    reviews?: {
       id: string;
       rating: number;
       comment: string;
@@ -298,9 +298,9 @@ const ProductTabs = ({
                 Write Review
               </Button>
             </div>
-            {product.reviewCount > 0 && product.reviews?.length > 0 ? (
+            {product.reviewCount > 0 && (product.reviews?.length ?? 0) > 0 ? (
               <div className="space-y-2">
-                {product.reviews.slice(0, 2).map((review) => (
+                {product.reviews?.slice(0, 2).map((review) => (
                   <div key={review.id} className="border-b pb-2 last:border-0">
                     <div className="flex items-center gap-2 mb-1">
                       <StarRating rating={review.rating} reviewCount={0} />

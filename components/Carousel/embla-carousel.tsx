@@ -71,6 +71,7 @@ const EmblaCarousel: React.FC<PropType> = (props) => {
                 height={800}
                 width={1200}
                 className="h-full w-full object-contain"
+                priority
               />
             </div>
           ))}

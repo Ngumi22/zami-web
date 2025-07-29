@@ -18,6 +18,7 @@ import { AddToCartButton } from "./add-to-cart-button";
 import { Product } from "@prisma/client";
 import { Check, AlertCircle, AlertTriangle } from "lucide-react";
 import { BuyNowButton } from "./buy-now-button";
+import Link from "next/link";
 
 interface VariantOption {
   label: string;
@@ -299,7 +300,11 @@ export function ProductQuickViewContent({
                 size="sm"
                 className="w-full h-8 text-xs"
                 asChild>
-                <a href={`/products/${product.slug}`}>View Full Details</a>
+                <Link
+                  href={`/products/${product.slug}`}
+                  className="w-full h-8 text-xs">
+                  View Full Details
+                </Link>
               </Button>
             </div>
           </div>
