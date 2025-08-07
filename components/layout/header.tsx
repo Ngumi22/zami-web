@@ -30,6 +30,8 @@ export function SiteHeader({
   const cartItemCount = useCartStore((state) => state.items.length);
   const compareItems = useCompareStore((state) => state.items);
   const wishItems = useWishlistStore((state) => state.items);
+
+  // Hide header on certain pages
   if (
     pathname.startsWith("/admin") ||
     pathname.startsWith("/login") ||
@@ -39,6 +41,30 @@ export function SiteHeader({
     return null;
   }
 
+  const navLinks = [
+    {
+      href: "/",
+      label: "Home",
+      isActive: pathname === "/",
+    },
+    {
+      href: "/about",
+      label: "About",
+      isActive: pathname === "/about",
+    },
+    {
+      href: "/contact",
+      label: "Contact",
+      isActive: pathname === "/contact",
+    },
+    {
+      href: "/blog",
+      label: "Blog",
+      isActive: pathname === "/blog",
+    },
+  ];
+
+  // --- User action links (with icons) ---
   const navItems = [
     {
       href: "/account",
@@ -75,51 +101,67 @@ export function SiteHeader({
 
   return (
     <>
-      <header className="sticky top-0 z-40 w-full bg-background">
-        <div className="border-b">
-          <div className="md:container grid grid-flow-col gap-2 items-center h-20">
+      <header className="sticky top-0 z-40 w-full border-b bg-white">
+        {/* --- Main Header Container --- */}
+        <div className="container flex h-20 items-center justify-between">
+          {/* --- Left Section: Mobile Menu & Logo --- */}
+          <div className="flex items-center gap-6">
             <MobileMenu
               mainCategories={categories}
               subCategories={categories}
               featuredProducts={products}
             />
-
             <Link prefetch href="/" className="flex items-center">
-              <span className="text-xl font-bold text-center">
-                Zami Tech Solutions
-              </span>
+              <span className="text-xl font-bold">Zami Tech Solutions</span>
             </Link>
+          </div>
 
-            <div className="flex text-center">
-              {!isMobile && <InstantSearch products={products} />}
-            </div>
-
-            <div className="flex flex-1 items-center justify-end md:pr-0 pr-3">
-              <div className="flex justify-between items-center gap-x-5 md:gap-x-10">
-                {navItems.map((item) => (
+          {/* --- Center Section: Search & Main Nav (Desktop) --- */}
+          {!isMobile && (
+            <div className="flex flex-1 items-center justify-center gap-8">
+              <div className="w-full max-w-md">
+                <InstantSearch products={products} />
+              </div>
+              <nav className="flex items-center gap-4">
+                {navLinks.map((item) => (
                   <Link
                     key={item.href}
                     href={item.href}
                     className={cn(
-                      "flex flex-col items-center justify-center w-full h-full text-xs",
-                      item.isActive ? "text-primary" : "text-muted-foreground"
+                      "text-sm font-medium transition-colors hover:text-[#2E2E2E]",
+                      item.isActive ? "text-[#2E2E2E]" : "text-[#2E2E2E]/50"
                     )}>
-                    <div className="relative">
-                      <item.icon className="h-5 w-5 mb-1" />
-                      {item.badge && (
-                        <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-primary text-[10px] font-medium text-primary-foreground flex items-center justify-center">
-                          {item.badge > 9 ? "9+" : item.badge}
-                        </span>
-                      )}
-                    </div>
-                    <span className="hidden md:block">{item.label}</span>
+                    {item.label}
                   </Link>
                 ))}
-              </div>
+              </nav>
             </div>
-          </div>
+          )}
+
+          {/* --- Right Section: User Actions --- */}
+          <nav className="flex items-center justify-end gap-2">
+            {navItems.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  "flex h-14 w-16 flex-col items-center justify-center gap-1 rounded-md text-sm font-medium transition-colors hover:text-black/50",
+                  item.isActive ? "text-[#2E2E2E]" : "text-[#2E2E2E]/50"
+                )}>
+                <div className="relative">
+                  <item.icon className="h-5 w-5 font-semibold text-[#2E2E2E]" />
+                  {item.badge && (
+                    <span className="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-[#2E2E2E] text-[10px] text-[#2E2E2E]-foreground">
+                      {item.badge > 9 ? "9+" : item.badge}
+                    </span>
+                  )}
+                </div>
+              </Link>
+            ))}
+          </nav>
         </div>
 
+        {/* --- Mega Menu (appears below header) --- */}
         <MegaMenu
           categories={categories}
           featuredProducts={products}

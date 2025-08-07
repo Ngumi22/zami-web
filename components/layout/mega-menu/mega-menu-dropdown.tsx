@@ -33,7 +33,7 @@ export function MegaMenuDropdown({
               {subcategories.map((subcategory) => (
                 <li key={subcategory.id}>
                   <Link
-                    href={`/products?category=${category.slug}&subcategory=${subcategory.slug}`}
+                    href={`/products?category=${category.slug}&subcategories=${subcategory.slug}`}
                     className="text-sm text-muted-foreground hover:text-foreground transition-colors block py-1"
                     onClick={onClose}>
                     {subcategory.name}

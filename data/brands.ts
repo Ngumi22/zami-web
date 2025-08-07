@@ -2,6 +2,7 @@
 
 import { Brand } from "@prisma/client";
 import prisma from "@/lib/prisma";
+import { cacheTags } from "@/lib/cache-keys";
 
 export async function getAllBrands(): Promise<Brand[]> {
   try {
@@ -12,7 +13,7 @@ export async function getAllBrands(): Promise<Brand[]> {
       cacheStrategy: {
         ttl: 60 * 60 * 24 * 7,
         swr: 60 * 60 * 24 * 2,
-        tags: ["brands_list"],
+        tags: [cacheTags.brands()],
       },
     });
     return brands;
@@ -29,7 +30,7 @@ export async function getBrandById(id: string): Promise<Brand | null> {
       cacheStrategy: {
         ttl: 60 * 60 * 24 * 7,
         swr: 60 * 60 * 24 * 2,
-        tags: [`brand_${id}`],
+        tags: [cacheTags.brand(id)],
       },
     });
 

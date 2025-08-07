@@ -1,9 +1,21 @@
+import { GetProductsParams } from "@/data/product-page-product";
+
 export const cacheKeys = {
   product: (id: string) => ["product", id],
   brand: (id: string) => ["brand", id],
   category: (id: string) => ["category", id],
   productBySlug: (slug: string) => ["product-slug", sanitizeSlug(slug)],
   products: (params?: Record<string, any>) => ["products", params],
+  filteredProducts: (params: GetProductsParams) => [
+    "filtered-products",
+    params,
+  ],
+  productsMaxPrice: (
+    params?: Omit<GetProductsParams, "sort" | "page" | "pageSize">
+  ) => ["products-max-price", params],
+  productsCount: (
+    params?: Omit<GetProductsParams, "sort" | "page" | "pageSize">
+  ) => ["products-count", params],
   brands: (params?: Record<string, any>) => ["brands", params],
   categories: (params?: Record<string, any>) => ["categories", params],
   featured: (limit: number) => ["products", "featured", limit],
@@ -13,6 +25,9 @@ export const cacheKeys = {
     categoryId,
     limit,
   ],
+  allCategoriesWithSpecifications: () => ["all-categories-with-specifications"],
+  maxPricePerMainCategory: (slug: string) => ["maxPrice", slug],
+  allBrands: () => ["all-brands"],
 };
 
 export const cacheTags = {
@@ -25,6 +40,12 @@ export const cacheTags = {
   byBrand: (brandId: string) => `products_by_brand_${brandId}`,
   featuredProducts: () => "featured",
   products: () => "all",
+  filteredProducts: (params: GetProductsParams) =>
+    `filtered_products_${JSON.stringify(params)}`,
+  productsBySpec: (specKey: string, specValue: string) =>
+    `products_by_spec_${specKey}_${specValue}`,
+  brands: () => "brands",
+  categories: () => "categories",
   newArrivals: () => "new",
   reviews: (productId: string) => `reviews_${productId}`,
   reviewsBatch: (ids: string[]) => `reviews_batch_${ids.join("_")}`,

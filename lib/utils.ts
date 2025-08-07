@@ -18,7 +18,7 @@ export const formatCurrency = (amount: number, currency = "KES") =>
 export function formatPrice(price: number): string {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
-    currency: "USD",
+    currency: "KES",
   }).format(price);
 }
 
@@ -205,4 +205,14 @@ export function getSpecificationValueByName(
       }
       return null;
   }
+}
+
+export function toCamelCase(str: string): string {
+  return str
+    .split(/\s+/)
+    .map((w, i) =>
+      i === 0 ? w.toLowerCase() : w[0].toUpperCase() + w.slice(1)
+    )
+    .join("")
+    .replace(/[^a-zA-Z0-9]/g, "");
 }

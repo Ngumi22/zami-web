@@ -2,12 +2,12 @@
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
-import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { MobileCategoryBar } from "./mobile-category-bar";
 import { MegaMenuDropdown } from "./mega-menu-dropdown";
 import { Brand, Category, Product } from "@prisma/client";
+import { Separator } from "@/components/ui/separator";
 
 interface MegaMenuProps {
   categories: Category[];
@@ -30,7 +30,6 @@ export function MegaMenu({
     { id: "deals", name: "Deals", href: "/deals" },
     { id: "new-arrivals", name: "New Arrivals", href: "/new-arrivals" },
     { id: "top-rated", name: "Top Rated", href: "/top-rated" },
-    { id: "blog", name: "Blog", href: "/blog" },
   ];
 
   useEffect(() => {
@@ -95,48 +94,56 @@ export function MegaMenu({
   }
 
   return (
-    <div className="bg-muted border-b relative" ref={menuRef}>
-      <div className="container">
-        <nav className="flex items-center justify-center overflow-x-auto scrollbar-hide">
-          {categories
-            .filter((category) => category.parentId === null) // Only main categories
-            .map((category) => (
-              <div
-                key={category.id}
-                className="relative"
-                onMouseEnter={() => handleMouseEnter(category.id)}
-                onMouseLeave={handleMouseLeave}>
-                <Link
-                  href={`/products?category=${category.slug}`}
-                  className={cn(
-                    "flex items-center px-4 py-3 text-sm font-medium whitespace-nowrap transition-colors",
-                    activeCategory === category.id
-                      ? "text-primary"
-                      : "hover:text-primary"
-                  )}
-                  onClick={() => setActiveCategory(null)}>
-                  {category.name}
-                  <ChevronDown
-                    className={cn(
-                      "ml-1 h-4 w-4 transition-transform",
-                      activeCategory === category.id && "rotate-180"
-                    )}
+    <div className="bg-[#2E2E2E] text-white relative" ref={menuRef}>
+      <nav className="grid grid-flow-col auto-cols-max gap-1 justify-center overflow-x-auto scrollbar-hide text-xs">
+        {categories
+          .filter((category) => category.parentId === null)
+          .map((category) => (
+            <div
+              key={category.id}
+              className="relative"
+              onMouseEnter={() => handleMouseEnter(category.id)}
+              onMouseLeave={handleMouseLeave}>
+              <Link
+                href={`/products?category=${category.slug}`}
+                className={cn(
+                  "flex items-center p-2 text-sm font-medium whitespace-nowrap transition-colors",
+                  activeCategory === category.id
+                    ? "text-white/50"
+                    : "hover:text-white/50"
+                )}
+                onClick={() => setActiveCategory(null)}>
+                {category.name}
+                <div className="flex items-center gap-2 px-4">
+                  <Separator
+                    orientation="vertical"
+                    className="data-[orientation=vertical]:h-5 text-white/50"
                   />
-                </Link>
-              </div>
-            ))}
+                </div>
+              </Link>
+            </div>
+          ))}
 
-          {/* Special sections */}
-          {specialSections.map((section) => (
+        {specialSections.map((section, index) => {
+          const isLast = index === specialSections.length - 1;
+          return (
             <Link
               key={section.id}
               href={section.href}
-              className="flex items-center px-4 py-3 text-sm font-medium whitespace-nowrap hover:text-primary transition-colors">
+              className="flex items-center p-2 font-medium whitespace-nowrap hover:text-white/50 transition-colors text-xs">
               {section.name}
+              {!isLast && (
+                <div className="flex items-center gap-2 px-4">
+                  <Separator
+                    orientation="vertical"
+                    className="data-[orientation=vertical]:h-5 text-white/50"
+                  />
+                </div>
+              )}
             </Link>
-          ))}
-        </nav>
-      </div>
+          );
+        })}
+      </nav>
 
       {/* Mega menu dropdown */}
       {activeCategory && (

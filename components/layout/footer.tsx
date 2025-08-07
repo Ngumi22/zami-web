@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { Facebook, Instagram, Twitter } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { Button } from "../ui/button";
 
@@ -48,7 +47,7 @@ export function SiteFooter() {
       link: "https://instagram.com",
     },
     {
-      name: "Twitter",
+      name: "X (Twitter)",
       icon: (
         <svg
           xmlns="http://www.w3.org/2000/svg"

@@ -2,6 +2,7 @@
 
 import { Brand, Category } from "@prisma/client";
 import prisma from "@/lib/prisma";
+import { cacheTags } from "@/lib/cache-keys";
 
 interface CategoryWithChildren extends Category {
   children?: CategoryWithChildren[];
@@ -16,7 +17,7 @@ export async function getAllCategories(): Promise<Category[]> {
     cacheStrategy: {
       ttl: 60 * 60 * 24 * 7,
       swr: 60 * 60 * 24 * 2,
-      tags: [`categories`],
+      tags: [cacheTags.categories()],
     },
   });
 }
@@ -30,7 +31,7 @@ export async function getCategoryById(id: string): Promise<Category | null> {
     cacheStrategy: {
       ttl: 60 * 60 * 24 * 7,
       swr: 60 * 60 * 24 * 2,
-      tags: [`category_${id}`],
+      tags: [cacheTags.category(id)],
     },
   });
 }

@@ -1,24 +1,97 @@
-import { Suspense } from "react";
-import type { Metadata } from "next";
-import ProductsLoading from "@/components/products/loading";
-import dynamic from "next/dynamic";
-import { getProductsByFilters, ProductFilters } from "@/data/product-filters";
+import {
+  getAllBrands,
+  getAllCategoriesWithSpecifications,
+  getCategoryMaxPrice,
+} from "@/data/cat";
+import ClientProductsPage from "./client";
+import { getProducts } from "@/data/product-page-product";
 
-const ProductsContent = dynamic(
-  () => import("@/components/products/products-content"),
-  {
-    loading: () => <ProductsLoading />,
-  }
-);
-
+import { getSafeSearchParams } from "@/utils/search-params";
 interface ProductsPageProps {
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+  searchParams: { [key: string]: string | string[] | undefined };
 }
 
-export async function generateMetadata(): Promise<Metadata> {
+const reservedParams = new Set([
+  "category",
+  "subcategories",
+  "brands",
+  "priceMin",
+  "priceMax",
+  "sort",
+  "page",
+  "pageSize",
+  "specifications",
+]);
+
+async function parseSpecifications(
+  params: Awaited<ReturnType<typeof getSafeSearchParams>>
+): Promise<Record<string, string[]>> {
+  const specifications: Record<string, string[]> = {};
+  const entries = params.entries();
+
+  for (const [key, value] of entries) {
+    if (!reservedParams.has(key)) {
+      const decodedKey = decodeURIComponent(key.replace(/\+/g, " "));
+      const values = Array.isArray(value) ? value : [value];
+      const decodedValues = values
+        .filter(Boolean)
+        .map((val) => decodeURIComponent((val as string).replace(/\+/g, " ")));
+
+      const specKey = decodedKey
+        .split(" ")
+        .map(
+          (word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+        )
+        .join(" ");
+
+      specifications[specKey] = decodedValues;
+    }
+  }
+
+  return specifications;
+}
+
+async function parseFilters(searchParams: {
+  [key: string]: string | string[] | undefined;
+}): Promise<{
+  category?: string;
+  subcategories: string[];
+  brands: string[];
+  priceMin: number;
+  priceMax: number;
+  sort: "rating" | "low" | "high" | "newest" | "popularity";
+  page: number;
+  pageSize: number;
+  specifications: Record<string, string[]>;
+}> {
+  const params = await getSafeSearchParams(searchParams);
+  const specifications = await parseSpecifications(params);
+
   return {
-    title: "Products | Electronics Store",
-    description: "Browse our wide selection of electronics",
+    category: params.get("category"),
+    subcategories: params.getAll("subcategories"),
+    brands: params.getAll("brands"),
+    priceMin: params.get("priceMin") ? parseFloat(params.get("priceMin")!) : 0,
+    priceMax: params.get("priceMax")
+      ? parseFloat(params.get("priceMax")!)
+      : Infinity,
+    sort:
+      params.get("sort") &&
+      ["rating", "low", "high", "newest", "popularity"].includes(
+        params.get("sort")!
+      )
+        ? (params.get("sort") as
+            | "rating"
+            | "low"
+            | "high"
+            | "newest"
+            | "popularity")
+        : "newest",
+    page: params.get("page") ? parseInt(params.get("page")!, 10) : 1,
+    pageSize: params.get("pageSize")
+      ? parseInt(params.get("pageSize")!, 10)
+      : 12,
+    specifications,
   };
 }
 
@@ -26,84 +99,24 @@ export default async function ProductsPage({
   searchParams,
 }: ProductsPageProps) {
   const params = await searchParams;
+  const filters = await parseFilters(params);
+  const currentCategorySlug = filters.category ?? "laptops";
 
-  const reservedParams = new Set([
-    "search",
-    "category",
-    "brand",
-    "minPrice",
-    "maxPrice",
-    "sort",
-    "page",
-    "limit",
-    "featured",
-    "stock",
-    "tags",
+  const [products, categories, brands, maxPrice] = await Promise.all([
+    getProducts(filters),
+    getAllCategoriesWithSpecifications(),
+    getAllBrands(),
+    getCategoryMaxPrice(currentCategorySlug),
   ]);
 
-  const parseSpecifications = (params: {
-    [key: string]: string | string[] | undefined;
-  }) => {
-    const specifications: { [key: string]: string } = {};
-
-    Object.entries(params).forEach(([key, value]) => {
-      if (!reservedParams.has(key) && typeof value === "string") {
-        const decodedKey = decodeURIComponent(key.replace(/\+/g, " "));
-        const decodedValue = decodeURIComponent(value.replace(/\+/g, " "));
-
-        const specKey = decodedKey
-          .split(" ")
-          .map(
-            (word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-          )
-          .join(" ");
-
-        specifications[specKey] = decodedValue;
-      }
-    });
-    return Object.keys(specifications).length > 0 ? specifications : undefined;
-  };
-
-  const filters: ProductFilters = {
-    search: typeof params.search === "string" ? params.search : undefined,
-    category: typeof params.category === "string" ? params.category : undefined,
-    brand: typeof params.brand === "string" ? params.brand : undefined,
-    minPrice: params.minPrice
-      ? Number.parseFloat(params.minPrice as string)
-      : undefined,
-    maxPrice: params.maxPrice
-      ? Number.parseFloat(params.maxPrice as string)
-      : undefined,
-    sort: typeof params.sort === "string" ? params.sort : "latest",
-    page: params.page ? Number.parseInt(params.page as string, 10) : 1,
-    limit: 12,
-    featured:
-      params.featured === "true"
-        ? true
-        : params.featured === "false"
-        ? false
-        : undefined,
-    stock: params.stock
-      ? Number.parseInt(params.stock as string, 10)
-      : undefined,
-    tags: Array.isArray(params.tags)
-      ? params.tags
-      : params.tags
-      ? [params.tags]
-      : undefined,
-    specifications: parseSpecifications(params),
-  };
-
-  const data = await getProductsByFilters(filters);
-
   return (
-    <div className="min-h-screen bg-background">
-      <Suspense fallback={<ProductsLoading />}>
-        <ProductsContent initialData={data} initialFilters={filters} />
-      </Suspense>
-    </div>
+    <ClientProductsPage
+      initialProducts={products.products}
+      initialCategories={categories}
+      initialBrands={brands}
+      initialFilters={filters}
+      totalCount={products.totalCount}
+      maxPrice={maxPrice}
+    />
   );
 }
-
-export const revalidate = 300; // 5 minutes
-export const fetchCache = "force-cache";

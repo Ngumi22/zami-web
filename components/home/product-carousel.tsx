@@ -63,7 +63,6 @@ export function ProductCarousel({
     checkScrollability();
   };
 
-  // Track touch events for swipe gestures on mobile
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
 
@@ -95,8 +94,8 @@ export function ProductCarousel({
   return (
     <div className={cn("relative", className)}>
       {title && (
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl md:text-2xl font-bold">{title}</h2>
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="md:text-xl font-bold">{title}</h2>
           {viewAllHref && (
             <a
               href={viewAllHref}
@@ -108,7 +107,6 @@ export function ProductCarousel({
       )}
 
       <div className="relative">
-        {/* Left scroll button - only on desktop */}
         {!isMobile && canScrollLeft && (
           <Button
             variant="outline"
@@ -120,7 +118,6 @@ export function ProductCarousel({
           </Button>
         )}
 
-        {/* Scrollable container */}
         <div
           ref={scrollContainerRef}
           className="flex overflow-x-auto scrollbar-hide snap-x snap-mandatory gap-4 pb-4"
@@ -131,7 +128,6 @@ export function ProductCarousel({
           {children}
         </div>
 
-        {/* Right scroll button - only on desktop */}
         {!isMobile && canScrollRight && (
           <Button
             variant="outline"

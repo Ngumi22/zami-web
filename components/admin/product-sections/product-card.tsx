@@ -80,8 +80,8 @@ export function ProductCard({
   );
 
   return (
-    <div className="group relative overflow-hidden rounded-lg border bg-background shadow-sm hover:shadow-lg transition-shadow duration-300 w-full h-[340px] flex flex-col">
-      <div className="relative w-full h-60 overflow-hidden bg-muted flex-shrink-0">
+    <div className="group relative overflow-hidden rounded-lg border bg-background shadow-sm hover:shadow-lg transition-shadow duration-300 flex flex-col">
+      <div className="relative w-full aspect-square overflow-hidden bg-muted flex-shrink-0">
         <Link
           href={`/products/${product.slug}`}
           className="absolute inset-0 z-10">
@@ -95,7 +95,7 @@ export function ProductCard({
           alt={displayName}
           fill
           priority={priority}
-          sizes="250px"
+          sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
           className="object-contain p-2 transition-transform duration-300 group-hover:scale-105"
         />
 
@@ -106,7 +106,7 @@ export function ProductCard({
         )}
 
         {showQuickView && !isMobile && <QuickViewTrigger product={product} />}
-        {/* Desktop hover overlay */}
+
         {!isMobile && (
           <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col gap-2 justify-center items-end px-2 z-20">
             <AddToCompareButton product={product} />
@@ -119,7 +119,6 @@ export function ProductCard({
           </div>
         )}
 
-        {/* Mobile overlay - always visible, no hover required */}
         {isMobile && (
           <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent flex flex-col gap-1.5 justify-center items-end px-2 z-20">
             <AddToWishlistButton product={product} />
@@ -136,16 +135,16 @@ export function ProductCard({
       <div className="p-2 flex flex-col flex-1 justify-between">
         <div className="flex-1">
           <Link href={`/products/${product.slug}`} className="block">
-            <h3 className="font-medium line-clamp-2 text-sm leading-tight min-h-[2rem] hover:text-blue-600 transition-colors">
+            <h3 className="font-medium line-clamp-2 text-sm leading-tight min-h-[1rem] hover:text-blue-600 transition-colors">
               {displayName}
             </h3>
           </Link>
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between mt-1">
             <p className="text-xs text-muted-foreground line-clamp-1 capitalize">
               {product.category?.name}
             </p>
             {hasVariants && (
-              <span className="text-xs text-muted-foreground mt-1 block">
+              <span className="text-xs text-muted-foreground block">
                 {variantTypes.size} Variant{variantTypes.size > 1 ? "s" : ""}
               </span>
             )}
@@ -153,14 +152,13 @@ export function ProductCard({
         </div>
 
         <div>
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between mt-2">
             <div className="flex items-center">
               <span className="text-sm font-bold">
                 {formatCurrency(displayPrice)}
               </span>
             </div>
 
-            {/* Desktop: Single cart button */}
             {!isMobile && (
               <div className="relative z-20">
                 <AddToCartButton
@@ -171,7 +169,6 @@ export function ProductCard({
               </div>
             )}
 
-            {/* Mobile: Only Buy Now button at bottom, others on image overlay */}
             {isMobile && (
               <div className="flex items-center justify-end relative z-30">
                 <BuyNowButton

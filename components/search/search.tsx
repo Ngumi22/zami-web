@@ -84,11 +84,19 @@ export function InstantSearch({ products }: InstantSearchProps) {
       </Button>
 
       <div className="relative hidden md:flex w-full max-w-sm items-center">
-        <Search className="absolute left-2.5 h-4 w-4 text-muted-foreground" />
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="16"
+          height="16"
+          fill="currentColor"
+          className="bi bi-search absolute left-2.5 h-4 w-4 text-muted-foreground"
+          viewBox="0 0 16 16">
+          <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0" />
+        </svg>
         <Input
+          className="text-xs pl-9 w-full focus-visible:ring-0 focus-visible:ring-offset-0 ring-0 rounded-sm bg-gray-50"
           type="search"
           placeholder="Search products..."
-          className="pl-9 w-full focus-visible:ring-0 focus-visible:ring-offset-0 ring-0 rounded-sm"
           value={query}
           onChange={(e) => {
             setQuery(e.target.value);
@@ -100,13 +108,13 @@ export function InstantSearch({ products }: InstantSearchProps) {
       </div>
 
       {isOpen && (
-        <div className="fixed inset-0 bg-background md:absolute md:inset-auto md:top-full md:mt-2 md:border md:bg-background md:shadow-lg z-50">
+        <div className="fixed inset-0 bg-background md:absolute md:inset-auto md:top-full md:mt-2 md:border md:bg-background md:shadow-lg z-50 text-xs">
           <div className="flex items-center p-4 md:hidden">
             <Search className="h-4 w-4 mr-2 text-muted-foreground" />
             <Input
               type="search"
               placeholder="Search products..."
-              className="flex-1 border-none focus-visible:ring-0 focus-visible:ring-offset-0"
+              className="flex-1 border-none focus-visible:ring-0 focus-visible:ring-offset-0 bg-gray-50"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               autoFocus
@@ -119,7 +127,7 @@ export function InstantSearch({ products }: InstantSearchProps) {
             </Button>
           </div>
 
-          <div className="p-4 max-h-[80vh] md:max-h-[300px] overflow-auto">
+          <div className="rounded-sm p-4 max-h-[80vh] md:max-h-[300px] overflow-auto">
             {isLoading ? (
               <div className="flex justify-center py-8">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -129,18 +137,18 @@ export function InstantSearch({ products }: InstantSearchProps) {
                 {results.map((product) => (
                   <Link
                     key={product.id}
-                    href={`/${product.slug}`}
+                    href={`/products/${product.slug}`}
                     onClick={() => {
                       setIsOpen(false);
                       setQuery("");
                     }}
-                    className="flex items-center p-2 hover:bg-muted rounded-md transition-colors">
+                    className="flex items-center p-2 hover:bg-muted rounded-md transition-colors text-xs">
                     <div className="relative h-12 w-12 rounded overflow-hidden mr-3">
                       <Image
                         src={product.mainImage || "/placeholder.svg"}
                         alt={product.name}
                         fill
-                        className="object-cover"
+                        className="object-contain"
                         sizes="48px"
                       />
                     </div>
@@ -160,17 +168,17 @@ export function InstantSearch({ products }: InstantSearchProps) {
                       setIsOpen(false);
                       setQuery("");
                     }}
-                    className="block w-full text-center text-sm text-primary hover:underline mt-2 pt-2 border-t">
+                    className="text-xs block w-full text-center text-black hover:underline mt-2 pt-2 border-t">
                     View all results for "{query}"
                   </Link>
                 )}
               </div>
             ) : query ? (
-              <p className="text-center py-8 text-muted-foreground">
+              <p className="text-xs text-center py-8 text-muted-foreground">
                 No products found for "{query}"
               </p>
             ) : (
-              <p className="text-center py-4 text-muted-foreground">
+              <p className="text-xs text-center py-4 text-muted-foreground">
                 Start typing to search products
               </p>
             )}

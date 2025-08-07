@@ -2,22 +2,17 @@
 
 import { ProductCarousel, ProductCarouselItem } from "./product-carousel";
 import { ProductCard } from "../admin/product-sections/product-card";
-import { Category, Product } from "@prisma/client";
+import { Brand, Category, Product } from "@prisma/client";
 import { PromotionalBanner } from "./promotional-banner";
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "../ui/button";
 import { ChevronLeft, ChevronRight, Smartphone } from "lucide-react";
 import { categoryIcons } from "@/lib/constants";
-import { useRef } from "react";
-import {
-  useBrands,
-  useCategories,
-  useFeaturedProducts,
-  useNewArrivals,
-  useProducts,
-} from "@/lib/hooks";
+import { useMemo, useRef } from "react";
+
 import { ProductCarouselSkeleton } from "./productCarouselSkeleton";
+import ProductGrid from "../products/products-grid/products-grid";
 
 function buildCategoryDescendantsMap(categories: Category[]) {
   const childrenMap = new Map<string, string[]>();
@@ -48,35 +43,121 @@ function buildCategoryDescendantsMap(categories: Category[]) {
   return descendantsMap;
 }
 
-export function CategoryProductsSection({ category }: { category: string }) {
-  const { data: categories } = useCategories();
-  const { data: products } = useProducts();
+export function CategoriesSection({ categories }: { categories: Category[] }) {
+  if (!categories?.length) {
+    return null;
+  }
 
-  if (!categories || !products) return null;
-
+  const topLevel = categories.filter((cat) => cat.parentId === null);
   const descendantsMap = buildCategoryDescendantsMap(categories);
+
+  return (
+    <section className="py-8 sm:py-12 bg-white">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="text-left mb-8">
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">
+            Browse By Category
+          </h2>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+          {topLevel.map((category) => {
+            const Icon =
+              categoryIcons[category.slug as keyof typeof categoryIcons] ||
+              Smartphone;
+
+            const subcategoryIds = descendantsMap.get(category.id) || [];
+            const subcategories = subcategoryIds
+
+              .map((subId) => categories.find((c) => c.id === subId))
+              .filter(Boolean);
+
+            return (
+              <div
+                key={category.id}
+                className="group bg-white p-4 rounded-md border border-gray-200 hover:shadow-lg transition-all duration-300 ease-in-out flex flex-row gap-5 items-center">
+                <div className="flex-shrink-0 w-24 h-24 sm:w-28 sm:h-28 flex items-center justify-center">
+                  {category.image ? (
+                    <Image
+                      src={category.image}
+                      alt={`${category.name} category`}
+                      width={112}
+                      height={112}
+                      className="w-full h-full object-contain"
+                    />
+                  ) : (
+                    <Icon className="w-10 h-10 sm:w-12 sm:h-12 text-gray-400 group-hover:text-red-500 transition-colors" />
+                  )}
+                </div>
+
+                <div className="flex flex-col flex-grow h-full">
+                  <div>
+                    <h3 className="font-bold text-base sm:text-lg text-gray-800 mb-2">
+                      {category.name}
+                    </h3>
+                    {subcategories.length > 0 && (
+                      <div className="flex flex-col space-y-1">
+                        {subcategories
+                          .filter((cat) => cat?.parentId !== null)
+                          .slice(0, 4)
+                          .map((sub) => (
+                            <Link
+                              href={`/products?category=${category.slug}&subcategories=${sub?.slug}`}
+                              key={sub?.id}
+                              className="text-xs sm:text-sm text-gray-500 hover:text-black">
+                              {sub?.name}
+                            </Link>
+                          ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="mt-auto pt-3">
+                    <Link
+                      href={`/products?category=${category.slug}`}
+                      className="text-xs sm:text-sm text-gray-700 uppercase tracking-wide hover:text-black transition-all duration-200 border-b-2 border-gray-300 hover:border-black pb-0.5">
+                      Shop Now
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+export function CategoryProductsSection({
+  category,
+  products,
+  categories,
+}: {
+  category: string;
+  products: Product[];
+  categories: Category[];
+}) {
+  const descendantsMap = buildCategoryDescendantsMap(categories);
+
   const matchedCategory = categories.find(
     (cat) => cat.slug.toLowerCase() === category.toLowerCase()
   );
-
   if (!matchedCategory) return null;
 
-  const descendantCategoryIds = descendantsMap.get(matchedCategory.id) || [
+  const descendantIds = descendantsMap.get(matchedCategory.id) || [
     matchedCategory.id,
   ];
 
-  const filteredProducts = products.filter((product) =>
-    descendantCategoryIds.includes(product.categoryId)
-  );
+  const filtered = products.filter((p) => descendantIds.includes(p.categoryId));
 
-  if (filteredProducts.length === 0) return null;
+  if (filtered.length === 0) return null;
 
   return (
-    <section className="py-8">
+    <section className="py-4">
       <ProductCarousel
-        title={`${matchedCategory.name} (${filteredProducts.length})`}
+        title={`${matchedCategory.name} (${filtered.length})`}
         viewAllHref={`/products?category=${matchedCategory.slug}`}>
-        {filteredProducts.map((product) => (
+        {filtered.map((product) => (
           <ProductCarouselItem key={product.id} className="w-[280px]">
             <ProductCard product={product} />
           </ProductCarouselItem>
@@ -86,55 +167,61 @@ export function CategoryProductsSection({ category }: { category: string }) {
   );
 }
 
-export function NewestProductsSection() {
-  const { data: newArrivals, isLoading, isError } = useNewArrivals(8);
-
-  if (isLoading) return <ProductCarouselSkeleton title="New Arrivals" />;
-  if (isError || !newArrivals?.length) return null;
-
+export function TabbedProducts({
+  featured,
+  newArrivals,
+}: {
+  featured: Product[];
+  newArrivals: Product[];
+}) {
   return (
-    <section className="py-8">
-      <ProductCarousel title="New Arrivals" viewAllHref="/products?sort=newest">
-        {newArrivals.map((product) => (
-          <ProductCarouselItem key={product.id} className="w-[280px]">
-            <ProductCard product={product} />
-          </ProductCarouselItem>
-        ))}
-      </ProductCarousel>
-    </section>
+    <div>
+      <ProductGrid
+        tabs={[
+          {
+            label: "Featured",
+            products: featured,
+          },
+          {
+            label: "Latest Products",
+            products: newArrivals,
+          },
+        ]}
+        tabPosition="left"
+      />
+    </div>
   );
 }
 
-export function FeaturedProductsSection() {
-  const { data: featuredProducts, isLoading, isError } = useFeaturedProducts(6);
-
-  if (isLoading) return <ProductCarouselSkeleton title="Featured Products" />;
-  if (isError || !featuredProducts?.length) return null;
+export function TabbedBrands({
+  brands,
+  products,
+}: {
+  brands: Brand[];
+  products: Product[];
+}) {
+  const tabs = brands.map((brand) => ({
+    label: brand.name,
+    products: products.filter((product) => product.brandId === brand.id),
+  }));
 
   return (
-    <section className="py-8">
-      <ProductCarousel
-        title="Featured Products"
-        viewAllHref="/products?featured=true">
-        {featuredProducts.map((product) => (
-          <ProductCarouselItem key={product.id} className="w-[280px]">
-            <ProductCard product={product} />
-          </ProductCarouselItem>
-        ))}
-      </ProductCarousel>
-    </section>
+    <div>
+      <ProductGrid tabs={tabs} tabPosition="center" />
+    </div>
   );
 }
 
-export function BrandsSection() {
-  const { data: brands, isLoading, isError } = useBrands();
-
-  if (isLoading) return [];
-  if (isError || !brands?.length) return null;
+export function BrandsSection({
+  brands,
+}: {
+  brands: { slug: string; logo?: string }[];
+}) {
+  if (!brands?.length) return null;
 
   return (
-    <section className="container max-w-7xl py-8">
-      <h2 className="text-2xl font-bold mb-6">Browse by Brand</h2>
+    <section className="container max-w-7xl py-4">
+      <h2 className="text-xl font-bold mb-3">Browse by Brand</h2>
       <div className="flex items-center justify-center flex-wrap gap-4">
         {brands.map((brand) => (
           <a
@@ -155,87 +242,11 @@ export function BrandsSection() {
   );
 }
 
-export function CategoriesSection() {
-  const { data: categories, isLoading, isError } = useCategories();
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
-
-  const scrollLeft = () => {
-    scrollContainerRef.current?.scrollBy({ left: -200, behavior: "smooth" });
-  };
-
-  const scrollRight = () => {
-    scrollContainerRef.current?.scrollBy({ left: 200, behavior: "smooth" });
-  };
-
-  if (isLoading) return [];
-  if (isError || !categories?.length) return null;
-
-  return (
-    <section className="md:container md:max-w-7xl py-8">
-      <div className="flex items-center justify-between mb-8">
-        <h2 className="text-2xl font-bold text-gray-900">Browse By Category</h2>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="icon"
-            className="h-8 w-8 rounded-full bg-transparent"
-            onClick={scrollLeft}>
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="outline"
-            size="icon"
-            className="h-8 w-8 rounded-full bg-transparent"
-            onClick={scrollRight}>
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
-
-      <div
-        ref={scrollContainerRef}
-        className="flex items-center justify-center gap-6 overflow-x-auto pb-4 scroll-smooth [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-        {categories.map((category) => {
-          const IconComponent =
-            categoryIcons[category.slug as keyof typeof categoryIcons] ||
-            Smartphone;
-
-          return (
-            <Link
-              key={category.slug}
-              href={`/products?category=${category.slug}`}
-              className="group flex-shrink-0">
-              <div className="flex flex-col items-center justify-center gap-3 p-4 border border-gray-200 rounded-lg hover:shadow-md transition-all duration-200 hover:border-red-500 w-32 h-32">
-                <div className="flex items-center justify-center w-12 h-12">
-                  {category.image ? (
-                    <Image
-                      src={category.image}
-                      alt={category.name}
-                      width={48}
-                      height={48}
-                      className="w-12 h-12 object-contain"
-                    />
-                  ) : (
-                    <IconComponent className="w-8 h-8 text-gray-700 group-hover:text-red-500 transition-colors" />
-                  )}
-                </div>
-                <span className="text-sm font-medium text-gray-900 text-center">
-                  {category.name}
-                </span>
-              </div>
-            </Link>
-          );
-        })}
-      </div>
-    </section>
-  );
-}
-
 export function SpecialOfferCarousel({ products }: { products: Product[] }) {
   return (
-    <section className="py-8">
-      <ProductCarousel title="Recommended For You" className="">
-        <ProductCarouselItem className="w-[200px] h-[340px]">
+    <section className="py-4">
+      <ProductCarousel title="Recommended For You">
+        <ProductCarouselItem className="w-[200px] h-full">
           <PromotionalBanner
             title="Special Offer"
             description="Limited time deal"
@@ -250,7 +261,31 @@ export function SpecialOfferCarousel({ products }: { products: Product[] }) {
         </ProductCarouselItem>
 
         {products.map((product) => (
-          <ProductCarouselItem key={product.id} className="w-[280px] ">
+          <ProductCarouselItem key={product.id} className="w-[280px]">
+            <ProductCard product={product} />
+          </ProductCarouselItem>
+        ))}
+      </ProductCarousel>
+    </section>
+  );
+}
+
+export function DiscountedProducts({ products }: { products: Product[] }) {
+  const discountedProducts = useMemo(() => {
+    return products
+      .filter(
+        (product) =>
+          product.originalPrice && product.originalPrice > product.price
+      )
+      .sort((a, b) => b.originalPrice! - b.price - (a.originalPrice! - a.price))
+      .slice(0, 5);
+  }, [products]);
+
+  return (
+    <section className="py-4">
+      <ProductCarousel title="Hot Sales & Discounts" viewAllHref="/products">
+        {discountedProducts.map((product) => (
+          <ProductCarouselItem key={product.id} className="w-[280px]">
             <ProductCard product={product} />
           </ProductCarouselItem>
         ))}
@@ -261,15 +296,15 @@ export function SpecialOfferCarousel({ products }: { products: Product[] }) {
 
 export function PromotionalSection() {
   return (
-    <section className="py-8">
+    <section className="py-4">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <PromotionalBanner
-          title="Crazy Sale"
-          description="Get up to 40% off on selected electronics"
+          title="Pre-Loved Laptops"
+          description="Laptops Amazing Discounts and Deals Today"
           ctaText="Shop Now"
-          ctaLink="/products?sale=true"
+          ctaLink="/products"
           imageSrc="/placeholder.svg"
-          imageAlt="Crazy Sale"
+          imageAlt="pre-loved Laptops"
           variant="primary"
           size="small"
         />
@@ -284,12 +319,12 @@ export function PromotionalSection() {
           size="small"
         />
         <PromotionalBanner
-          title="New Arrivals"
-          description="Check out the latest tech gadgets"
+          title="Featured Products"
+          description="Featured tech gadgets"
           ctaText="Discover"
-          ctaLink="/products?sort=newest"
+          ctaLink="/products?featured=true"
           imageSrc="/placeholder.svg"
-          imageAlt="New Arrivals"
+          imageAlt="Featured Products"
           variant="secondary"
           size="small"
         />

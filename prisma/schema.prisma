@@ -199,6 +199,7 @@ model Category {
   updatedAt      DateTime                @updatedAt
 
   @@index([name])
+  @@index([parentId])
 }
 
 model Product {

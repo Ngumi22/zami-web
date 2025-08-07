@@ -1,40 +1,38 @@
 "use client";
 
-import { notFound } from "next/navigation";
 import { ProductDetails } from "@/components/products/product-details";
-import { FrequentlyBoughtTogether } from "@/components/products/frequently-bought-together";
 import RelatedProducts from "@/components/products/related-products";
-import { useProductBySlug } from "@/lib/hooks";
-import { useQueries } from "@tanstack/react-query";
-import {
-  getFrequentlyBoughtTogetherProducts,
-  getRelatedProducts,
-} from "@/data/product";
+import { FrequentlyBoughtTogether } from "@/components/products/frequently-bought-together";
 import { useEffect } from "react";
+import { notFound } from "next/navigation";
+import { useSingleProductData } from "@/lib/hooks";
+import { Product } from "@prisma/client";
 
-interface ProductPageProps {
-  params: { slug: string };
-}
-
-export default function ProductPage({ params }: ProductPageProps) {
-  const { slug } = params;
-  const { data: product, isLoading, isError } = useProductBySlug(slug);
-
-  const [{ data: relatedProducts }, { data: suggestedProducts }] = useQueries({
-    queries: [
-      {
-        queryKey: ["related-products", product?.id],
-        queryFn: () => (product ? getRelatedProducts(product.id) : []),
-        enabled: !!product,
-      },
-      {
-        queryKey: ["frequently-bought", product?.id],
-        queryFn: () =>
-          product ? getFrequentlyBoughtTogetherProducts(product.id) : [],
-        enabled: !!product,
-      },
-    ],
+export default function ProductPageClient({
+  slug,
+  initialProduct,
+  initialRelated,
+  initialSuggested,
+}: {
+  slug: string;
+  initialProduct: Product | null;
+  initialRelated: Product[];
+  initialSuggested: Product[];
+}) {
+  const {
+    product,
+    related,
+    suggested,
+    queries: { productQuery },
+  } = useSingleProductData({
+    slug,
+    productId: initialProduct?.id,
+    initialProduct,
+    initialRelated,
+    initialSuggested,
   });
+
+  const { isLoading, isError } = productQuery;
 
   useEffect(() => {
     if (isError || (!isLoading && !product)) {
@@ -48,7 +46,6 @@ export default function ProductPage({ params }: ProductPageProps) {
         <main className="flex-1 container mx-auto px-4 py-6 lg:py-8">
           <div className="bg-white rounded-lg shadow-sm mb-8">
             <div className="flex flex-col lg:flex-row min-h-[600px]">
-              {/* Loading skeletons */}
               <div className="lg:w-1/4 border-b lg:border-b-0 lg:border-r border-gray-200 order-2 lg:order-1">
                 <div className="p-4 lg:p-6 h-full animate-pulse bg-gray-100" />
               </div>
@@ -71,7 +68,7 @@ export default function ProductPage({ params }: ProductPageProps) {
           <div className="flex flex-col lg:flex-row min-h-[600px]">
             <div className="lg:w-1/4 border-b lg:border-b-0 lg:border-r border-gray-200 order-2 lg:order-1">
               <div className="p-4 lg:p-6 h-full">
-                <RelatedProducts products={relatedProducts || []} />
+                <RelatedProducts products={related || []} />
               </div>
             </div>
 
@@ -83,12 +80,12 @@ export default function ProductPage({ params }: ProductPageProps) {
           </div>
         </div>
 
-        {(suggestedProducts?.length ?? 0) > 0 && (
+        {(suggested?.length ?? 0) > 0 && (
           <div className="bg-white rounded-lg shadow-sm">
             <div className="p-4 lg:p-6">
               <FrequentlyBoughtTogether
                 mainProduct={product}
-                suggestedProducts={suggestedProducts || []}
+                suggestedProducts={suggested ?? []}
               />
             </div>
           </div>

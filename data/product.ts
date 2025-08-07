@@ -1,8 +1,10 @@
 "use server";
+
 import prisma from "@/lib/prisma";
 import { Product } from "@prisma/client";
 import { mapSpecifications } from "@/lib/utils";
 import { cacheTags } from "@/lib/cache-keys";
+import { unstable_cache as cache } from "next/cache";
 
 export async function getProductById(productId: string) {
   const product = await prisma.product.findUnique({
@@ -39,7 +41,7 @@ export async function getProductById(productId: string) {
   };
 }
 
-export async function getProductBySlug(slug: string) {
+export const getProductBySlug = cache(async (slug: string) => {
   const product = await prisma.product.findUnique({
     where: { slug },
     include: {
@@ -52,8 +54,8 @@ export async function getProductBySlug(slug: string) {
       },
     },
     cacheStrategy: {
-      ttl: 60 * 60 * 24 * 7,
-      swr: 60 * 60 * 24 * 2,
+      ttl: 60 * 60 * 24 * 7, // 7 days
+      swr: 60 * 60 * 24 * 2, // 2 days
       tags: [cacheTags.productBySlug(slug)],
     },
   });
@@ -70,14 +72,12 @@ export async function getProductBySlug(slug: string) {
     },
   });
 
-  const mapped = mapSpecifications(product);
-
   return {
     ...product,
     reviews,
-    mappedSpecifications: mapped,
+    mappedSpecifications: mapSpecifications(product),
   };
-}
+});
 
 export async function getAllProducts(limit?: number) {
   const products = await prisma.product.findMany({
@@ -328,10 +328,11 @@ export async function getTopRatedProducts(limit?: number) {
   }));
 }
 
-export async function getFrequentlyBoughtTogetherProducts(productId: string) {
+export async function getFrequentlyBoughtTogetherProducts(slug: string) {
   const product = await prisma.product.findUnique({
-    where: { id: productId },
-    include: {
+    where: { slug },
+    select: {
+      id: true,
       category: true,
       brand: true,
     },
@@ -347,7 +348,7 @@ export async function getFrequentlyBoughtTogetherProducts(productId: string) {
     where: {
       items: {
         some: {
-          productId,
+          productId: product.id,
         },
       },
     },
@@ -360,7 +361,7 @@ export async function getFrequentlyBoughtTogetherProducts(productId: string) {
 
   for (const order of orders) {
     for (const item of order.items) {
-      if (item.productId !== productId) {
+      if (item.productId !== product.id) {
         productFrequencyMap[item.productId] =
           (productFrequencyMap[item.productId] || 0) + 1;
       }
@@ -390,9 +391,9 @@ export async function getFrequentlyBoughtTogetherProducts(productId: string) {
   return suggestedProducts;
 }
 
-export async function getRelatedProducts(productId: string, limit?: number) {
+export async function getRelatedProducts(slug: string, limit?: number) {
   const currentProduct = await prisma.product.findUnique({
-    where: { id: productId },
+    where: { slug },
     select: {
       id: true,
       categoryId: true,
@@ -410,7 +411,7 @@ export async function getRelatedProducts(productId: string, limit?: number) {
 
   const related = await prisma.product.findMany({
     where: {
-      id: { not: productId },
+      slug: { not: slug },
       OR: [{ categoryId }, ...(brandId ? [{ brandId }] : [])],
     },
     include: {

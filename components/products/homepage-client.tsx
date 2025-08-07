@@ -1,30 +1,76 @@
 "use client";
 
-import { useHomepageData } from "@/lib/hooks";
+import { useMemo } from "react";
+import Link from "next/link";
+import { Skeleton } from "@/components/ui/skeleton";
 import HeroSection from "@/components/home/hero-section";
 import { PromotionalBanner } from "@/components/home/promotional-banner";
 import {
-  CategoryProductsSection,
-  FeaturedProductsSection,
+  TabbedProducts,
+  TabbedBrands,
   SpecialOfferCarousel,
-  NewestProductsSection,
   PromotionalSection,
   CategoriesSection,
+  DiscountedProducts,
+  CategoryProductsSection,
 } from "@/components/home/product-sections";
+import { useHomeData } from "@/lib/hooks";
+import { Brand, Category, Product } from "@prisma/client";
 
-export default function HomePageClient() {
-  const [
-    { data: products, isLoading: productsLoading },
-    { data: featuredProducts, isLoading: featuredLoading },
-    { data: newProducts, isLoading: newProductsLoading },
-    { data: categories, isLoading: categoriesLoading },
-  ] = useHomepageData();
+type ProductWithBrand = Product & {
+  brand?: Brand;
+};
 
-  const isLoading =
-    productsLoading ||
-    featuredLoading ||
-    newProductsLoading ||
-    categoriesLoading;
+interface HomePageClientProps {
+  initialProducts: ProductWithBrand[];
+  initialFeatured: ProductWithBrand[];
+  initialNewArrivals: ProductWithBrand[];
+  initialCategories: Category[];
+}
+
+export default function HomePageClient({
+  initialProducts,
+  initialFeatured,
+  initialNewArrivals,
+  initialCategories,
+}: HomePageClientProps) {
+  const {
+    products,
+    featured,
+    newProducts,
+    categories,
+    queries: {
+      productsQuery,
+      featuredQuery,
+      newArrivalsQuery,
+      categoriesQuery,
+    },
+  } = useHomeData({
+    initialProducts,
+    initialFeatured,
+    initialNewArrivals,
+    initialCategories,
+  }) as {
+    products: ProductWithBrand[];
+    featured: ProductWithBrand[];
+    newProducts: ProductWithBrand[];
+    categories: Category[];
+    queries: any;
+  };
+
+  const isLoading = useMemo(
+    () =>
+      productsQuery.isLoading ||
+      featuredQuery.isLoading ||
+      newArrivalsQuery.isLoading ||
+      categoriesQuery.isLoading,
+    [
+      productsQuery.isLoading,
+      featuredQuery.isLoading,
+      newArrivalsQuery.isLoading,
+      categoriesQuery.isLoading,
+    ]
+  );
 
   if (isLoading) {
     return (
@@ -33,19 +79,34 @@ export default function HomePageClient() {
           <HeroSection />
           <div className="container px-4 md:px-6">
             <PromotionalSection />
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 py-8">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <Skeleton key={i} className="h-80 w-full rounded-lg" />
+              ))}
+            </div>
           </div>
         </main>
       </div>
     );
   }
 
-  if (!products || !featuredProducts || !newProducts || !categories) {
+  if (!products || !featured || !newProducts || !categories) {
     return <div>Error loading data</div>;
   }
 
-  const topLevelCategories = (
-    Array.isArray(categories) ? categories : []
-  ).filter((cat) => !cat.parentId);
+  const topLevelCategories = categories.filter((cat) => !cat.parentId);
+
+  const brands = useMemo(() => {
+    const brandMap = new Map<string, ProductWithBrand["brand"]>();
+    for (const product of products) {
+      if (product.brand && !brandMap.has(product.brand.id)) {
+        brandMap.set(product.brand.id, product.brand);
+      }
+    }
+    return Array.from(brandMap.values()).filter(
+      (b): b is Brand => b !== undefined
+    );
+  }, [products]);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -53,11 +114,15 @@ export default function HomePageClient() {
         <HeroSection />
 
         <div className="container px-4 md:px-6">
+          <CategoriesSection categories={categories} />
           <PromotionalSection />
-
-          <NewestProductsSection />
-
-          <FeaturedProductsSection />
+          <TabbedProducts featured={featured} newArrivals={newProducts} />
+          <div>
+            <p className="text-center text-xl mb-1 font-bold">
+              Shop Your Favorite Brand
+            </p>
+            <TabbedBrands brands={brands} products={products} />
+          </div>
 
           <section className="py-8">
             <PromotionalBanner
@@ -72,13 +137,18 @@ export default function HomePageClient() {
             />
           </section>
 
-          {topLevelCategories.map((cat: { id: string; slug: string }) => (
-            <CategoryProductsSection key={cat.id} category={cat.slug} />
+          <DiscountedProducts products={products} />
+
+          {topLevelCategories.map((cat) => (
+            <CategoryProductsSection
+              key={cat.id}
+              category={cat.slug}
+              products={products}
+              categories={categories}
+            />
           ))}
 
           <SpecialOfferCarousel products={products} />
-
-          <CategoriesSection />
         </div>
       </main>
     </div>

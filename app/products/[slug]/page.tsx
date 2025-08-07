@@ -1,7 +1,12 @@
 import { Metadata } from "next";
-import { getProductBySlug } from "@/data/product";
 import { getAllProducts } from "@/data/product";
+import {
+  getProductBySlug,
+  getRelatedProducts,
+  getFrequentlyBoughtTogetherProducts,
+} from "@/data/product";
 import ProductPageClient from "@/components/products/product-page-client";
+import { notFound } from "next/navigation";
 
 export async function generateStaticParams() {
   const products = await getAllProducts();
@@ -51,8 +56,29 @@ export async function generateMetadata({
 export default async function ProductPage({
   params,
 }: {
-  params: Promise<{ slug: string }>;
+  params: { slug: string };
 }) {
-  const slug = await params;
-  return <ProductPageClient params={slug} />;
+  const { slug } = await params;
+
+  const [{ product, error }, related, suggested] = await Promise.all([
+    (async () => {
+      const p = await getProductBySlug(slug);
+      return p
+        ? { product: p, error: null }
+        : { product: null, error: "not_found" };
+    })(),
+    getRelatedProducts(slug),
+    getFrequentlyBoughtTogetherProducts(slug),
+  ]);
+
+  if (error === "not_found" || !product) notFound();
+
+  return (
+    <ProductPageClient
+      slug={slug}
+      initialProduct={product}
+      initialRelated={related}
+      initialSuggested={suggested}
+    />
+  );
 }

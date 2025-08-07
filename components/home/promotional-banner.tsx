@@ -18,7 +18,7 @@ export function PromotionalBanner({
   title,
   description,
   ctaText = "Shop Now",
-  ctaLink = "#",
+  ctaLink = "/products",
   imageSrc,
   imageAlt,
   variant = "primary",
@@ -41,7 +41,7 @@ export function PromotionalBanner({
   return (
     <div
       className={cn(
-        "relative overflow-hidden rounded-lg h-auto",
+        "relative overflow-hidden rounded-sm h-auto",
         variantStyles[variant],
         sizeStyles[size],
         className
@@ -80,7 +80,7 @@ export function PromotionalBanner({
             <Link
               href={ctaLink}
               className={cn(
-                "inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors",
+                "inline-flex items-center justify-center rounded-sm px-4 py-2 text-sm font-medium transition-colors",
                 "bg-background text-foreground hover:bg-accent hover:text-accent-foreground"
               )}>
               {ctaText}
