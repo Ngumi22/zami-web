@@ -75,7 +75,7 @@ export const productFormSchema = z.object({
   description: z
     .string()
     .min(20, "Full description must be at least 20 characters.")
-    .max(10000, "Description cannot exceed 10,000 characters.")
+    .max(100000, "Description cannot exceed 100,000 characters.")
     .refine((val) => {
       const textContent = val.replace(/<[^>]*>/g, "").trim();
       return textContent.length >= 20;

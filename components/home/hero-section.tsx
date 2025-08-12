@@ -10,7 +10,7 @@ const SLIDES = Array.from(Array(SLIDE_COUNT).keys());
 
 export default function HeroSection() {
   return (
-    <section className="flex flex-col md:flex-row justify-between items-stretch w-full bg-muted md:border border-black h-[15rem] md:h-[25rem]">
+    <section className="flex flex-col md:flex-row justify-between items-stretch w-full bg-gray-100 md:border border-black h-[15rem] md:h-[25rem]">
       <div className="flex flex-col justify-center space-y-3 py-2 px-8 md:border-r md:border-black h-full md:h-full w-full md:w-1/2">
         <div className="mb-1 md:mb-4">
           <h6 className="text-sm md:text-md text-start text-black font-semibold">
@@ -28,7 +28,7 @@ export default function HeroSection() {
           <br /> Collection
         </p>
         <p className="text-xs md:text-lg">
-          We sell the best quality New, Ex Uk, Refurbished{" "}
+          We sell the best quality New, Pre-Loved{" "}
           <br className="text-xs md:text-lg" /> laptops, phones, pc's, softwares
           in Kenya...
         </p>
@@ -36,8 +36,7 @@ export default function HeroSection() {
           <Link href="/products">
             <Button
               size="lg"
-              variant="outline"
-              className="flex items-center gap-2 justify-between px-4 bg-transparent">
+              className="flex items-center gap-2 justify-between px-4 w-full bg-black text-white border border-black hover:bg-white hover:text-black rounded-sm">
               Shop Now
               <ArrowRight className="h-5 w-5" />
             </Button>

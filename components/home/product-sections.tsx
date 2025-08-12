@@ -55,7 +55,7 @@ export function CategoriesSection({ categories }: { categories: Category[] }) {
     <section className="py-8 sm:py-12 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-left mb-8">
-          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">
+          <h2 className="text-xl font-bold text-gray-900">
             Browse By Category
           </h2>
         </div>
@@ -91,7 +91,7 @@ export function CategoriesSection({ categories }: { categories: Category[] }) {
 
                 <div className="flex flex-col flex-grow h-full">
                   <div>
-                    <h3 className="font-bold text-base sm:text-lg text-gray-800 mb-2">
+                    <h3 className="font-bold text-base text-gray-800 mb-2">
                       {category.name}
                     </h3>
                     {subcategories.length > 0 && (
@@ -114,7 +114,7 @@ export function CategoriesSection({ categories }: { categories: Category[] }) {
                   <div className="mt-auto pt-3">
                     <Link
                       href={`/products?category=${category.slug}`}
-                      className="text-xs sm:text-sm text-gray-700 uppercase tracking-wide hover:text-black transition-all duration-200 border-b-2 border-gray-300 hover:border-black pb-0.5">
+                      className="text-xs sm:text-sm text-black uppercase tracking-wide hover:text-gray-700 transition-all duration-200 border-b-2 border-black hover:border-gray-700 pb-0.5">
                       Shop Now
                     </Link>
                   </div>

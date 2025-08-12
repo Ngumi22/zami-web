@@ -3,6 +3,7 @@ import { ProductWithRelations } from "@/hooks/use-compare";
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { SPEC_CATEGORIES } from "./constants";
+import DOMPurify from "isomorphic-dompurify";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -39,6 +40,21 @@ export function slugify(text: string): string {
     .toLowerCase()
     .replace(/[^\w ]+/g, "")
     .replace(/ +/g, "-");
+}
+
+export function sanitizeInput<T>(data: T): T {
+  if (typeof data === "string") {
+    return DOMPurify.sanitize(data) as T;
+  }
+  if (Array.isArray(data)) {
+    return data.map((item) => sanitizeInput(item)) as T;
+  }
+  if (data && typeof data === "object") {
+    return Object.fromEntries(
+      Object.entries(data).map(([k, v]) => [k, sanitizeInput(v)])
+    ) as T;
+  }
+  return data;
 }
 
 export function mapSpecifications(product: any) {

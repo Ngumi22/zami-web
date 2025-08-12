@@ -1,13 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeft, Edit, Eye, Save, X } from "lucide-react";
-import { updateProduct } from "@/lib/product-actions";
+import { updateProduct, deleteProduct } from "@/lib/product-actions";
 import { useToast } from "@/hooks/use-toast";
 import { ProductBasicInfo } from "./product-basic-info";
 import { ProductImageManager } from "./product-image-manager";
@@ -17,7 +17,6 @@ import { ProductInventory } from "./product-inventory";
 import { ProductSEO } from "./product-seo";
 import { Brand, Category, Product } from "@prisma/client";
 import { formatCurrency } from "@/lib/utils";
-import { deleteProduct } from "@/lib/product-actions";
 
 interface ProductDetailsProps {
   products: Product[];
@@ -33,16 +32,81 @@ export function ProductDetails({
 }: ProductDetailsProps) {
   const router = useRouter();
   const { toast } = useToast();
+
   const [isEditing, setIsEditing] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [editedProduct, setEditedProduct] = useState<Product>(product);
 
+  // Keeps a deep copy of the original so we can rollback if the update fails
+  const previousProductRef = useRef<Product>(
+    JSON.parse(JSON.stringify(product))
+  );
+
+  // keeps editedProduct in sync when parent product prop changes (e.g. navigation / refresh)
+  useEffect(() => {
+    setEditedProduct(product);
+    previousProductRef.current = JSON.parse(JSON.stringify(product));
+  }, [product]);
+
   const category = categories.find((c) => c.id === editedProduct.categoryId);
+
+  useEffect(() => {
+    if (category && Array.isArray(category.specifications)) {
+      setEditedProduct((currentProduct) => {
+        const existingSpecs = currentProduct.specifications;
+        let newSpecs: Record<string, any> = {};
+
+        if (
+          existingSpecs &&
+          typeof existingSpecs === "object" &&
+          !Array.isArray(existingSpecs)
+        ) {
+          newSpecs = { ...existingSpecs };
+        } else if (Array.isArray(existingSpecs)) {
+          newSpecs = existingSpecs.reduce((acc, item) => {
+            if (item && typeof item === "object" && "value" in item) {
+              const key = (item as any).id || (item as any).name;
+              acc[String(key)] = (item as any).value;
+            }
+            return acc;
+          }, {} as Record<string, any>);
+        }
+
+        category.specifications.forEach((spec: any) => {
+          if (spec && spec.id && !newSpecs.hasOwnProperty(spec.id)) {
+            newSpecs[spec.id] = spec.type === "BOOLEAN" ? false : "";
+          }
+        });
+
+        if (
+          JSON.stringify(currentProduct.specifications) !==
+          JSON.stringify(newSpecs)
+        ) {
+          return { ...currentProduct, specifications: newSpecs };
+        }
+
+        return currentProduct;
+      });
+    }
+  }, [category]);
+
   const brand = brands.find((b) => b.id === editedProduct.brandId);
 
   const handleSave = async () => {
+    // Saves a snapshot of current server-known product for safe rollback
+    previousProductRef.current = JSON.parse(JSON.stringify(product));
+
+    // Immediately apply UI changes (editedProduct already reflects the changes),
+    // close the editor to create a snappy feel.
     setIsSaving(true);
+    setIsEditing(false);
+
+    toast({
+      title: "Saving…",
+      description: "Applying your changes. This may take a moment.",
+    });
+
     try {
       const productData = {
         name: editedProduct.name,
@@ -71,12 +135,23 @@ export function ProductDetails({
 
       if (result.success) {
         toast({
-          title: "Product updated",
-          description: result.message,
+          title: "✅ Product updated",
+          description: result.message || "Changes saved.",
         });
-        setIsEditing(false);
+      } else {
+        // Back to previous product state on server-declared failure
+        setEditedProduct(previousProductRef.current);
+        setIsEditing(true);
+        toast({
+          title: "⚠️ Update failed",
+          description: result.message || "Unable to update the product.",
+          variant: "destructive",
+        });
       }
     } catch (error) {
+      // rollback on network / unexpected error
+      setEditedProduct(previousProductRef.current);
+      setIsEditing(true);
       toast({
         title: "Error",
         description: "Failed to update product. Please try again.",
@@ -93,18 +168,32 @@ export function ProductDetails({
         "Are you sure you want to delete this product? This action cannot be undone."
       )
     ) {
+      toast({
+        title: "❌ Delete canceled",
+        description: "Product deletion was canceled.",
+      });
       return;
     }
 
     setIsDeleting(true);
+
+    toast({ title: "Deleting…", description: "Removing product…" });
+
     try {
       const result = await deleteProduct(product.id);
+
       if (result.success) {
         toast({
-          title: "Product deleted",
-          description: result.message,
+          title: "🗑 Product deleted",
+          description: result.message || "Product removed.",
         });
         router.push("/admin/products");
+      } else {
+        toast({
+          title: "⚠️ Delete failed",
+          description: result.message || "Unable to delete the product.",
+          variant: "destructive",
+        });
       }
     } catch (error) {
       toast({
@@ -120,11 +209,14 @@ export function ProductDetails({
   const handleCancel = () => {
     setEditedProduct(product);
     setIsEditing(false);
+    toast({
+      title: "✏️ Edits canceled",
+      description: "All changes have been reverted.",
+    });
   };
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Button variant="outline" size="icon" onClick={() => router.back()}>
@@ -135,7 +227,7 @@ export function ProductDetails({
               {editedProduct.name}
             </h1>
             <p className="text-muted-foreground">
-              {category?.name} • {brand?.name} • SKU: {editedProduct.id}
+              {category?.name} • {brand?.name} • {editedProduct.slug}
             </p>
           </div>
         </div>

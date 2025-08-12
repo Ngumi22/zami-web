@@ -128,6 +128,8 @@ model User {
   sessions      Session[]
   accounts      Account[]
 
+  products      Product[]  @relation("ProductsByUser")
+
   @@index([role])
   @@map("user")
 }
@@ -175,12 +177,14 @@ model Brand {
   logo        String?
   description String?
   isActive    Boolean   @default(true)
+  productCount   Int    @default(0)
   products    Product[]
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
-  @@index([name])
+  @@index([isActive, createdAt])
   @@index([isActive])
+  @@index([name])
 }
 
 model Category {
@@ -191,6 +195,7 @@ model Category {
   image          String?
   isActive       Boolean?                @default(true)
   specifications CategorySpecification[]
+  productCount   Int                     @default(0)
   products       Product[]
   parentId       String?                 @db.ObjectId
   parent         Category?               @relation("CategoryChildren", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
@@ -198,9 +203,12 @@ model Category {
   createdAt      DateTime                @default(now())
   updatedAt      DateTime                @updatedAt
 
-  @@index([name])
+ @@index([parentId, name])
   @@index([parentId])
+  @@index([name])
 }
+
+
 
 model Product {
   id               String           @id @default(auto()) @map("_id") @db.ObjectId
@@ -225,6 +233,10 @@ model Product {
   brand            Brand            @relation(fields: [brandId], references: [id])
   reviews          Review[]
   sales            Int?             @default(0)
+
+  createdById      String?   @db.ObjectId
+  createdBy        User?     @relation("ProductsByUser", fields: [createdById], references: [id])
+
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
 
@@ -232,9 +244,22 @@ model Product {
   @@index([brandId])
   @@index([price])
   @@index([averageRating])
-  @@fulltext([name, description, tags])
+  @@fulltext([name, shortDescription, description, tags])
   @@index([featured])
   @@index([createdAt])
+  @@index([stock])
+  @@index([sales])
+  @@index([originalPrice])
+  @@index([featured, createdAt])
+
+  @@index([categoryId, createdAt])
+  @@index([categoryId, price])
+  @@index([categoryId, averageRating])
+  @@index([brandId, createdAt])
+  @@index([brandId, price])
+  @@index([originalPrice, createdAt])
+  @@index([sales, createdAt])
+
 }
 
 model Review {
@@ -254,6 +279,7 @@ model Review {
   @@index([productId])
   @@index([rating])
   @@index([createdAt])
+  @@index([productId, createdAt])
 }
 
 model Cart {
@@ -295,6 +321,7 @@ model Order {
   @@index([customerId])
   @@index([status])
   @@index([createdAt])
+  @@index([items.productId])
 }
 
 model Invoice {
@@ -410,6 +437,20 @@ model AllowedAdmin {
   expiresAt  DateTime
   createdAt  DateTime @default(now())
   sentAt     DateTime?
+}
+
+model rateLimit {
+  id           String  @id @default(auto()) @map("_id") @db.ObjectId
+  key          String  @unique
+  count        Int
+  lastRequest  BigInt
+}
+
+model BlockedIp {
+  id        String    @id @default(auto()) @map("_id") @db.ObjectId
+  ip        String    @unique
+  reason    String?
+  expiresAt DateTime?
 }
 
 model SeedLog {

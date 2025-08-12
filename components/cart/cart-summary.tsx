@@ -48,7 +48,7 @@ export function CartSummary() {
       <div className="flex flex-col space-y-2">
         <div className="flex flex-col gap-2 space-y-2 mt-2">
           <Input placeholder="Coupon code" />
-          <Button variant="outline" className="w-full">
+          <Button className="w-full mt-2 bg-black text-white border border-black hover:bg-white hover:text-black">
             Apply Coupon
           </Button>
         </div>
@@ -58,7 +58,7 @@ export function CartSummary() {
         />
         <Link href={items.length > 0 ? "/checkout" : "#"} passHref>
           <Button
-            className="w-full mt-2"
+            className="w-full mt-2 bg-white text-black border border-black hover:bg-black hover:text-white"
             size="lg"
             disabled={items.length === 0}>
             Proceed to Checkout

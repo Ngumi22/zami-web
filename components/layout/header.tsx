@@ -138,7 +138,6 @@ export function SiteHeader({
             </div>
           )}
 
-          {/* --- Right Section: User Actions --- */}
           <nav className="flex items-center justify-end gap-2">
             {navItems.map((item) => (
               <Link
@@ -151,7 +150,7 @@ export function SiteHeader({
                 <div className="relative">
                   <item.icon className="h-5 w-5 font-semibold text-[#2E2E2E]" />
                   {item.badge && (
-                    <span className="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-[#2E2E2E] text-[10px] text-[#2E2E2E]-foreground">
+                    <span className="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-[#2E2E2E] text-[10px] text-white">
                       {item.badge > 9 ? "9+" : item.badge}
                     </span>
                   )}
@@ -161,7 +160,6 @@ export function SiteHeader({
           </nav>
         </div>
 
-        {/* --- Mega Menu (appears below header) --- */}
         <MegaMenu
           categories={categories}
           featuredProducts={products}

@@ -18,6 +18,7 @@ const generateOrderNumber = () => `ORD-${nanoid()}`;
 
 import DOMPurify from "isomorphic-dompurify";
 import { requireAuth } from "./auth-action";
+import { requireRateLimit } from "./ratelimit";
 
 function isValidStatusTransition(from: string, to: string): boolean {
   const transitions: Record<string, string[]> = {
@@ -53,7 +54,15 @@ export async function updateOrder(
   orderId: string,
   formData: FormData
 ): Promise<ActionResult<Order>> {
-  await requireAuth();
+  const user = await requireAuth();
+  if (!user) {
+    return { success: false, message: "Sign In" };
+  }
+  await requireRateLimit({
+    windowSec: 60, // 1 minute window
+    max: 10, //10 uploads per minute
+    identifier: user.id,
+  });
   try {
     const existingOrder = await prisma.order.findUnique({
       where: { id: orderId },
@@ -185,7 +194,15 @@ export async function updateOrderStatus(
   newStatus: string,
   reason?: string
 ): Promise<ActionResult<Order>> {
-  await requireAuth();
+  const user = await requireAuth();
+  if (!user) {
+    return { success: false, message: "Sign In" };
+  }
+  await requireRateLimit({
+    windowSec: 60, // 1 minute window
+    max: 10, //10 uploads per minute
+    identifier: user.id,
+  });
   try {
     const existingOrder = await prisma.order.findUnique({
       where: { id: orderId },
@@ -241,7 +258,15 @@ export async function updateOrderStatus(
 }
 
 export async function createOrder(input: CreateOrderInput) {
-  await requireAuth();
+  const user = await requireAuth();
+  if (!user) {
+    return { success: false, message: "Sign In" };
+  }
+  await requireRateLimit({
+    windowSec: 60, // 1 minute window
+    max: 10, //10 uploads per minute
+    identifier: user.id,
+  });
   const parsed = createOrderSchema.safeParse(input);
   if (!parsed.success) throw new Error("Invalid order data");
 
@@ -290,7 +315,15 @@ export async function refundOrder(
   orderId: string,
   reason: string
 ): Promise<ActionResult<Order>> {
-  await requireAuth();
+  const user = await requireAuth();
+  if (!user) {
+    return { success: false, message: "Sign In" };
+  }
+  await requireRateLimit({
+    windowSec: 60, // 1 minute window
+    max: 10, //10 uploads per minute
+    identifier: user.id,
+  });
   try {
     const order = await prisma.order.findUnique({ where: { id: orderId } });
     if (!order) return { success: false, message: "Order not found" };

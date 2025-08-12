@@ -1,9 +1,12 @@
 import { notFound } from "next/navigation";
 import { ProductDetails } from "@/components/admin/product-sections/comprehensive-product-details";
 import { Suspense } from "react";
-import { getAllProducts, getProductBySlug } from "@/data/product";
-import { getAllBrands } from "@/data/brands";
+import {
+  getProductBySlug,
+  getProducts,
+} from "@/data/consolidated-products-fetch";
 import { getAllCategories } from "@/data/category";
+import { getAllBrands } from "@/data/cat";
 
 export default async function ProductPage({
   params,
@@ -15,7 +18,7 @@ export default async function ProductPage({
     getProductBySlug(slug),
     getAllCategories(),
     getAllBrands(),
-    getAllProducts(),
+    getProducts({}),
   ]);
 
   if (!product) {

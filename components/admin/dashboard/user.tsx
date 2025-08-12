@@ -5,7 +5,6 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
-  DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "../../ui/avatar";
@@ -27,12 +26,12 @@ export default function UserDropdownMenu({ user }: UserDropdownMenuProps) {
           <Avatar className="h-8 w-8 ring-2 ring-purple-200">
             <AvatarImage src="/placeholder.svg?height=32&width=32" />
             <AvatarFallback className="bg-gradient-to-br from-purple-500 to-pink-500 text-white">
-              JD
+              {user.image}
             </AvatarFallback>
           </Avatar>
           <div className="hidden md:block text-left">
-            <p className="text-sm font-medium">John Doe</p>
-            <p className="text-xs text-slate-500">Admin</p>
+            <p className="text-sm font-medium">{user.name}</p>
+            <p className="text-xs text-slate-500">{user.role}</p>
           </div>
           <ChevronDown className="h-4 w-4 text-slate-400" />
         </Button>

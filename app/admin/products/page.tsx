@@ -6,11 +6,12 @@ import Link from "next/link";
 import { ProductsTable } from "@/components/admin/product-sections/products-table";
 import ProductsPageStats from "@/components/admin/admin-home-sections/dash-stats";
 import { ProductsPageSkeleton } from "@/components/admin/admin-home-sections/product-page-skeleton";
-import { getAllProducts, getProductsStats } from "@/data/product";
+import { getProductsStats } from "@/data/product";
+import { getProducts } from "@/data/consolidated-products-fetch";
 
 export default async function ProductsPage() {
   const [products, stats] = await Promise.all([
-    getAllProducts(),
+    getProducts({}),
     getProductsStats(),
   ]);
 

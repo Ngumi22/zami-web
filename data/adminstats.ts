@@ -66,6 +66,7 @@ export async function getAdminStats(): Promise<AdminStats> {
   const revenueGrowth = percentChange(currentRevenue, previousRevenue);
   const ordersGrowth = percentChange(currentOrders, previousOrders);
   const customersGrowth = percentChange(currentCustomers, previousCustomers);
+  // const conversionGrowth = ((currentRate - previousRate) / previousRate) * 100;
 
   return {
     totalProducts,

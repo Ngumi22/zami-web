@@ -3,75 +3,59 @@
 import { Brand, Category } from "@prisma/client";
 import prisma from "@/lib/prisma";
 import { cacheTags } from "@/lib/cache-keys";
+import { cache } from "react";
 
 interface CategoryWithChildren extends Category {
   children?: CategoryWithChildren[];
 }
 
-export async function getAllCategories(): Promise<Category[]> {
-  return await prisma.category.findMany({
+// Use a shared cached function to fetch all categories once per request
+const getCachedCategories = cache(() => {
+  return prisma.category.findMany({
     orderBy: { createdAt: "desc" },
-    include: {
-      children: true,
-    },
+    include: { children: true },
     cacheStrategy: {
-      ttl: 60 * 60 * 24 * 7,
-      swr: 60 * 60 * 24 * 2,
-      tags: [cacheTags.categories()],
+      tags: [cacheTags.categoriesCollection()],
     },
   });
+});
+
+export async function getAllCategories(): Promise<CategoryWithChildren[]> {
+  const allCategories = await getCachedCategories();
+  // We can add in-memory processing here if needed, e.g., building a tree
+  return allCategories;
 }
 
 export async function getCategoryById(id: string): Promise<Category | null> {
-  return await prisma.category.findUnique({
-    where: { id },
-    include: {
-      children: true,
-    },
-    cacheStrategy: {
-      ttl: 60 * 60 * 24 * 7,
-      swr: 60 * 60 * 24 * 2,
-      tags: [cacheTags.category(id)],
-    },
-  });
-}
-
-async function buildCategoryPath(
-  categoryId: string
-): Promise<CategoryWithChildren[]> {
-  const category = await prisma.category.findUnique({
-    where: { id: categoryId },
-    include: {
-      parent: true,
-      children: true,
-    },
-  });
-
-  if (!category) return [];
-  if (!category.parent)
-    return [{ ...category, children: category.children || [] }];
-
-  const parentPath = await buildCategoryPath(category.parent.id);
-  return [...parentPath, { ...category, children: category.children || [] }];
+  const allCategories = await getCachedCategories();
+  const category = allCategories.find((cat) => cat.id === id);
+  return category || null;
 }
 
 export async function getCategoryWithPath(id: string): Promise<{
   category: CategoryWithChildren;
   path: CategoryWithChildren[];
 } | null> {
-  const category = await prisma.category.findUnique({
-    where: { id },
-    include: {
-      children: true,
-    },
-  });
+  const allCategories = await getCachedCategories();
+  const category = allCategories.find((cat) => cat.id === id);
 
-  if (!category) return null;
+  if (!category) {
+    return null;
+  }
 
-  const path = await buildCategoryPath(id);
+  const path: CategoryWithChildren[] = [];
+  let currentCategory: CategoryWithChildren | null = category;
+
+  // Build path in-memory
+  while (currentCategory) {
+    path.unshift(currentCategory);
+    currentCategory =
+      allCategories.find((cat) => cat.id === currentCategory?.parentId) || null;
+  }
+
   return {
-    category: { ...category, children: category.children || [] },
-    path,
+    category: category,
+    path: path,
   };
 }
 

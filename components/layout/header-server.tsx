@@ -1,8 +1,10 @@
 import { getAllCategories } from "@/data/category";
-import { getFeaturedProducts } from "@/data/product";
+
 import React from "react";
 import { SiteHeader } from "./header";
-import { getAllBrands } from "@/data/brands";
+
+import { getFeaturedProducts } from "@/data/consolidated-products-fetch";
+import { getAllBrands } from "@/data/cat";
 
 export default async function Header() {
   const [categories, products, brands] = await Promise.all([

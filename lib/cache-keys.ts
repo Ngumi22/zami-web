@@ -38,6 +38,21 @@ export const cacheTags = {
   productsByCategory: (categoryId: string) =>
     `products_by_category_${categoryId}`,
   byBrand: (brandId: string) => `products_by_brand_${brandId}`,
+
+  productsCollection: () => "products_collection",
+  brandsCollection: () => "brands_collection",
+  categoriesCollection: () => "categories_collection",
+
+  featured_products: () => "featured_products",
+  new_arrivals: () => "new_arrivals",
+  best_selling: () => "best_selling",
+  products_by_category: (categoryId: string) =>
+    `products_by_category_${categoryId}`,
+  by_brand: (brandId: string) => `products_by_brand_${brandId}`,
+  products_reviews: (productIds: string[]) =>
+    productIds.slice(0, 5).map((id) => `reviews_${id}`),
+  product_reviews: (productId: string) => `reviews_${productId}`,
+
   featuredProducts: () => "featured",
   products: () => "all",
   filteredProducts: (params: GetProductsParams) =>

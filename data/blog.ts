@@ -5,16 +5,15 @@ import { toPrismaStatus } from "@/lib/blog-schema";
 import { BlogSearchParams, BlogSearchResult } from "@/lib/types";
 import { BlogPost } from "@prisma/client";
 
-export async function getBlogPost(id: string): Promise<BlogPost | null> {
-  return prisma.blogPost.findUnique({
-    where: { id },
+export async function getBlogPost(slug: string): Promise<BlogPost | null> {
+  return prisma.blogPost.findFirst({
+    where: { slug },
     include: {
       author: { select: { id: true, name: true, email: true } },
       category: { select: { id: true, name: true, slug: true } },
     },
   });
 }
-
 export async function getPosts({
   page = 1,
   limit = 6,
@@ -79,7 +78,7 @@ export async function getBlogPosts(): Promise<BlogPost[]> {
 export async function getBlogPostBySlug(
   slug: string
 ): Promise<BlogPost | null> {
-  return prisma.blogPost.findUnique({
+  return prisma.blogPost.findFirst({
     where: { slug },
     include: {
       author: { select: { id: true, name: true, email: true } },

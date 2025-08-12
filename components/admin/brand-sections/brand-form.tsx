@@ -25,6 +25,7 @@ interface BrandFormProps {
 export default function BrandForm({ brand }: BrandFormProps) {
   const router = useRouter();
   const { toast } = useToast();
+  // useTransition handles pending state and non-blocking UI updates
   const [isPending, startTransition] = useTransition();
   const isEditing = !!brand;
 
@@ -38,23 +39,27 @@ export default function BrandForm({ brand }: BrandFormProps) {
     initialValue: [],
   });
   const [isActive, setIsActive] = useState(brand?.isActive ?? true);
+  // Track if the slug has been manually edited by the user
+  const [hasManuallyEditedSlug, setHasManuallyEditedSlug] = useState(false);
 
   // Error state
   const [errors, setErrors] = useState<Record<string, string[]>>({});
 
-  // Auto-generate slug from name
+  // Auto-generate slug from name, debounced to prevent frequent re-renders.
   const generateSlug = debounce((n: string) => {
-    if (n && !isEditing) {
+    // Only auto-generate if it's a new brand or the user hasn't manually edited the slug
+    if (n && (!isEditing || !hasManuallyEditedSlug)) {
       setSlug(slugify(n));
     }
   }, 300);
 
   useEffect(() => {
     generateSlug(name);
+    // Cleanup function to cancel the debounce on unmount
     return () => generateSlug.cancel();
   }, [name, generateSlug]);
 
-  // Clear errors when user starts typing
+  // Clear specific errors when the corresponding input changes
   useEffect(() => {
     if (errors.name && name) {
       setErrors((prev) => ({ ...prev, name: [] }));
@@ -67,21 +72,23 @@ export default function BrandForm({ brand }: BrandFormProps) {
     }
   }, [slug, errors.slug]);
 
+  /**
+   * Handles form submission, wrapping the server action in a transition
+   * to provide a smooth, non-blocking UI experience.
+   * @param formData The form data object.
+   */
   async function handleSubmit(formData: FormData) {
+    // Use startTransition to mark the update as non-urgent
     startTransition(async () => {
       try {
-        // Clear previous errors
         setErrors({});
 
-        // Prepare form data
         formData.set("name", name);
         formData.set("slug", slug);
         formData.set("description", description);
 
-        // Use existing logo if present, otherwise use new uploaded logo
         const logoToUse = existingLogo || newLogos[0] || "";
         formData.set("logo", logoToUse);
-
         formData.set("isActive", isActive.toString());
 
         const result = isEditing
@@ -93,6 +100,7 @@ export default function BrandForm({ brand }: BrandFormProps) {
             title: isEditing ? "Brand updated" : "Brand created",
             description: result.message,
           });
+          // Redirect the user on a successful submission
           router.push("/admin/brands");
           router.refresh();
         } else {
@@ -147,9 +155,13 @@ export default function BrandForm({ brand }: BrandFormProps) {
                   id="name"
                   value={name}
                   placeholder="Enter brand name"
-                  onChange={(e) => setName(e.target.value)}
+                  onChange={(e) => {
+                    setName(e.target.value);
+                  }}
                   className={errors.name ? "border-destructive" : ""}
                   required
+                  // Disable the input while a submission is in progress
+                  disabled={isPending}
                 />
                 {errors.name && (
                   <Alert variant="destructive">
@@ -167,9 +179,13 @@ export default function BrandForm({ brand }: BrandFormProps) {
                   id="slug"
                   value={slug}
                   placeholder="brand-slug"
-                  onChange={(e) => setSlug(e.target.value)}
+                  onChange={(e) => {
+                    setSlug(e.target.value);
+                    setHasManuallyEditedSlug(true);
+                  }}
                   className={errors.slug ? "border-destructive" : ""}
                   required
+                  disabled={isPending}
                 />
                 {errors.slug && (
                   <Alert variant="destructive">
@@ -189,6 +205,7 @@ export default function BrandForm({ brand }: BrandFormProps) {
                 onChange={(e) => setDescription(e.target.value)}
                 rows={4}
                 className={errors.description ? "border-destructive" : ""}
+                disabled={isPending}
               />
               {errors.description && (
                 <Alert variant="destructive">
@@ -215,7 +232,8 @@ export default function BrandForm({ brand }: BrandFormProps) {
                         type="button"
                         onClick={() => setExistingLogo("")}
                         className="absolute top-2 right-2 p-1 rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors z-10"
-                        aria-label="Remove existing logo">
+                        aria-label="Remove existing logo"
+                        disabled={isPending}>
                         <Trash2 className="h-4 w-4" />
                       </button>
                     </div>
@@ -233,6 +251,7 @@ export default function BrandForm({ brand }: BrandFormProps) {
                     imageUrls={newLogos}
                     {...logoUploader}
                     endpoint="imageUploader"
+                    disabled={isPending}
                   />
                 )}
                 {errors.logo && (
@@ -251,6 +270,7 @@ export default function BrandForm({ brand }: BrandFormProps) {
                     onCheckedChange={(checked) =>
                       setIsActive(checked as boolean)
                     }
+                    disabled={isPending}
                   />
                   <Label htmlFor="isActive">Active brand</Label>
                 </div>

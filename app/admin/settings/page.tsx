@@ -29,14 +29,14 @@ export default function AdminSettingsPage() {
             <div className="grid md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="storeName">Store Name</Label>
-                <Input id="storeName" defaultValue="ElectroStore" />
+                <Input id="storeName" defaultValue="Zami Tech Solutions" />
               </div>
               <div>
                 <Label htmlFor="storeEmail">Store Email</Label>
                 <Input
                   id="storeEmail"
                   type="email"
-                  defaultValue="info@electrostore.com"
+                  defaultValue="zamidigitalsolutions@gmail.com"
                 />
               </div>
             </div>
@@ -51,13 +51,13 @@ export default function AdminSettingsPage() {
             <div className="grid md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="storePhone">Phone Number</Label>
-                <Input id="storePhone" defaultValue="+1 (555) 123-4567" />
+                <Input id="storePhone" defaultValue="+254757011738" />
               </div>
               <div>
                 <Label htmlFor="storeAddress">Address</Label>
                 <Input
                   id="storeAddress"
-                  defaultValue="123 Tech Street, Silicon Valley, CA 94000"
+                  defaultValue="Revlon Plaza Kimathi Street"
                 />
               </div>
             </div>
@@ -94,6 +94,10 @@ export default function AdminSettingsPage() {
             <div className="space-y-2">
               <Label>Payment Methods</Label>
               <div className="space-y-2">
+                <label className="flex items-center space-x-2">
+                  <input type="checkbox" className="rounded" />
+                  <span>M Pesa</span>
+                </label>
                 <label className="flex items-center space-x-2">
                   <input type="checkbox" defaultChecked className="rounded" />
                   <span>Credit/Debit Cards</span>

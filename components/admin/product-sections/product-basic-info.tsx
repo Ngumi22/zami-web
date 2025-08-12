@@ -14,6 +14,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/utils";
 import { Brand, Category, Product } from "@prisma/client";
+import RichTextEditor from "../forms/products/Editor";
 
 interface ProductBasicInfoProps {
   product: Product;
@@ -79,12 +80,10 @@ export function ProductBasicInfo({
           <div>
             <Label htmlFor="description">Full Description</Label>
             {isEditing ? (
-              <Textarea
-                id="description"
+              <RichTextEditor
                 value={product.description}
-                onChange={(e) => updateField("description", e.target.value)}
-                placeholder="Detailed product description"
-                rows={6}
+                onChange={(value) => updateField("description", value)}
+                className="min-h-[200px]"
               />
             ) : (
               <div className="text-sm text-muted-foreground mt-1 prose max-w-none">

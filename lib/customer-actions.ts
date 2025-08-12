@@ -14,6 +14,7 @@ import {
   type CustomerUpdateInput,
 } from "./customer-schemas";
 import { requireAuth } from "./auth-action";
+import { requireRateLimit } from "./ratelimit";
 
 export type ActionState = {
   success?: boolean;
@@ -24,7 +25,15 @@ export type ActionState = {
 export async function createCustomerAction(
   formData: FormData
 ): Promise<ActionState> {
-  await requireAuth();
+  const user = await requireAuth();
+  if (!user) {
+    return { success: false, message: "Sign In" };
+  }
+  await requireRateLimit({
+    windowSec: 60, // 1 minute window
+    max: 10, //10 uploads per minute
+    identifier: user.id,
+  });
   try {
     const customerData = transformFormDataToCustomer(formData);
     const addresses = transformFormDataToAddresses(formData);
@@ -234,7 +243,15 @@ export async function updateCustomerAction(
 export async function deleteCustomerAction(
   customerId: string
 ): Promise<ActionState> {
-  await requireAuth();
+  const user = await requireAuth();
+  if (!user) {
+    return { success: false, message: "Sign In" };
+  }
+  await requireRateLimit({
+    windowSec: 60, // 1 minute window
+    max: 10, //10 uploads per minute
+    identifier: user.id,
+  });
   try {
     // Validate customer ID
     if (!customerId || customerId.trim() === "") {
@@ -429,7 +446,15 @@ export async function setDefaultAddressAction(
 export async function archiveCustomerAction(
   customerId: string
 ): Promise<ActionState> {
-  await requireAuth();
+  const user = await requireAuth();
+  if (!user) {
+    return { success: false, message: "Sign In" };
+  }
+  await requireRateLimit({
+    windowSec: 60, // 1 minute window
+    max: 10, //10 uploads per minute
+    identifier: user.id,
+  });
   try {
     if (!customerId || customerId.trim() === "") {
       return {
@@ -484,7 +509,15 @@ export async function bulkUpdateAddressesAction(
     preferredCourier?: string;
   }>
 ): Promise<ActionState> {
-  await requireAuth();
+  const user = await requireAuth();
+  if (!user) {
+    return { success: false, message: "Sign In" };
+  }
+  await requireRateLimit({
+    windowSec: 60, // 1 minute window
+    max: 10, //10 uploads per minute
+    identifier: user.id,
+  });
   try {
     // Validate addresses using the schema
     const validated = customerUpdateSchema

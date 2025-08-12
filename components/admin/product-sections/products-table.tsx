@@ -188,13 +188,7 @@ export function ProductsTable({ products }: ProductsTableProps) {
       },
       icon: <Eye className="w-4 h-4" />,
     },
-    {
-      label: "Edit Product",
-      onClick: (product: Product) => {
-        router.push(`/admin/products/${product.id}/edit`);
-      },
-      icon: <Edit className="w-4 h-4" />,
-    },
+
     {
       label: "Delete Product",
       onClick: async (product: Product) => {

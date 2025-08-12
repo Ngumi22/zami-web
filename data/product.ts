@@ -6,6 +6,56 @@ import { mapSpecifications } from "@/lib/utils";
 import { cacheTags } from "@/lib/cache-keys";
 import { unstable_cache as cache } from "next/cache";
 
+export async function getAllProducts(limit?: number) {
+  const products = await prisma.product.findMany({
+    include: {
+      brand: true,
+      category: {
+        select: {
+          name: true,
+          specifications: true,
+        },
+      },
+    },
+    take: limit,
+    cacheStrategy: {
+      ttl: 60 * 60 * 24 * 7,
+      swr: 60 * 60 * 24 * 2,
+      tags: [cacheTags.productsCollection()],
+    },
+  });
+
+  if (!products.length) return [];
+
+  const productIds = products.map((p: Product) => p.id);
+
+  const reviews = await prisma.review.findMany({
+    where: {
+      productId: { in: productIds },
+    },
+    include: {
+      customer: true,
+    },
+
+    cacheStrategy: {
+      ttl: 60 * 60 * 24 * 7,
+      swr: 60 * 60 * 24 * 2,
+      tags: cacheTags.products_reviews(productIds),
+    },
+  });
+
+  const reviewsByProductId = reviews.reduce((acc: any, review: any) => {
+    (acc[review.productId] ||= []).push(review);
+    return acc;
+  }, {} as Record<string, typeof reviews>);
+
+  return products.map((product: Product) => ({
+    ...product,
+    reviews: reviewsByProductId[product.id] || [],
+    specifications: mapSpecifications(product),
+  }));
+}
+
 export async function getProductById(productId: string) {
   const product = await prisma.product.findUnique({
     where: { id: productId },
@@ -78,55 +128,6 @@ export const getProductBySlug = cache(async (slug: string) => {
     mappedSpecifications: mapSpecifications(product),
   };
 });
-
-export async function getAllProducts(limit?: number) {
-  const products = await prisma.product.findMany({
-    include: {
-      brand: true,
-      category: {
-        select: {
-          name: true,
-          specifications: true,
-        },
-      },
-    },
-    take: limit,
-    cacheStrategy: {
-      ttl: 60 * 60 * 24 * 7,
-      swr: 60 * 60 * 24 * 2,
-      tags: [cacheTags.products()],
-    },
-  });
-
-  if (!products.length) return [];
-
-  const productIds = products.map((p: Product) => p.id);
-
-  const reviews = await prisma.review.findMany({
-    where: {
-      productId: { in: productIds },
-    },
-    include: {
-      customer: true,
-    },
-    cacheStrategy: {
-      ttl: 60 * 60 * 24 * 7,
-      swr: 60 * 60 * 24 * 2,
-      tags: [cacheTags.reviewsBatch(productIds)],
-    },
-  });
-
-  const reviewsByProductId = reviews.reduce((acc: any, review: any) => {
-    (acc[review.productId] ||= []).push(review);
-    return acc;
-  }, {} as Record<string, typeof reviews>);
-
-  return products.map((product: Product) => ({
-    ...product,
-    reviews: reviewsByProductId[product.id] || [],
-    specifications: mapSpecifications(product),
-  }));
-}
 
 export async function getFeaturedProducts(limit: number = 6) {
   const featured = await prisma.product.findMany({

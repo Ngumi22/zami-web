@@ -1,9 +1,9 @@
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
-import { getProductById } from "@/data/product";
 import { getAllBrands } from "@/data/brands";
 import { getAllCategories } from "@/data/category";
 import ProductForm from "@/components/admin/forms/products/product-form";
+import { getProductById } from "@/data/consolidated-products-fetch";
 
 export default async function EditProductPage({
   params,

@@ -112,6 +112,7 @@ interface UploaderProps {
   reorder: (oldIndex: number, newIndex: number) => void;
   className?: string;
   endpoint: "imageUploader";
+  disabled?: boolean;
 }
 
 function SortableImage({
