@@ -1,10 +1,10 @@
 import { Suspense } from "react";
 import CategoriesTable from "@/components/admin/category-sections/categories-page";
 import { TableSkeleton } from "@/components/admin/table-skeleton";
-import { getAllCategories } from "@/data/category";
+import { getCachedCategories } from "@/data/productspage/getProducts";
 
 export default async function CategoriesPage() {
-  const categories = await getAllCategories();
+  const categories = await getCachedCategories();
   return (
     <div className="mx-auto">
       <Suspense fallback={<TableSkeleton />}>

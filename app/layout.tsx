@@ -1,14 +1,15 @@
 import type React from "react";
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Jost } from "next/font/google";
 import { Toaster } from "@/components/ui/toaster";
 import "./globals.css";
 import { SiteFooter } from "@/components/layout/footer";
 import Header from "@/components/layout/header-server";
 import BottomNav from "@/components/layout/mobile/bottom-nav";
+import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { Providers } from "./providers";
 
-const inter = Inter({ subsets: ["latin"] });
+const jost = Jost({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: {
@@ -54,15 +55,17 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body className={`${inter.className} pb-16 md:pb-0`}>
-        <Providers>
-          <Header />
-          {children}
-          <Toaster />
-          <SiteFooter />
-          <BottomNav />
-        </Providers>
+    <html lang="en" className={jost.className}>
+      <body className={`pb-16 md:pb-0`}>
+        <NuqsAdapter>
+          <Providers>
+            <Header />
+            {children}
+            <Toaster />
+            <SiteFooter />
+            <BottomNav />
+          </Providers>
+        </NuqsAdapter>
       </body>
     </html>
   );

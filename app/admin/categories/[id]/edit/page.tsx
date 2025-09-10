@@ -56,14 +56,8 @@ export default async function EditCategoryPage({ params }: PageProps) {
   const { id } = await params;
 
   return (
-    <div className="mx-auto py-4">
-      <div className="mb-2">
-        <h1 className="text-xl font-bold tracking-tight">Edit Category</h1>
-      </div>
-
-      <Suspense fallback={<LoadingSkeleton />}>
-        <EditCategoryFormWrapper id={id} />
-      </Suspense>
-    </div>
+    <Suspense fallback={<LoadingSkeleton />}>
+      <EditCategoryFormWrapper id={id} />
+    </Suspense>
   );
 }

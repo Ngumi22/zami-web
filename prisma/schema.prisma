@@ -17,6 +17,8 @@ enum Role {
 enum CustomerStatus {
   ACTIVE
   INACTIVE
+  SUSPENDED
+  PENDING_VERIFICATION
 }
 
 enum OrderStatus {
@@ -48,6 +50,12 @@ enum CategorySpecificationType {
   NUMBER
   SELECT
   BOOLEAN
+}
+
+enum CollectionType {
+  STATIC
+  DYNAMIC
+  FLASH_SALE
 }
 
 type ProductVariant {
@@ -134,28 +142,95 @@ model User {
   @@map("user")
 }
 
-model Customer {
-  id         String         @id @default(auto()) @map("_id") @db.ObjectId
-  name       String
-  phone      String?
-  email      String         @unique
-  password   String
-  status     CustomerStatus @default(ACTIVE)
-  joinDate   DateTime       @default(now())
-  totalSpent Float          @default(0)
-  orders     Order[]
-  reviews    Review[]
-  cart       Cart?
+enum AuthProvider {
+  EMAIL
+  GOOGLE
+}
 
-  addresses CustomerAddress[] @relation("CustomerAddresses")
+model Customer {
+  id           String         @id @default(auto()) @map("_id") @db.ObjectId
+  name         String
+  phone        String?
+  email        String         @unique
+  password     String?
+  status       CustomerStatus @default(PENDING_VERIFICATION)
+  joinDate     DateTime       @default(now())
+  lastLogin    DateTime?
+  totalSpent   Float          @default(0)
+  orders       Order[]
+  reviews      Review[]
+  cart         Cart?
+  addresses    CustomerAddress[]
+  socialAccounts CustomerSocialAccount[]
+  sessions     CustomerSession[]
+  wishlist     Wishlist?
+
+  authProvider AuthProvider   @default(EMAIL)
+  providerId   String?
+  emailVerified Boolean       @default(false)
+  verificationToken String?
+  verificationTokenExpires DateTime?
+  resetToken     String?
+  resetTokenExpires DateTime?
+  loginAttempts  Int          @default(0)
+  lockedUntil    DateTime?
+
+  avatar       String?
+
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
 
   @@index([status])
+  @@index([createdAt])
+  @@unique([authProvider, providerId])
 }
+
+model Wishlist {
+  id         String         @id @default(auto()) @map("_id") @db.ObjectId
+  customerId String         @unique @db.ObjectId
+  customer   Customer       @relation(fields: [customerId], references: [id])
+  items      WishlistItem[]
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+}
+
+model WishlistItem {
+  id         String     @id @default(auto()) @map("_id") @db.ObjectId
+  wishlistId String     @db.ObjectId
+  wishlist   Wishlist   @relation(fields: [wishlistId], references: [id])
+  productId  String     @db.ObjectId
+  product    Product    @relation(fields: [productId], references: [id])
+  addedAt    DateTime   @default(now())
+
+  @@unique([wishlistId, productId])
+  @@index([wishlistId])
+  @@index([productId])
+}
+
+model CustomerSocialAccount {
+  id           String      @id @default(auto()) @map("_id") @db.ObjectId
+  customerId   String      @db.ObjectId
+  customer     Customer    @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  provider     AuthProvider
+  providerId   String
+  email        String?
+  name         String?
+  avatar       String?
+  accessToken  String?
+  refreshToken String?
+  expiresAt    DateTime?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  @@unique([provider, providerId])
+  @@index([customerId])
+}
+
 
 model CustomerAddress {
   id               String   @id @default(auto()) @map("_id") @db.ObjectId
   customerId       String   @db.ObjectId
-  customer         Customer @relation("CustomerAddresses", fields: [customerId], references: [id])
+  customer         Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
   fullName         String
   addressLine1     String
   addressLine2     String?
@@ -166,6 +241,8 @@ model CustomerAddress {
   phone            String?
   isDefault        Boolean  @default(false)
   preferredCourier String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
   @@index([customerId])
 }
@@ -208,8 +285,6 @@ model Category {
   @@index([name])
 }
 
-
-
 model Product {
   id               String           @id @default(auto()) @map("_id") @db.ObjectId
   name             String
@@ -233,6 +308,7 @@ model Product {
   brand            Brand            @relation(fields: [brandId], references: [id])
   reviews          Review[]
   sales            Int?             @default(0)
+  collections      ProductsOnCollections[]
 
   createdById      String?   @db.ObjectId
   createdBy        User?     @relation("ProductsByUser", fields: [createdById], references: [id])
@@ -253,6 +329,7 @@ model Product {
   @@index([featured, createdAt])
 
   @@index([categoryId, createdAt])
+  @@index([categoryId, brandId])
   @@index([categoryId, price])
   @@index([categoryId, averageRating])
   @@index([brandId, createdAt])
@@ -260,6 +337,43 @@ model Product {
   @@index([originalPrice, createdAt])
   @@index([sales, createdAt])
 
+  WishlistItem WishlistItem[]
+}
+
+model Collection {
+  id          String                   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  slug        String                   @unique
+  description String?
+  type        CollectionType           @default(STATIC)
+  isActive    Boolean                  @default(true)
+
+  startDate   DateTime?
+  endDate     DateTime?
+
+  products    ProductsOnCollections[]
+  createdAt   DateTime                 @default(now())
+  updatedAt   DateTime                 @updatedAt
+
+  @@index([isActive])
+  @@index([createdAt])
+  @@index([type, isActive])
+  @@index([startDate, endDate])
+}
+
+model ProductsOnCollections {
+  id           String      @id @default(auto()) @map("_id") @db.ObjectId
+  product      Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId    String      @db.ObjectId
+  collection   Collection  @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  collectionId String      @db.ObjectId
+  order        Int         @default(0)
+  addedAt      DateTime    @default(now())
+
+  @@unique([productId, collectionId])
+  @@index([productId])
+  @@index([collectionId])
+  @@index([collectionId, order])
 }
 
 model Review {
@@ -297,6 +411,8 @@ model Order {
   status          OrderStatus     @default(PENDING)
   items           OrderItem[]
   shippingAddress ShippingAddress
+  addressId       String?          @db.ObjectId
+  billingAddress  ShippingAddress?
   subtotal        Float
   tax             Float
   shipping        Float
@@ -397,6 +513,21 @@ model Session {
 
   @@unique([token])
   @@map("session")
+}
+
+model CustomerSession {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  customerId String  @db.ObjectId
+  customer  Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  token     String
+  expiresAt DateTime
+  userAgent String?
+  ipAddress String?
+  createdAt DateTime
+  updatedAt DateTime
+
+  @@unique([token])
+  @@map("customersession")
 }
 
 model Account {

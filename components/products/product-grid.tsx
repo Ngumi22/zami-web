@@ -1,31 +1,13 @@
 "use client";
 
-import type React from "react";
-
 import { Card, CardContent } from "@/components/ui/card";
-
 import { memo } from "react";
 import { cn } from "@/lib/utils";
 import { ProductCard } from "@/components/admin/product-sections/product-card";
-import { NormalizedProduct } from "@/data/product-filters";
+import { Product } from "@prisma/client";
 
 interface ProductGridProps {
-  products: Array<
-    NormalizedProduct & {
-      shortDescription?: string;
-      description?: string;
-      thumbnailImages?: string[];
-      categoryId?: string;
-      brandId?: string;
-      isPublished?: boolean;
-      isFeatured?: boolean;
-      isArchived?: boolean;
-      createdAt?: Date;
-      updatedAt?: Date;
-      variants?: any[];
-      sales?: number;
-    }
-  >;
+  products: Product[];
   viewMode: 1 | 2 | 3 | 4 | 5;
   isLoading: boolean;
 }
@@ -76,24 +58,7 @@ const ProductGrid = memo(function ProductGrid({
   return (
     <div className={cn("grid gap-4", gridCols[viewMode])}>
       {products.map((product, index) => (
-        <ProductCard
-          key={product.id}
-          product={{
-            ...product,
-            shortDescription: product.shortDescription ?? "",
-            description: product.description ?? "",
-            thumbnailImages: product.thumbnailImages ?? [],
-            variants: product.variants ?? [],
-            categoryId: product.categoryId ?? "",
-            brandId: product.brandId ?? "",
-            createdAt: product.createdAt ?? new Date(),
-            updatedAt: product.updatedAt ?? new Date(),
-            sales: product.sales ?? 0,
-            price: (product as any).price ?? 0,
-            originalPrice: product.originalPrice ?? null,
-            stock: (product as any).stock ?? 0,
-          }}
-        />
+        <ProductCard key={product.id} product={product} />
       ))}
     </div>
   );

@@ -34,15 +34,14 @@ export const cacheTags = {
   product: (id: string) => `product_${id}`,
   brand: (id: string) => `brand_${id}`,
   category: (id: string) => `category_${id}`,
-  productBySlug: (slug: string) => `product_${sanitizeSlug(slug)}`,
+  productBySlug: (slug: string) =>
+    `product_${slug.replace(/[^a-zA-Z0-9_]/g, "_").slice(0, 64)}`,
   productsByCategory: (categoryId: string) =>
     `products_by_category_${categoryId}`,
   byBrand: (brandId: string) => `products_by_brand_${brandId}`,
-
   productsCollection: () => "products_collection",
   brandsCollection: () => "brands_collection",
   categoriesCollection: () => "categories_collection",
-
   featured_products: () => "featured_products",
   new_arrivals: () => "new_arrivals",
   best_selling: () => "best_selling",
@@ -52,7 +51,6 @@ export const cacheTags = {
   products_reviews: (productIds: string[]) =>
     productIds.slice(0, 5).map((id) => `reviews_${id}`),
   product_reviews: (productId: string) => `reviews_${productId}`,
-
   featuredProducts: () => "featured",
   products: () => "all",
   filteredProducts: (params: GetProductsParams) =>

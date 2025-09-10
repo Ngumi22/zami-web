@@ -1,18 +1,38 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Search, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useDebounce } from "@/hooks/use-debounce";
+import debounce from "lodash.debounce";
 import type { Product } from "@prisma/client";
 import { formatCurrency } from "@/lib/utils";
 
 interface InstantSearchProps {
   products: Product[];
 }
+
+// Precompute searchable text for each product to avoid repeated processing
+const preprocessProducts = (products: Product[]) => {
+  return products.map((product) => ({
+    ...product,
+    searchText: `${product.name} ${product.description || ""} ${
+      product.categoryId || ""
+    }`.toLowerCase(),
+  }));
+};
+
+// Memoized search function for better performance
+const searchProducts = (products: PreprocessedProduct[], query: string) => {
+  const lowercaseQuery = query.toLowerCase();
+  return products
+    .filter((product) => product.searchText.includes(lowercaseQuery))
+    .slice(0, 5);
+};
+
+type PreprocessedProduct = Product & { searchText: string };
 
 export function InstantSearch({ products }: InstantSearchProps) {
   const [isOpen, setIsOpen] = useState(false);
@@ -21,38 +41,48 @@ export function InstantSearch({ products }: InstantSearchProps) {
   const [isLoading, setIsLoading] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const debouncedQuery = useDebounce(query, 300);
 
-  useEffect(() => {
-    if (!debouncedQuery) {
-      setResults([]);
-      return;
-    }
+  // Preprocess products once on component mount
+  const preprocessedProducts = useMemo(
+    () => preprocessProducts(products),
+    [products]
+  );
 
-    const performSearch = () => {
+  // Create debounced search function
+  const debouncedSearch = useRef(
+    debounce((searchQuery: string) => {
+      if (!searchQuery) {
+        setResults([]);
+        setIsLoading(false);
+        return;
+      }
+
       setIsLoading(true);
       try {
-        const filtered = products.filter(
-          (product) =>
-            product.name.toLowerCase().includes(debouncedQuery.toLowerCase()) ||
-            product.description
-              ?.toLowerCase()
-              .includes(debouncedQuery.toLowerCase()) ||
-            product.categoryId
-              ?.toLowerCase()
-              .includes(debouncedQuery.toLowerCase())
-        );
-        setResults(filtered.slice(0, 5));
+        const filtered = searchProducts(preprocessedProducts, searchQuery);
+        setResults(filtered);
       } catch (error) {
         console.error("Search error:", error);
       } finally {
         setIsLoading(false);
       }
+    }, 300)
+  ).current;
+
+  // Clean up debounce on unmount
+  useEffect(() => {
+    return () => {
+      debouncedSearch.cancel();
     };
+  }, [debouncedSearch]);
 
-    performSearch();
-  }, [debouncedQuery, products]);
+  // Handle query changes with debounce
+  useEffect(() => {
+    setIsLoading(!!query);
+    debouncedSearch(query);
+  }, [query, debouncedSearch]);
 
+  // Close search when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -62,15 +92,30 @@ export function InstantSearch({ products }: InstantSearchProps) {
         setIsOpen(false);
       }
     };
+
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // Focus input when search opens
   useEffect(() => {
     if (isOpen && inputRef.current) {
       inputRef.current.focus();
     }
   }, [isOpen]);
+
+  // Clear search results when closing
+  const handleCloseSearch = useCallback(() => {
+    setIsOpen(false);
+    setQuery("");
+    setResults([]);
+  }, []);
+
+  // Handle product selection
+  const handleProductSelect = useCallback(() => {
+    setIsOpen(false);
+    setQuery("");
+  }, []);
 
   return (
     <div className="relative flex-1 w-full" ref={searchRef}>
@@ -84,15 +129,7 @@ export function InstantSearch({ products }: InstantSearchProps) {
       </Button>
 
       <div className="relative hidden md:flex w-full max-w-sm items-center">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="16"
-          height="16"
-          fill="currentColor"
-          className="bi bi-search absolute left-2.5 h-4 w-4 text-muted-foreground"
-          viewBox="0 0 16 16">
-          <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0" />
-        </svg>
+        <Search className="absolute left-2.5 h-4 w-4 text-muted-foreground" />
         <Input
           className="text-xs pl-9 w-full focus-visible:ring-0 focus-visible:ring-offset-0 ring-0 rounded-sm bg-gray-50"
           type="search"
@@ -119,10 +156,7 @@ export function InstantSearch({ products }: InstantSearchProps) {
               onChange={(e) => setQuery(e.target.value)}
               autoFocus
             />
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setIsOpen(false)}>
+            <Button variant="ghost" size="icon" onClick={handleCloseSearch}>
               <X className="h-4 w-4" />
             </Button>
           </div>
@@ -138,12 +172,9 @@ export function InstantSearch({ products }: InstantSearchProps) {
                   <Link
                     key={product.id}
                     href={`/products/${product.slug}`}
-                    onClick={() => {
-                      setIsOpen(false);
-                      setQuery("");
-                    }}
+                    onClick={handleProductSelect}
                     className="flex items-center p-2 hover:bg-muted rounded-md transition-colors text-xs">
-                    <div className="relative h-12 w-12 rounded overflow-hidden mr-3">
+                    <div className="relative h-12 w-12 rounded overflow-hidden mr-3 flex-shrink-0">
                       <Image
                         src={product.mainImage || "/placeholder.svg"}
                         alt={product.name}
@@ -164,10 +195,7 @@ export function InstantSearch({ products }: InstantSearchProps) {
                 {query && (
                   <Link
                     href={`/products?search=${encodeURIComponent(query)}`}
-                    onClick={() => {
-                      setIsOpen(false);
-                      setQuery("");
-                    }}
+                    onClick={handleProductSelect}
                     className="text-xs block w-full text-center text-black hover:underline mt-2 pt-2 border-t">
                     View all results for "{query}"
                   </Link>

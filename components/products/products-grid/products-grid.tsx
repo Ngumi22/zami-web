@@ -10,7 +10,6 @@ export default function ProductGrid({
   tabs,
   defaultActiveTab,
   className,
-  maxWidth = "max-w-7xl",
   gridCols = { sm: 2, lg: 4 },
   tabPosition = "left",
 }: ProductGridProps) {
@@ -30,7 +29,7 @@ export default function ProductGrid({
   const getProductId = useCallback((product: Product) => product.id, []);
 
   const gridClasses = cn(
-    "grid gap-6 grid-cols-1",
+    "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6",
     gridCols.sm && `sm:grid-cols-${gridCols.sm}`,
     gridCols.md && `md:grid-cols-${gridCols.md}`,
     gridCols.lg && `lg:grid-cols-${gridCols.lg}`,
@@ -38,8 +37,7 @@ export default function ProductGrid({
   );
 
   return (
-    <div
-      className={cn("w-full mx-auto p-4 md:p-6 lg:p-8", maxWidth, className)}>
+    <div className={cn("w-full mx-auto", className)}>
       <TabbedGrid<Product>
         tabs={tabs.map((tab) => ({ label: tab.label }))}
         items={activeProducts}

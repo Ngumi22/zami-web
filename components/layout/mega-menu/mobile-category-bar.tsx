@@ -98,7 +98,11 @@ export function MobileCategoryBar({
   };
 
   return (
-    <div className={cn("bg-background border-b md:hidden relative", className)}>
+    <div
+      className={cn(
+        "hidden md:block bg-background border-b relative",
+        className
+      )}>
       <div className="container px-0 relative">
         {showLeftScroll && (
           <button

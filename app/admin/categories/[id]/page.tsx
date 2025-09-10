@@ -58,12 +58,6 @@ async function CategoryDetailContent({ categoryId }: { categoryId: string }) {
         </div>
 
         <div className="flex gap-2">
-          <Link href={`/admin/categories/new?parent=${category.id}`}>
-            <Button variant="outline">
-              <Plus className="w-4 h-4 mr-2" />
-              Add Subcategory
-            </Button>
-          </Link>
           <Link href={`/admin/categories/${category.id}/edit`}>
             <Button variant="outline">
               <Edit className="w-4 h-4 mr-2" />
@@ -152,7 +146,7 @@ async function CategoryDetailContent({ categoryId }: { categoryId: string }) {
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
               <span>Subcategories</span>
-              <Link href={`/admin/categories/new?parent=${category.id}`}>
+              <Link href={`/admin/categories/new`}>
                 <Button size="sm">
                   <Plus className="w-4 h-4 mr-2" />
                   Add Subcategory

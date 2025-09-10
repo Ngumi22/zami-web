@@ -55,7 +55,7 @@ export function TabbedGrid<T>({
   onLoadMore,
   hasMore = false,
   className,
-  gridClasses = "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 h-[5rem]",
+  gridClasses = "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6",
   tabPosition = "left",
 }: TabbedGridProps<T>) {
   const [indicatorStyle, setIndicatorStyle] = useState({ left: 0, width: 0 });
@@ -95,14 +95,14 @@ export function TabbedGrid<T>({
             className={cn(
               "pb-3 text-sm font-medium transition-colors duration-150 whitespace-nowrap",
               activeTab === tab.label
-                ? "text-primary"
-                : "text-muted-foreground hover:text-primary"
+                ? "text-black"
+                : "text-muted-foreground hover:text-black"
             )}>
             {tab.label}
           </button>
         ))}
         <div
-          className="absolute bottom-0 h-0.5 bg-primary transition-all duration-300 ease-out"
+          className="absolute bottom-0 h-0.5 bg-black transition-all duration-300 ease-out"
           style={indicatorStyle}
         />
       </div>

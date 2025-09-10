@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Search } from "lucide-react";
@@ -13,13 +13,37 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { useDebounce } from "@/hooks/use-debounce";
+import debounce from "lodash.debounce";
 import type { Category, Product } from "@prisma/client";
 
 interface MobileSearchProps {
   categories: Category[];
   products: Product[];
 }
+
+// Precompute searchable text for each product to avoid repeated processing
+const preprocessProducts = (products: Product[], categories: Category[]) => {
+  const categoryMap = new Map(
+    categories.map((c) => [c.id, c.name.toLowerCase()])
+  );
+
+  return products.map((product) => ({
+    ...product,
+    searchText: `${product.name} ${product.description || ""} ${
+      categoryMap.get(product.categoryId) || ""
+    }`.toLowerCase(),
+  }));
+};
+
+// Memoized search function for better performance
+const searchProducts = (products: PreprocessedProduct[], query: string) => {
+  const lowercaseQuery = query.toLowerCase();
+  return products
+    .filter((product) => product.searchText.includes(lowercaseQuery))
+    .slice(0, 5);
+};
+
+type PreprocessedProduct = Product & { searchText: string };
 
 export function MobileSearch({ categories, products }: MobileSearchProps) {
   const [open, setOpen] = useState(false);
@@ -28,8 +52,14 @@ export function MobileSearch({ categories, products }: MobileSearchProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
-  const debouncedQuery = useDebounce(query, 300);
 
+  // Preprocess products once on component mount
+  const preprocessedProducts = useMemo(
+    () => preprocessProducts(products, categories),
+    [products, categories]
+  );
+
+  // Load recent searches from localStorage
   useEffect(() => {
     const storedSearches = localStorage.getItem("recentSearches");
     if (storedSearches) {
@@ -41,55 +71,41 @@ export function MobileSearch({ categories, products }: MobileSearchProps) {
     }
   }, []);
 
-  // Save recent searches to localStorage
-  const saveSearch = (searchTerm: string) => {
-    if (!searchTerm.trim()) return;
+  // Create debounced search function
+  const debouncedSearch = useRef(
+    debounce((searchQuery: string) => {
+      if (!searchQuery) {
+        setResults([]);
+        setIsLoading(false);
+        return;
+      }
 
-    const updatedSearches = [
-      searchTerm,
-      ...recentSearches.filter((s) => s !== searchTerm),
-    ].slice(0, 5);
-
-    setRecentSearches(updatedSearches);
-    localStorage.setItem("recentSearches", JSON.stringify(updatedSearches));
-  };
-
-  // Handle search
-  useEffect(() => {
-    if (!debouncedQuery) {
-      setResults([]);
-      return;
-    }
-
-    const performSearch = () => {
       setIsLoading(true);
       try {
-        const filtered = products.filter((product) => {
-          const lowerQuery = debouncedQuery.toLowerCase();
-          const matchesProduct =
-            product.name.toLowerCase().includes(lowerQuery) ||
-            product.description.toLowerCase().includes(lowerQuery);
-
-          const matchesCategory = categories.some(
-            (c) =>
-              c.id === product.categoryId &&
-              c.name.toLowerCase().includes(lowerQuery)
-          );
-
-          return matchesProduct || matchesCategory;
-        });
-
-        setResults(filtered.slice(0, 5)); // Limit to 5 results
+        const filtered = searchProducts(preprocessedProducts, searchQuery);
+        setResults(filtered);
       } catch (error) {
         console.error("Search error:", error);
       } finally {
         setIsLoading(false);
       }
+    }, 300)
+  ).current;
+
+  // Clean up debounce on unmount
+  useEffect(() => {
+    return () => {
+      debouncedSearch.cancel();
     };
+  }, [debouncedSearch]);
 
-    performSearch();
-  }, [debouncedQuery, products, categories]);
+  // Handle query changes with debounce
+  useEffect(() => {
+    setIsLoading(!!query);
+    debouncedSearch(query);
+  }, [query, debouncedSearch]);
 
+  // Focus input when search opens
   useEffect(() => {
     if (open && inputRef.current) {
       setTimeout(() => {
@@ -98,18 +114,65 @@ export function MobileSearch({ categories, products }: MobileSearchProps) {
     }
   }, [open]);
 
-  const handleSearch = (searchTerm: string) => {
-    saveSearch(searchTerm);
-    setOpen(false);
-  };
+  // Save recent searches to localStorage
+  const saveSearch = useCallback(
+    (searchTerm: string) => {
+      if (!searchTerm.trim()) return;
 
-  const clearRecentSearches = () => {
+      const updatedSearches = [
+        searchTerm,
+        ...recentSearches.filter((s) => s !== searchTerm),
+      ].slice(0, 5);
+
+      setRecentSearches(updatedSearches);
+      localStorage.setItem("recentSearches", JSON.stringify(updatedSearches));
+    },
+    [recentSearches]
+  );
+
+  // Handle search submission
+  const handleSearch = useCallback(
+    (searchTerm: string) => {
+      saveSearch(searchTerm);
+      setOpen(false);
+    },
+    [saveSearch]
+  );
+
+  // Clear recent searches
+  const clearRecentSearches = useCallback(() => {
     setRecentSearches([]);
     localStorage.removeItem("recentSearches");
-  };
+  }, []);
+
+  // Handle recent search term selection
+  const handleRecentSearchSelect = useCallback((term: string) => {
+    setQuery(term);
+    // Focus and potentially trigger search
+    if (inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, []);
+
+  // Clear search query
+  const clearQuery = useCallback(() => {
+    setQuery("");
+    if (inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, []);
+
+  // Close sheet handler
+  const handleOpenChange = useCallback((isOpen: boolean) => {
+    setOpen(isOpen);
+    if (!isOpen) {
+      setQuery("");
+      setResults([]);
+    }
+  }, []);
 
   return (
-    <Sheet open={open} onOpenChange={setOpen}>
+    <Sheet open={open} onOpenChange={handleOpenChange}>
       <SheetTrigger asChild>
         <div className="flex flex-col items-center justify-center w-full h-full text-xs text-muted-foreground cursor-pointer">
           <Search className="h-5 w-5 mb-1" />
@@ -133,8 +196,8 @@ export function MobileSearch({ categories, products }: MobileSearchProps) {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="absolute right-2 top-1/2 -translate-y-1/2"
-                  onClick={() => setQuery("")}>
+                  className="absolute right-2 top-1/2 -translate-y-1/2 h-6 w-6"
+                  onClick={clearQuery}>
                   ×
                 </Button>
               )}
@@ -159,7 +222,7 @@ export function MobileSearch({ categories, products }: MobileSearchProps) {
                     href={`/products/${product.slug}`}
                     onClick={() => handleSearch(query)}
                     className="flex items-center p-3 hover:bg-muted rounded-md transition-colors">
-                    <div className="relative h-16 w-16 rounded overflow-hidden mr-3">
+                    <div className="relative h-16 w-16 rounded overflow-hidden mr-3 flex-shrink-0">
                       <Image
                         src={product.mainImage || "/placeholder.svg"}
                         alt={product.name}
@@ -200,7 +263,8 @@ export function MobileSearch({ categories, products }: MobileSearchProps) {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={clearRecentSearches}>
+                      onClick={clearRecentSearches}
+                      className="h-8 px-2 text-xs">
                       Clear
                     </Button>
                   </div>
@@ -209,35 +273,24 @@ export function MobileSearch({ categories, products }: MobileSearchProps) {
                       <button
                         key={index}
                         className="flex items-center w-full p-3 hover:bg-muted rounded-md transition-colors text-left"
-                        onClick={() => {
-                          setQuery(term);
-                        }}>
+                        onClick={() => handleRecentSearchSelect(term)}>
                         <Search className="h-4 w-4 mr-3 text-muted-foreground" />
-                        <span>{term}</span>
+                        <span className="truncate">{term}</span>
                       </button>
                     ))}
                   </div>
                 </div>
               )}
 
-              <div className="space-y-3">
-                <h3 className="font-medium text-sm text-muted-foreground">
-                  Recent Searches
-                </h3>
-                <div className="space-y-2">
-                  {recentSearches.map((term, index) => (
-                    <button
-                      key={index}
-                      className="flex items-center w-full p-3 hover:bg-muted rounded-md transition-colors text-left"
-                      onClick={() => {
-                        setQuery(term);
-                      }}>
-                      <Search className="h-4 w-4 mr-3 text-muted-foreground" />
-                      <span>{term}</span>
-                    </button>
-                  ))}
+              {recentSearches.length === 0 && (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Search className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>No recent searches</p>
+                  <p className="text-xs mt-2">
+                    Start typing to search products
+                  </p>
                 </div>
-              </div>
+              )}
             </div>
           )}
         </div>

@@ -16,7 +16,6 @@ import { ActionResult } from "./types";
 import { requireAuth } from "./auth-action";
 import { requireRateLimit } from "./ratelimit";
 import { Prisma } from "@prisma/client";
-import { nanoid } from "nanoid"; // Small utility for generating random strings for unique slugs
 
 // --- Blog Category Actions ---
 

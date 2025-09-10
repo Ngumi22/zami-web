@@ -1,0 +1,18 @@
+import { getFlashSaleData } from "@/lib/flash-sale-actions";
+import { FlashSaleClient } from "./flash-sale-section-client";
+
+export async function FlashSaleSection() {
+  const flashSaleData = await getFlashSaleData();
+
+  if (!flashSaleData) {
+    return null;
+  }
+
+  return (
+    <FlashSaleClient
+      products={flashSaleData.products}
+      saleEndDate={flashSaleData.saleEndDate}
+      collectionName={flashSaleData.collectionName}
+    />
+  );
+}

@@ -1,11 +1,11 @@
 import { Suspense } from "react";
-import { getAllCategories } from "@/data/category";
-import ProductForm from "@/components/admin/forms/products/product-form";
-import { getAllBrands } from "@/data/cat";
+import ProductForm from "@/components/admin/forms/products/form";
+import { getCategoriesWithParents } from "@/data/category";
+import { getAllBrands } from "@/data/brands";
 
 export default async function NewProductPage() {
   const [categories, brands] = await Promise.all([
-    getAllCategories(),
+    getCategoriesWithParents(),
     getAllBrands(),
   ]);
 

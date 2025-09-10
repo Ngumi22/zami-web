@@ -7,6 +7,7 @@ import {
   Watch,
 } from "lucide-react";
 export const WhatsappPhoneNumber = +254757011738;
+export const AUTO_SLIDE_INTERVAL = 5000;
 
 export const SPEC_CATEGORIES = {
   "General Information": ["price", "brand", "category", "stock", "rating"],

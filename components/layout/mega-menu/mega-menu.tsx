@@ -70,7 +70,7 @@ export function MegaMenu({
 
     openTimeout.current = setTimeout(() => {
       setActiveCategory(categoryId);
-    }, 200); // open delay
+    }, 200);
   };
 
   const handleMouseLeave = () => {
@@ -81,7 +81,7 @@ export function MegaMenu({
 
     closeTimeout.current = setTimeout(() => {
       setActiveCategory(null);
-    }, 200); // close delay
+    }, 200);
   };
 
   if (isMobile) {
@@ -145,7 +145,6 @@ export function MegaMenu({
         })}
       </nav>
 
-      {/* Mega menu dropdown */}
       {activeCategory && (
         <div
           onMouseEnter={() => handleMouseEnter(activeCategory)}

@@ -12,10 +12,9 @@ export function Notifications() {
   const [notifications, setNotifications] = useState(3);
   return (
     <DropdownMenu modal={false}>
-      <DropdownMenuTrigger asChild>
+      <DropdownMenuTrigger asChild className="border-0 hover:bg-none">
         <Button variant="outline">
-          <BellIcon className="h-4 w-4 mr-2" />
-          Notifications
+          <BellIcon className="h-6 w-6 mr-2" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-80 max-h-[400px] overflow-auto">

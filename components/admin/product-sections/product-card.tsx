@@ -26,7 +26,7 @@ type ProductCardProps = {
       name: string;
       specifications?: {
         name: string;
-        unit?: string;
+        unit?: string | null;
       }[];
     };
   };
@@ -72,6 +72,22 @@ export function ProductCard({
 
   const displayName = `${product.name}${variantSuffix}`.trim();
   const displayPrice = product.price + displayPriceModifier;
+  const displayOriginalPrice = product.originalPrice
+    ? product.originalPrice + displayPriceModifier
+    : null;
+
+  // Check if product has discount
+  const hasDiscount =
+    displayOriginalPrice && displayOriginalPrice > displayPrice;
+
+  // Calculate discount percentage
+  const discountPercentage =
+    hasDiscount && displayOriginalPrice
+      ? Math.round(
+          ((displayOriginalPrice - displayPrice) / displayOriginalPrice) * 100
+        )
+      : 0;
+
   const selectedVariants = Object.fromEntries(
     Array.from(defaultVariantsMap.entries()).map(([type, { value }]) => [
       type,
@@ -80,23 +96,33 @@ export function ProductCard({
   );
 
   return (
-    <div className="group relative overflow-hidden rounded-lg border bg-background shadow-sm hover:shadow-lg transition-shadow duration-300 flex flex-col">
-      <div className="relative w-full aspect-square overflow-hidden bg-muted flex-shrink-0">
+    <div className="group relative overflow-hidden rounded-sm border shadow-sm hover:shadow-lg transition-shadow duration-300 flex flex-col">
+      <div className="relative w-full aspect-square overflow-hidden flex-shrink-0">
         <Link
           href={`/products/${product.slug}`}
           className="absolute inset-0 z-10">
           <span className="sr-only">View {displayName}</span>
         </Link>
+
+        {/* Discount Badge */}
+        {hasDiscount && (
+          <div className="absolute top-2 left-2 z-20">
+            <span className="bg-black px-2 text-white text-xs">
+              - {discountPercentage}%
+            </span>
+          </div>
+        )}
+
         <Image
           src={
             product.mainImage ||
-            "/placeholder.svg?height=250&width=250&query=product"
+            "/placeholder.svg?height=125&width=125&query=product"
           }
           alt={displayName}
           fill
           priority={priority}
-          sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
-          className="object-contain p-2 transition-transform duration-300 group-hover:scale-105"
+          sizes="(max-width: 768px) 30vw, (max-width: 1024px) 20vw, 15vw"
+          className="object-contain p-2 transition-transform duration-300 scale-90 group-hover:scale-105"
         />
 
         {product.stock < 10 && product.stock > 0 && (
@@ -132,10 +158,10 @@ export function ProductCard({
         )}
       </div>
 
-      <div className="p-2 flex flex-col flex-1 justify-between">
+      <div className="flex flex-col flex-1 justify-between p-1">
         <div className="flex-1">
           <Link href={`/products/${product.slug}`} className="block">
-            <h3 className="font-medium line-clamp-2 text-sm leading-tight min-h-[1rem] hover:text-blue-600 transition-colors">
+            <h3 className="font-medium line-clamp-1 text-sm leading-tight min-h-[1rem] hover:text-black/80 transition-colors">
               {displayName}
             </h3>
           </Link>
@@ -145,40 +171,43 @@ export function ProductCard({
             </p>
             {hasVariants && (
               <span className="text-xs text-muted-foreground block">
-                {variantTypes.size} Variant{variantTypes.size > 1 ? "s" : ""}
+                {variantTypes.size} Option{variantTypes.size > 1 ? "s" : ""}
               </span>
             )}
           </div>
         </div>
 
-        <div>
-          <div className="flex items-center justify-between mt-2">
-            <div className="flex items-center">
-              <span className="text-sm font-bold">
-                {formatCurrency(displayPrice)}
+        <div className="flex items-center justify-between mt-1">
+          <div className="flex items-center gap-1">
+            <span className="text-sm font-bold">
+              {formatCurrency(displayPrice)}
+            </span>
+            {hasDiscount && displayOriginalPrice && (
+              <span className="text-xs text-muted-foreground line-through">
+                {formatCurrency(displayOriginalPrice)}
               </span>
-            </div>
-
-            {!isMobile && (
-              <div className="relative z-20">
-                <AddToCartButton
-                  product={product}
-                  selectedVariants={selectedVariants}
-                  quantity={1}
-                />
-              </div>
-            )}
-
-            {isMobile && (
-              <div className="flex items-center justify-end relative z-30">
-                <BuyNowButton
-                  product={product}
-                  selectedVariants={selectedVariants}
-                  quantity={1}
-                />
-              </div>
             )}
           </div>
+
+          {!isMobile && (
+            <div className="relative z-20">
+              <AddToCartButton
+                product={product}
+                selectedVariants={selectedVariants}
+                quantity={1}
+              />
+            </div>
+          )}
+
+          {isMobile && (
+            <div className="flex items-center justify-end relative z-30">
+              <BuyNowButton
+                product={product}
+                selectedVariants={selectedVariants}
+                quantity={1}
+              />
+            </div>
+          )}
         </div>
       </div>
     </div>

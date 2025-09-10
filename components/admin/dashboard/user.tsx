@@ -19,11 +19,11 @@ type UserDropdownMenuProps = {
 export default function UserDropdownMenu({ user }: UserDropdownMenuProps) {
   return (
     <DropdownMenu modal={false}>
-      <DropdownMenuTrigger asChild>
+      <DropdownMenuTrigger asChild className="hover:bg-none">
         <Button
           variant="ghost"
-          className="flex items-center gap-2 hover:bg-purple-100 hover:text-purple-700 transition-colors">
-          <Avatar className="h-8 w-8 ring-2 ring-purple-200">
+          className="flex items-center gap-2 bg-none hover:bg-none">
+          <Avatar className="h-6 w-6">
             <AvatarImage src="/placeholder.svg?height=32&width=32" />
             <AvatarFallback className="bg-gradient-to-br from-purple-500 to-pink-500 text-white">
               {user.image}

@@ -229,7 +229,7 @@ export default function CategoryForm({
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back
         </Button>
-        <h1 className="text-3xl font-bold tracking-tight">
+        <h1 className="text-xl font-bold tracking-tight mx-auto">
           {isEditing ? "Edit Category" : "New Category"}
         </h1>
       </div>
@@ -324,169 +324,188 @@ export default function CategoryForm({
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Category Image</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Uploader
-              imageUrls={newImages}
-              {...mainImageUploader}
-              endpoint="imageUploader"
-            />
-            {existingImage && (
-              <div className="relative w-40 h-40 rounded-md overflow-hidden">
-                <Image
-                  src={existingImage}
-                  alt="Category image preview"
-                  layout="fill"
-                  objectFit="cover"
+        {!parentId && (
+          <>
+            <Card>
+              <CardHeader>
+                <CardTitle>Category Image</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <Uploader
+                  imageUrls={newImages}
+                  {...mainImageUploader}
+                  endpoint="imageUploader"
                 />
-                <Button
-                  type="button"
-                  variant="destructive"
-                  size="icon"
-                  className="absolute top-1 right-1"
-                  onClick={() => setExistingImage("")}>
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Specifications</CardTitle>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleAddSpecification}>
-              <Plus className="h-4 w-4 mr-2" /> Add Specification
-            </Button>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {specifications.length === 0 && (
-              <p className="text-sm text-muted-foreground">
-                No specifications defined for this category.
-              </p>
-            )}
-            {specifications.map((spec, index) => (
-              <div key={spec.id} className="border rounded-md p-4 space-y-4">
-                <div className="flex items-center justify-between">
-                  <h4 className="font-semibold">Specification #{index + 1}</h4>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleRemoveSpecification(index)}>
-                    <Trash2 className="h-4 w-4 text-destructive" />
-                  </Button>
-                </div>
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor={`spec-name-${index}`}>Name</Label>
-                    <Input
-                      id={`spec-name-${index}`}
-                      value={spec.name}
-                      onChange={(e) =>
-                        handleSpecificationChange(index, "name", e.target.value)
-                      }
-                      placeholder="e.g., Screen Size"
+                {existingImage && (
+                  <div className="relative w-40 h-40 rounded-md overflow-hidden">
+                    <Image
+                      src={existingImage}
+                      alt="Category image preview"
+                      layout="fill"
+                      objectFit="cover"
                     />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor={`spec-unit-${index}`}>Unit</Label>
-                    <Input
-                      id={`spec-unit-${index}`}
-                      value={spec.unit || ""}
-                      onChange={(e) =>
-                        handleSpecificationChange(index, "unit", e.target.value)
-                      }
-                      placeholder="e.g., Inches"
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor={`spec-type-${index}`}>Type</Label>
-                  <Select
-                    value={spec.type}
-                    onValueChange={(value: CategorySpecificationType) =>
-                      handleSpecificationChange(index, "type", value)
-                    }>
-                    <SelectTrigger id={`spec-type-${index}`}>
-                      <SelectValue placeholder="Select type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="TEXT">Text</SelectItem>
-                      <SelectItem value="NUMBER">Number</SelectItem>
-                      <SelectItem value="BOOLEAN">Boolean</SelectItem>
-                      <SelectItem value="SELECT">Select</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                {spec.type === "SELECT" && (
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <Label>Options</Label>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleAddOption(index)}>
-                        <Plus className="w-4 h-4 mr-2" /> Add Option
-                      </Button>
-                    </div>
-                    {spec.options && spec.options.length > 0 ? (
-                      <div className="space-y-2">
-                        {spec.options.map((option, optionIndex) => (
-                          <div
-                            key={optionIndex}
-                            className="flex gap-2 items-center">
-                            <Input
-                              value={option}
-                              onChange={(e) =>
-                                handleUpdateOption(
-                                  index,
-                                  optionIndex,
-                                  e.target.value
-                                )
-                              }
-                              placeholder="Option value"
-                            />
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              onClick={() =>
-                                handleRemoveOption(index, optionIndex)
-                              }>
-                              <Trash2 className="h-4 w-4 text-destructive" />
-                            </Button>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-sm text-muted-foreground">
-                        Add at least one option for this type.
-                      </p>
-                    )}
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="icon"
+                      className="absolute top-1 right-1"
+                      onClick={() => setExistingImage("")}>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                   </div>
                 )}
-                <div className="flex items-center gap-2">
-                  <Checkbox
-                    id={`spec-required-${index}`}
-                    checked={spec.required}
-                    onCheckedChange={(checked) =>
-                      handleSpecificationChange(index, "required", !!checked)
-                    }
-                  />
-                  <Label htmlFor={`spec-required-${index}`}>Required</Label>
-                </div>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle>Specifications</CardTitle>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleAddSpecification}>
+                  <Plus className="h-4 w-4 mr-2" /> Add Specification
+                </Button>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {specifications.length === 0 && (
+                  <p className="text-sm text-muted-foreground">
+                    No specifications defined for this category.
+                  </p>
+                )}
+                {specifications.map((spec, index) => (
+                  <div
+                    key={spec.id}
+                    className="border rounded-md p-4 space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-semibold">
+                        Specification #{index + 1}
+                      </h4>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleRemoveSpecification(index)}>
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    </div>
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor={`spec-name-${index}`}>Name</Label>
+                        <Input
+                          id={`spec-name-${index}`}
+                          value={spec.name}
+                          onChange={(e) =>
+                            handleSpecificationChange(
+                              index,
+                              "name",
+                              e.target.value
+                            )
+                          }
+                          placeholder="e.g., Screen Size"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor={`spec-unit-${index}`}>Unit</Label>
+                        <Input
+                          id={`spec-unit-${index}`}
+                          value={spec.unit || ""}
+                          onChange={(e) =>
+                            handleSpecificationChange(
+                              index,
+                              "unit",
+                              e.target.value
+                            )
+                          }
+                          placeholder="e.g., Inches"
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor={`spec-type-${index}`}>Type</Label>
+                      <Select
+                        value={spec.type}
+                        onValueChange={(value: CategorySpecificationType) =>
+                          handleSpecificationChange(index, "type", value)
+                        }>
+                        <SelectTrigger id={`spec-type-${index}`}>
+                          <SelectValue placeholder="Select type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="TEXT">Text</SelectItem>
+                          <SelectItem value="NUMBER">Number</SelectItem>
+                          <SelectItem value="BOOLEAN">Boolean</SelectItem>
+                          <SelectItem value="SELECT">Select</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    {spec.type === "SELECT" && (
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <Label>Options</Label>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleAddOption(index)}>
+                            <Plus className="w-4 h-4 mr-2" /> Add Option
+                          </Button>
+                        </div>
+                        {spec.options && spec.options.length > 0 ? (
+                          <div className="space-y-2">
+                            {spec.options.map((option, optionIndex) => (
+                              <div
+                                key={optionIndex}
+                                className="flex gap-2 items-center">
+                                <Input
+                                  value={option}
+                                  onChange={(e) =>
+                                    handleUpdateOption(
+                                      index,
+                                      optionIndex,
+                                      e.target.value
+                                    )
+                                  }
+                                  placeholder="Option value"
+                                />
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() =>
+                                    handleRemoveOption(index, optionIndex)
+                                  }>
+                                  <Trash2 className="h-4 w-4 text-destructive" />
+                                </Button>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-sm text-muted-foreground">
+                            Add at least one option for this type.
+                          </p>
+                        )}
+                      </div>
+                    )}
+                    <div className="flex items-center gap-2">
+                      <Checkbox
+                        id={`spec-required-${index}`}
+                        checked={spec.required}
+                        onCheckedChange={(checked) =>
+                          handleSpecificationChange(
+                            index,
+                            "required",
+                            !!checked
+                          )
+                        }
+                      />
+                      <Label htmlFor={`spec-required-${index}`}>Required</Label>
+                    </div>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          </>
+        )}
 
         <div className="flex justify-end gap-2">
           <Button type="submit" disabled={isPending}>

@@ -19,18 +19,19 @@ import { getAllCategories, getCategoryById } from "@/data/category";
 import { Brand, Category, Product } from "@prisma/client";
 import { getQueryClient } from "@/app/get-query-client";
 import { cacheKeys } from "@/lib/cache-keys";
-import {
-  getProducts,
-  GetProductsParams,
-  ProductsResponse,
-} from "@/data/product-page-product";
+
 import {
   BrandWithProductCount,
   getAllBrands,
   getAllCategoriesWithSpecifications,
   getCategoryMaxPrice,
   OutputCategory,
-} from "@/data/cat";
+} from "@/data/category";
+import {
+  getProducts,
+  GetProductsParams,
+  ProductsResponse,
+} from "@/data/productspage/getProducts";
 
 const queryClient = getQueryClient();
 
@@ -76,28 +77,26 @@ export function useProductsInfiniteQuery({
 }: UseProductsInfiniteQueryOptions) {
   return useInfiniteQuery<ProductsResponse>({
     queryKey: cacheKeys.filteredProducts(initialParams),
-    queryFn: async ({ pageParam = 1 }) => {
-      return getProducts({
-        ...initialParams,
-        page: pageParam as number,
-      });
+    queryFn: async ({}) => {
+      return getProducts(initialParams);
     },
     initialPageParam: 1,
-    getNextPageParam: (lastPage, pages) => {
-      if (lastPage.hasMore) {
-        return pages.length + 1;
+    getNextPageParam: (lastPage, allPages) => {
+      const totalFetched = allPages.reduce(
+        (acc, page) => acc + page.products.length,
+        0
+      );
+      if (totalFetched < lastPage.totalProducts) {
+        return allPages.length + 1;
       }
       return undefined;
     },
-
     placeholderData: keepPreviousData,
     initialData: {
       pages: [
         {
           products,
-          totalCount,
-          maxPrice,
-          hasMore,
+          totalProducts: totalCount,
         },
       ],
       pageParams: [1],

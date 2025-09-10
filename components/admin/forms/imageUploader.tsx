@@ -172,7 +172,7 @@ export default function Uploader({
   endpoint,
   className = "",
 }: UploaderProps) {
-  const { toast } = useToast(); // Remove this line as toast is imported directly
+  const { toast } = useToast();
 
   return (
     <div className={clsx("space-y-4", className)}>

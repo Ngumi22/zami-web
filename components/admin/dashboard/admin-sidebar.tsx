@@ -71,6 +71,10 @@ const menuItems: MenuItem[] = [
         title: "Brand",
         href: "/admin/brands",
       },
+      {
+        title: "Collections",
+        href: "/admin/collections",
+      },
     ],
     divider: true,
   },

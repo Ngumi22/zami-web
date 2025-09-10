@@ -6,7 +6,7 @@ import {
   getProducts,
 } from "@/data/consolidated-products-fetch";
 import { getAllCategories } from "@/data/category";
-import { getAllBrands } from "@/data/cat";
+import { getAllBrands } from "@/data/brands";
 
 export default async function ProductPage({
   params,

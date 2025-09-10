@@ -31,6 +31,15 @@ export function formatDate(date: Date): string {
   }).format(date);
 }
 
+export const DateFormatter = (date: Date | null | undefined) => {
+  if (!date) return "";
+  return new Intl.DateTimeFormat("en-US", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date(date));
+};
+
 export function generateId(): string {
   return Math.random().toString(36).substr(2, 9);
 }
@@ -103,7 +112,6 @@ export function getCategoryMap(categories: Category[]) {
   return Object.fromEntries(categories.map((cat) => [cat.id, cat.name]));
 }
 
-// Helper function to extract specification objects from products
 export function getAllSpecificationNames(
   products: ProductWithRelations[]
 ): string[] {
@@ -129,7 +137,6 @@ export function getAllSpecificationNames(
   return Array.from(allSpecNames).sort();
 }
 
-// Helper function to categorize specifications by name
 export function categorizeSpecifications(
   specNames: string[]
 ): Record<string, string[]> {
@@ -184,7 +191,6 @@ export function categorizeSpecifications(
   return categorized;
 }
 
-// Helper function to get specification value by name
 export function getSpecificationValueByName(
   product: ProductWithRelations,
   specName: string

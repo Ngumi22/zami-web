@@ -55,7 +55,6 @@ export default function AboutPage() {
 
   return (
     <div className="min-h-screen">
-      {/* Hero Section */}
       <section className="relative py-10 md:py-20">
         <div className="container px-4 sm:px-4">
           <div className="mx-auto max-w-4xl text-center">
@@ -147,7 +146,6 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* Mission Section */}
       <section className="py-8 md:py-12">
         <div className="container px-4 sm:px-4">
           <div className="mx-auto max-w-4xl text-center">
@@ -170,7 +168,6 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* Values Section */}
       <section className="py-8 md:py-12">
         <div className="container px-4 sm:px-4">
           <div className="mx-auto max-w-7xl">
@@ -207,7 +204,6 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* Team Section */}
       <section className="py-4 md:py-8">
         <div className="container px-4 sm:px-4">
           <div className="mx-auto max-w-5xl">

@@ -1,122 +1,97 @@
+import { notFound, redirect } from "next/navigation";
+import { extractSpecifications } from "@/components/layout/products-page/new/search.params";
 import {
-  getAllBrands,
-  getAllCategoriesWithSpecifications,
-  getCategoryMaxPrice,
-} from "@/data/cat";
-import ClientProductsPage from "./client";
-import { getProducts } from "@/data/product-page-product";
+  getCachedCategories,
+  getProducts,
+  getFilterData,
+} from "@/data/productspage/getProducts";
+import { HydrationBoundary, dehydrate } from "@tanstack/react-query";
+import ProductsPageClient from "./ProductsPageClient";
+import { getQueryClient } from "../get-query-client";
+import { SearchParams } from "nuqs/server";
 
-import { getSafeSearchParams } from "@/utils/search-params";
-interface ProductsPageProps {
-  searchParams: { [key: string]: string | string[] | undefined };
-}
+type PageProps = {
+  searchParams: SearchParams;
+};
 
-const reservedParams = new Set([
-  "category",
-  "subcategories",
-  "brands",
-  "priceMin",
-  "priceMax",
-  "sort",
-  "page",
-  "pageSize",
-  "specifications",
-]);
+export default async function Home({ searchParams }: PageProps) {
+  const params = (await searchParams) || {};
 
-async function parseSpecifications(
-  params: Awaited<ReturnType<typeof getSafeSearchParams>>
-): Promise<Record<string, string[]>> {
-  const specifications: Record<string, string[]> = {};
-  const entries = params.entries();
-
-  for (const [key, value] of entries) {
-    if (!reservedParams.has(key)) {
-      const decodedKey = decodeURIComponent(key.replace(/\+/g, " "));
-      const values = Array.isArray(value) ? value : [value];
-      const decodedValues = values
-        .filter(Boolean)
-        .map((val) => decodeURIComponent((val as string).replace(/\+/g, " ")));
-
-      const specKey = decodedKey
-        .split(" ")
-        .map(
-          (word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-        )
-        .join(" ");
-
-      specifications[specKey] = decodedValues;
+  const getSingleParam = (
+    param: string | string[] | undefined
+  ): string | undefined => {
+    if (Array.isArray(param)) {
+      return param[0] ?? undefined;
     }
+    return param ?? undefined;
+  };
+
+  const specifications = extractSpecifications(params);
+  const categories = await getCachedCategories();
+
+  if (categories.length === 0) {
+    return <div className="container py-24">No categories found.</div>;
   }
 
-  return specifications;
-}
+  const categorySlug = getSingleParam(params.category) || categories[0].slug!;
+  if (!params.category) {
+    redirect(`/products?category=${categorySlug}`);
+  }
 
-async function parseFilters(searchParams: {
-  [key: string]: string | string[] | undefined;
-}): Promise<{
-  category?: string;
-  subcategories: string[];
-  brands: string[];
-  priceMin: number;
-  priceMax: number;
-  sort: "rating" | "low" | "high" | "newest" | "popularity";
-  page: number;
-  pageSize: number;
-  specifications: Record<string, string[]>;
-}> {
-  const params = await getSafeSearchParams(searchParams);
-  const specifications = await parseSpecifications(params);
+  const categoryExists = categories.some((c: any) => c.slug === categorySlug);
+  if (!categoryExists) {
+    redirect(`/products?category=${categories[0].slug!}`);
+  }
 
-  return {
-    category: params.get("category"),
-    subcategories: params.getAll("subcategories"),
-    brands: params.getAll("brands"),
-    priceMin: params.get("priceMin") ? parseFloat(params.get("priceMin")!) : 0,
-    priceMax: params.get("priceMax")
-      ? parseFloat(params.get("priceMax")!)
-      : Infinity,
-    sort:
-      params.get("sort") &&
-      ["rating", "low", "high", "newest", "popularity"].includes(
-        params.get("sort")!
-      )
-        ? (params.get("sort") as
-            | "rating"
-            | "low"
-            | "high"
-            | "newest"
-            | "popularity")
-        : "newest",
-    page: params.get("page") ? parseInt(params.get("page")!, 10) : 1,
-    pageSize: params.get("pageSize")
-      ? parseInt(params.get("pageSize")!, 10)
-      : 12,
+  const sidebarData = await getFilterData(categorySlug);
+
+  const productsParams = {
+    category: categorySlug,
+    search: getSingleParam(params.search),
+    perPage: getSingleParam(params.perPage)
+      ? parseInt(getSingleParam(params.perPage) as string, 10)
+      : undefined,
+    offset: getSingleParam(params.offset)
+      ? parseInt(getSingleParam(params.offset) as string, 10)
+      : undefined,
+    priceMax: getSingleParam(params.priceMax)
+      ? parseInt(getSingleParam(params.priceMax) as string, 10)
+      : undefined,
+    priceMin: getSingleParam(params.priceMin)
+      ? parseInt(getSingleParam(params.priceMin) as string, 10)
+      : undefined,
+    subcategories: Array.isArray(params.subcategories)
+      ? params.subcategories
+      : params.subcategories
+      ? [params.subcategories]
+      : undefined,
+    brands: Array.isArray(params.brands)
+      ? params.brands
+      : params.brands
+      ? [params.brands]
+      : undefined,
     specifications,
   };
-}
 
-export default async function ProductsPage({
-  searchParams,
-}: ProductsPageProps) {
-  const params = await searchParams;
-  const filters = await parseFilters(params);
-  const currentCategorySlug = filters.category ?? "laptops";
+  const queryClient = getQueryClient();
+  await queryClient.prefetchQuery({
+    queryKey: ["products", productsParams],
+    queryFn: () => getProducts(productsParams),
+  });
 
-  const [products, categories, brands, maxPrice] = await Promise.all([
-    getProducts(filters),
-    getAllCategoriesWithSpecifications(),
-    getAllBrands(),
-    getCategoryMaxPrice(currentCategorySlug),
-  ]);
+  const dehydratedState = dehydrate(queryClient);
+
+  const initialData = {
+    productsData: await getProducts(productsParams),
+    categories,
+    activeCategorySlug: categorySlug,
+    params: productsParams,
+    sidebarData,
+  };
 
   return (
-    <ClientProductsPage
-      initialProducts={products.products}
-      initialCategories={categories}
-      initialBrands={brands}
-      initialFilters={filters}
-      totalCount={products.totalCount}
-      maxPrice={maxPrice}
-    />
+    <HydrationBoundary state={dehydratedState}>
+      <ProductsPageClient initialData={initialData} />
+    </HydrationBoundary>
   );
 }

@@ -2,8 +2,24 @@
 @tailwind components;
 @tailwind utilities;
 
-.logo-font {
-  font-family: Oakes Grotesk Regular, sans-serif;
+@import url("https://fonts.googleapis.com/css2?family=Jost:ital,wght@0,100..900;1,100..900&display=swap");
+
+body {
+  font-family: "Jost", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 400;
+  font-style: normal;
+  font-size: 12px;
+}
+
+/* Add to your global CSS or use a CSS-in-JS solution */
+.product-grid {
+  transition: opacity 0.2s ease-in-out;
+}
+
+.product-grid.loading {
+  opacity: 0.7;
+  pointer-events: none;
 }
 
 @layer base {

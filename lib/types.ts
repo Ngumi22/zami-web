@@ -1,4 +1,8 @@
-import { BlogPost as Post } from "@prisma/client";
+import {
+  Collection,
+  BlogPost as Post,
+  ProductsOnCollections,
+} from "@prisma/client";
 
 export interface Product {
   id: string;
@@ -476,4 +480,52 @@ export interface CustomerAddress {
   phone?: string;
   isDefault: boolean;
   preferredCourier?: string;
+}
+
+export interface CollectionWithProducts extends Collection {
+  products: (ProductsOnCollections & {
+    product: Product;
+  })[];
+}
+
+export interface FlashSaleData {
+  products: Product[];
+  saleEndDate: Date;
+  collectionName: string;
+  collectionId: string;
+}
+
+export interface FlashSaleCreateData {
+  name: string;
+  slug: string;
+  productIds: string[];
+  startDate?: Date;
+  endDate?: Date;
+  description?: string;
+}
+
+export interface FlashSaleUpdateData {
+  name?: string;
+  slug?: string;
+  description?: string;
+  startDate?: Date | null;
+  endDate?: Date | null;
+  isActive?: boolean;
+}
+
+export interface AdminProduct {
+  id: string;
+  name: string;
+  price: number;
+  stock: number;
+  mainImage: string;
+}
+
+export interface AdminCollection extends Collection {
+  products: (ProductsOnCollections & {
+    product: {
+      id: string;
+      name: string;
+    };
+  })[];
 }

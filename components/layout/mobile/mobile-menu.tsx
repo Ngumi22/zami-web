@@ -85,7 +85,20 @@ export function MobileMenu({
 
       <SheetContent side="left" className="w-[85%] sm:w-[350px] p-0">
         <SheetHeader className="flex items-center justify-between border-b py-2">
-          <SheetTitle className="text-sm">Zami Tech Solutions</SheetTitle>
+          <SheetTitle className="text-sm">
+            <Link
+              prefetch
+              href="/"
+              className="flex items-center justify-center h-fit">
+              <Image
+                src={"/logo.png"}
+                height={100}
+                width={100}
+                alt="Zami Tech Solutions"
+                className="w-full object-cover h-16"
+              />
+            </Link>
+          </SheetTitle>
         </SheetHeader>
 
         <div className="overflow-y-auto h-[calc(100vh-4rem)] px-3 py-2 space-y-4">

@@ -519,7 +519,7 @@ export default function BlogPostsClient({
                 <Button
                   variant="outline"
                   onClick={() => {
-                    router.push("/admin/blog"); // clears all filters
+                    router.push("/admin/blog");
                   }}>
                   Clear all filters
                 </Button>

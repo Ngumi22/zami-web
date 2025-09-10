@@ -11,7 +11,6 @@ import { Loader2 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { signUpUser } from "@/data/users";
-import { authClient } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
 import {
   Card,

@@ -10,7 +10,7 @@ const SLIDES = Array.from(Array(SLIDE_COUNT).keys());
 
 export default function HeroSection() {
   return (
-    <section className="flex flex-col md:flex-row justify-between items-stretch w-full bg-gray-100 md:border border-black h-[15rem] md:h-[25rem]">
+    <section className="flex flex-col md:flex-row justify-between items-stretch w-full bg-gray-100 md:border border-black h-[15rem] md:h-[25rem] mt-1">
       <div className="flex flex-col justify-center space-y-3 py-2 px-8 md:border-r md:border-black h-full md:h-full w-full md:w-1/2">
         <div className="mb-1 md:mb-4">
           <h6 className="text-sm md:text-md text-start text-black font-semibold">

@@ -1,12 +1,13 @@
 "use client";
 import dynamic from "next/dynamic";
 import type React from "react";
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 import {
   User,
   MapPin,
@@ -16,6 +17,7 @@ import {
   Heart,
   ChevronRight,
   Home,
+  Loader2,
 } from "lucide-react";
 import ClientSEO from "../client-seo";
 import {
@@ -23,6 +25,8 @@ import {
   CustomerAddress,
   Order,
 } from "@prisma/client";
+import { useToast } from "@/hooks/use-toast";
+import { signOut } from "@/lib/auth/actions";
 
 export interface CustomerWithRelations extends PrismaCustomer {
   addresses?: CustomerAddress[];
@@ -43,8 +47,9 @@ export interface NotificationPreferences {
   productUpdates: boolean;
 }
 
-interface AccountPageProps {
+interface CustomerPageProps {
   customer: CustomerWithRelations;
+  addresses: CustomerAddress[];
   orders: Order[];
   notificationPreferences: NotificationPreferences;
   onCustomerUpdate?: (customer: CustomerWithRelations) => void;
@@ -52,16 +57,27 @@ interface AccountPageProps {
   onNotificationUpdate?: (preferences: NotificationPreferences) => void;
 }
 
-export default function AccountPage({
+export default function CustomerAccountClientPage({
   customer: initialCustomer,
   orders,
   notificationPreferences: initialNotificationPreferences,
   onCustomerUpdate,
   onAddressUpdate,
   onNotificationUpdate,
-}: AccountPageProps) {
+}: CustomerPageProps) {
   const [activeSection, setActiveSection] = useState("profile");
   const [orderStatusFilter, setOrderStatusFilter] = useState<string>("all");
+  const [isPending, startTransition] = useTransition();
+
+  const handleSignOut = async () => {
+    startTransition(async () => {
+      try {
+        await signOut();
+      } catch (error) {
+        toast.error("An error occurred during sign out.");
+      }
+    });
+  };
 
   const [customer, setCustomer] =
     useState<CustomerWithRelations>(initialCustomer);
@@ -666,7 +682,16 @@ export default function AccountPage({
                 <Home className="h-4 w-4" />
                 <span>Home</span>
                 <ChevronRight className="h-4 w-4" />
-                <span>My Account</span>
+                <Button
+                  onClick={handleSignOut}
+                  disabled={isPending}
+                  className="w-full bg-red-600 text-white hover:bg-red-700">
+                  {isPending ? (
+                    <Loader2 className="size-4 animate-spin" />
+                  ) : (
+                    "Sign Out"
+                  )}
+                </Button>
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-sm">Welcome!</span>

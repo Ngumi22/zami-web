@@ -14,6 +14,7 @@ export async function getBlogPost(slug: string): Promise<BlogPost | null> {
     },
   });
 }
+
 export async function getPosts({
   page = 1,
   limit = 6,
