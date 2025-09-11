@@ -163,7 +163,7 @@ export default function ProductsPageClient({
         onCategoryChange={handleCategoryChange}
         isPending={isPending}
       />
-      <div className="flex items-center justify-between gap-8">
+      <div className="md:flex items-center justify-between gap-8">
         <div className="w-full">
           <SortBar />
         </div>
