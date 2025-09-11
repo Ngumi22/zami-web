@@ -39,6 +39,63 @@ export interface CachedCollection extends Collection {
 const CACHE_TAG = "collections";
 const CACHE_DURATION = 60 * 5;
 
+export interface GetProductsParams {
+  category?: string;
+  subcategories?: string[];
+  brands?: string[];
+  specifications?: Record<string, string[]>;
+  search?: string;
+  sort?: string;
+  perPage?: number;
+  offset?: number;
+  priceMin?: number;
+  priceMax?: number;
+  collection?: string;
+}
+
+export interface GetCollectionProductsParams {
+  collection: string;
+  category?: string;
+  brands?: string[];
+  search?: string;
+  sort?: string;
+  perPage?: number;
+  offset?: number;
+  priceMin?: number;
+  priceMax?: number;
+}
+
+export interface ProductsResponse {
+  products: Prisma.ProductGetPayload<{
+    include: { brand: true; category: true };
+  }>[];
+  totalProducts: number;
+  priceRange?: { min: number; max: number };
+}
+
+export interface FilterData {
+  maxPrice: number;
+  minPrice: number;
+  subcategories: Category[];
+  brands: string[];
+  specifications: SpecificationFilter[];
+}
+
+export interface SpecificationFilter {
+  id: string;
+  name: string;
+  type: CategorySpecificationType;
+  options: string[];
+  unit?: string;
+}
+
+export interface FlashSaleCollection extends Collection {
+  products: (ProductsOnCollections & {
+    product: Product;
+  })[];
+  productCount: number;
+}
+
 export const getCollectionsWithProducts = cache(
   async (): Promise<CollectionWithProducts[]> => {
     try {
@@ -157,50 +214,6 @@ export const getCollectionBySlug = cache(
   }
 );
 
-export interface GetProductsParams {
-  category?: string;
-  subcategories?: string[];
-  brands?: string[];
-  specifications?: Record<string, string[]>;
-  search?: string;
-  sort?: string;
-  perPage?: number;
-  offset?: number;
-  priceMin?: number;
-  priceMax?: number;
-  collection?: string;
-}
-
-export interface ProductsResponse {
-  products: Prisma.ProductGetPayload<{
-    include: { brand: true };
-  }>[];
-  totalProducts: number;
-}
-
-export interface FilterData {
-  maxPrice: number;
-  minPrice: number;
-  subcategories: Category[];
-  brands: string[];
-  specifications: SpecificationFilter[];
-}
-
-export interface SpecificationFilter {
-  id: string;
-  name: string;
-  type: CategorySpecificationType;
-  options: string[];
-  unit?: string;
-}
-
-export interface FlashSaleCollection extends Collection {
-  products: (ProductsOnCollections & {
-    product: Product;
-  })[];
-  productCount: number;
-}
-
 export const getFlashSaleCollections = cache(
   async (): Promise<FlashSaleCollection[]> => {
     try {
@@ -241,486 +254,6 @@ export const getFlashSaleCollections = cache(
     revalidate: CACHE_DURATION,
   }
 );
-
-export const getCachedCategories = cache(async (): Promise<Category[]> => {
-  const categories = await prisma.category.findMany({
-    where: { parentId: null },
-    include: {
-      children: true,
-    },
-  });
-  return categories;
-});
-
-export const getCachedBrands = cache(async (): Promise<Brand[]> => {
-  const brands = await prisma.brand.findMany();
-  return brands;
-});
-
-async function getDescendantCategoryIds(slug: string): Promise<string[]> {
-  const category = await prisma.category.findUnique({
-    where: { slug },
-    select: {
-      id: true,
-      children: {
-        select: {
-          id: true,
-          children: {
-            select: {
-              id: true,
-              children: {
-                select: { id: true },
-              },
-            },
-          },
-        },
-      },
-    },
-  });
-
-  if (!category) return [];
-
-  const allIds: string[] = [category.id];
-
-  const extractChildIds = (children: any[]) => {
-    for (const child of children) {
-      allIds.push(child.id);
-      if (child.children && child.children.length > 0) {
-        extractChildIds(child.children);
-      }
-    }
-  };
-
-  if (category.children) {
-    extractChildIds(category.children);
-  }
-
-  return allIds;
-}
-
-export const getFilterData = cache(
-  async (categorySlug: string): Promise<FilterData> => {
-    const allDescendantIds = await getDescendantCategoryIds(categorySlug);
-
-    if (allDescendantIds.length === 0) {
-      return {
-        minPrice: 0,
-        maxPrice: 100,
-        subcategories: [],
-        brands: [],
-        specifications: [],
-      };
-    }
-
-    const [productStats, mainCategoryWithSpecs, availableSubcategories] =
-      await Promise.all([
-        prisma.product.findMany({
-          where: { categoryId: { in: allDescendantIds } },
-          select: { price: true, brand: { select: { name: true } } },
-        }),
-
-        prisma.category.findUnique({
-          where: { slug: categorySlug },
-          select: { specifications: true },
-        }),
-
-        prisma.category.findMany({
-          where: { parentId: allDescendantIds[0] },
-        }),
-      ]);
-
-    const prices = productStats.map((p) => p.price);
-    const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
-    const maxPrice = prices.length > 0 ? Math.max(...prices) : 100;
-
-    const availableBrands = Array.from(
-      new Set(
-        productStats
-          .filter((product) => product.brand)
-          .map((product) => product.brand!.name)
-      )
-    );
-
-    const specMetadataMap = new Map();
-    if (
-      mainCategoryWithSpecs &&
-      Array.isArray(mainCategoryWithSpecs.specifications)
-    ) {
-      mainCategoryWithSpecs.specifications.forEach((spec) => {
-        const normalizedId = spec.id.toLowerCase().trim();
-        if (!specMetadataMap.has(normalizedId)) {
-          specMetadataMap.set(normalizedId, {
-            id: spec.id,
-            name: spec.name,
-            type: spec.type,
-            unit: spec.unit ?? undefined,
-            options: new Set<string>(),
-          });
-        }
-
-        const currentSpec = specMetadataMap.get(normalizedId);
-        if (Array.isArray(spec.options)) {
-          spec.options.forEach((option) => currentSpec.options.add(option));
-        }
-      });
-    }
-
-    const availableSpecifications = Array.from(specMetadataMap.values())
-      .filter((spec) => spec.options.size > 0)
-      .map((spec) => ({
-        id: spec.id,
-        name: spec.name,
-        type: spec.type,
-        unit: spec.unit,
-        options: Array.from(spec.options) as string[],
-      }));
-
-    return {
-      minPrice,
-      maxPrice,
-      subcategories: availableSubcategories,
-      brands: availableBrands,
-      specifications: availableSpecifications,
-    };
-  }
-);
-
-export const getProducts = cache(
-  async (params: GetProductsParams): Promise<ProductsResponse> => {
-    const {
-      category: categorySlug,
-      subcategories,
-      brands,
-      specifications: selectedSpecifications = {},
-      search,
-      sort = "createdAt-desc",
-      perPage = 12,
-      offset = 0,
-      priceMin,
-      priceMax,
-      collection: collectionSlug,
-    } = params;
-
-    if (collectionSlug) {
-      return getProductsByCollection(collectionSlug, params);
-    }
-    if (!categorySlug) {
-      return { products: [], totalProducts: 0 };
-    }
-
-    const allDescendantIds = await getDescendantCategoryIds(categorySlug);
-    if (allDescendantIds.length === 0) {
-      return { products: [], totalProducts: 0 };
-    }
-
-    const selectedSubcategoriesArray = Array.isArray(subcategories)
-      ? subcategories
-      : [];
-    let targetCategoryIds = allDescendantIds;
-    if (selectedSubcategoriesArray.length > 0) {
-      const resolvedSubcategoryIds = await prisma.category.findMany({
-        where: { slug: { in: selectedSubcategoriesArray } },
-        select: { id: true },
-      });
-      targetCategoryIds = resolvedSubcategoryIds.map((c) => c.id);
-    }
-    const targetCategoryObjectIds = targetCategoryIds.map((id) => ({
-      $oid: id,
-    }));
-
-    const matchStage: any = {
-      $and: [{ categoryId: { $in: targetCategoryObjectIds } }],
-    };
-
-    const selectedBrandsArray = Array.isArray(brands) ? brands : [];
-    if (selectedBrandsArray.length > 0) {
-      const brandObjects = await prisma.brand.findMany({
-        where: { name: { in: selectedBrandsArray, mode: "insensitive" } },
-        select: { id: true },
-      });
-      if (brandObjects.length > 0) {
-        matchStage.$and.push({
-          brandId: { $in: brandObjects.map((b) => ({ $oid: b.id })) },
-        });
-      }
-    }
-
-    const priceFilter: any = {};
-    if (priceMin !== undefined) priceFilter.$gte = Number(priceMin);
-    if (priceMax !== undefined) priceFilter.$lte = Number(priceMax);
-    if (Object.keys(priceFilter).length > 0) {
-      matchStage.$and.push({ price: priceFilter });
-    }
-
-    if (search) {
-      matchStage.$and.push({
-        $or: [
-          { name: { $regex: search, $options: "i" } },
-          { description: { $regex: search, $options: "i" } },
-        ],
-      });
-    }
-
-    if (Object.keys(selectedSpecifications).length > 0) {
-      type CategoryWithSpecs = {
-        id: string;
-        parentId: string | null;
-        specifications: Prisma.JsonValue;
-      };
-
-      const currentCategory = await prisma.category.findUnique({
-        where: { slug: categorySlug },
-        select: { id: true, parentId: true, specifications: true },
-      });
-
-      if (currentCategory) {
-        let rootCategory: CategoryWithSpecs = currentCategory;
-        let parentId: string | null = currentCategory.parentId;
-        while (parentId) {
-          const parent = await prisma.category.findUnique({
-            where: { id: parentId },
-            select: { id: true, parentId: true, specifications: true },
-          });
-          if (!parent) break;
-
-          rootCategory = parent;
-          parentId = parent.parentId;
-        }
-
-        const specDefinitions = (rootCategory?.specifications || []) as any[];
-
-        const specIdMap = new Map<
-          string,
-          { id: string; name: string; type: CategorySpecificationType }
-        >(
-          specDefinitions.map((spec) => [
-            spec.id,
-            { id: spec.id, name: spec.name, type: spec.type },
-          ])
-        );
-
-        for (const [specId, values] of Object.entries(selectedSpecifications)) {
-          const specInfo = specIdMap.get(specId);
-          if (specInfo && values && values.length > 0) {
-            let queryValues: any[] = values;
-            if (specInfo.type === "NUMBER")
-              queryValues = values
-                .map((v) => parseFloat(v))
-                .filter((v) => !isNaN(v));
-            if (specInfo.type === "BOOLEAN")
-              queryValues = values.map((v) => v.toLowerCase() === "true");
-            if (queryValues.length > 0) {
-              matchStage.$and.push({
-                [`specifications.${specId}`]: { $in: queryValues },
-              });
-            }
-          }
-        }
-      }
-    }
-
-    let sortStage: any = { createdAt: -1 };
-    switch (sort) {
-      case "price-asc":
-        sortStage = { price: 1 };
-        break;
-      case "price-desc":
-        sortStage = { price: -1 };
-        break;
-      case "name-asc":
-        sortStage = { name: 1 };
-        break;
-      case "name-desc":
-        sortStage = { name: -1 };
-        break;
-    }
-
-    const pipeline = [
-      { $match: matchStage },
-      {
-        $facet: {
-          paginatedResults: [
-            { $sort: sortStage },
-            { $skip: offset },
-            { $limit: perPage },
-            {
-              $lookup: {
-                from: "Brand",
-                localField: "brandId",
-                foreignField: "_id",
-                as: "brandData",
-              },
-            },
-            {
-              $project: {
-                _id: 0,
-                id: { $toString: "$_id" },
-                name: 1,
-                slug: 1,
-                price: 1,
-                mainImage: 1,
-                brand: { $arrayElemAt: ["$brandData", 0] },
-              },
-            },
-          ],
-          totalCount: [{ $count: "count" }],
-        },
-      },
-    ];
-
-    const results = await prisma.product.aggregateRaw({
-      pipeline: pipeline,
-    });
-
-    const data = (results as any)[0];
-    const products = data?.paginatedResults || [];
-    const totalProducts = data?.totalCount[0]?.count || 0;
-
-    return { products, totalProducts };
-  }
-);
-
-export async function getProductsByCollection(
-  collectionSlug: string,
-  params: Omit<GetProductsParams, "collection">
-): Promise<ProductsResponse> {
-  const {
-    brands,
-    specifications: selectedSpecifications = {},
-    search,
-    sort = "createdAt-desc",
-    perPage = 12,
-    offset = 0,
-    priceMin,
-    priceMax,
-  } = params;
-
-  const collection = await prisma.collection.findUnique({
-    where: { slug: collectionSlug },
-    include: {
-      products: {
-        include: {
-          product: true,
-        },
-        orderBy: {
-          order: "asc",
-        },
-      },
-    },
-  });
-
-  if (!collection) {
-    return { products: [], totalProducts: 0 };
-  }
-
-  const productIds = collection.products.map((poc) => poc.productId);
-
-  if (productIds.length === 0) {
-    return { products: [], totalProducts: 0 };
-  }
-
-  const matchStage: any = {
-    $and: [{ _id: { $in: productIds.map((id) => ({ $oid: id })) } }],
-  };
-
-  const selectedBrandsArray = Array.isArray(brands) ? brands : [];
-  if (selectedBrandsArray.length > 0) {
-    const brandObjects = await prisma.brand.findMany({
-      where: { name: { in: selectedBrandsArray, mode: "insensitive" } },
-      select: { id: true },
-    });
-    if (brandObjects.length > 0) {
-      matchStage.$and.push({
-        brandId: { $in: brandObjects.map((b) => ({ $oid: b.id })) },
-      });
-    }
-  }
-
-  const priceFilter: any = {};
-  if (priceMin !== undefined) priceFilter.$gte = Number(priceMin);
-  if (priceMax !== undefined) priceFilter.$lte = Number(priceMax);
-  if (Object.keys(priceFilter).length > 0) {
-    matchStage.$and.push({ price: priceFilter });
-  }
-
-  if (search) {
-    matchStage.$and.push({
-      $or: [
-        { name: { $regex: search, $options: "i" } },
-        { description: { $regex: search, $options: "i" } },
-      ],
-    });
-  }
-
-  if (Object.keys(selectedSpecifications).length > 0) {
-    for (const [specId, values] of Object.entries(selectedSpecifications)) {
-      if (values && values.length > 0) {
-        matchStage.$and.push({
-          [`specifications.${specId}`]: { $in: values },
-        });
-      }
-    }
-  }
-
-  let sortStage: any = { createdAt: -1 };
-  switch (sort) {
-    case "price-asc":
-      sortStage = { price: 1 };
-      break;
-    case "price-desc":
-      sortStage = { price: -1 };
-      break;
-    case "name-asc":
-      sortStage = { name: 1 };
-      break;
-    case "name-desc":
-      sortStage = { name: -1 };
-      break;
-  }
-
-  const pipeline = [
-    { $match: matchStage },
-    {
-      $facet: {
-        paginatedResults: [
-          { $sort: sortStage },
-          { $skip: offset },
-          { $limit: perPage },
-          {
-            $lookup: {
-              from: "Brand",
-              localField: "brandId",
-              foreignField: "_id",
-              as: "brandData",
-            },
-          },
-          {
-            $project: {
-              _id: 0,
-              id: { $toString: "$_id" },
-              name: 1,
-              slug: 1,
-              price: 1,
-              mainImage: 1,
-              brand: { $arrayElemAt: ["$brandData", 0] },
-            },
-          },
-        ],
-        totalCount: [{ $count: "count" }],
-      },
-    },
-  ];
-
-  const results = await prisma.product.aggregateRaw({
-    pipeline: pipeline,
-  });
-
-  const data = (results as any)[0];
-  const products = data?.paginatedResults || [];
-  const totalProducts = data?.totalCount[0]?.count || 0;
-
-  return { products, totalProducts };
-}
 
 export const getCollections = cache(
   async (): Promise<(Collection & { productCount: number })[]> => {
@@ -890,3 +423,440 @@ export async function getFlashSaleData() {
     return null;
   }
 }
+export async function getProductsByCollection(
+  collectionSlug: string,
+  params: Omit<GetProductsParams, "collection">
+): Promise<ProductsResponse> {
+  const {
+    brands,
+    specifications: selectedSpecifications = {},
+    search,
+    sort = "createdAt-desc",
+    perPage = 12,
+    offset = 0,
+    priceMin,
+    priceMax,
+  } = params;
+
+  const collection = await prisma.collection.findUnique({
+    where: { slug: collectionSlug },
+    include: {
+      products: {
+        include: {
+          product: true,
+        },
+        orderBy: {
+          order: "asc",
+        },
+      },
+    },
+  });
+
+  if (!collection) {
+    return { products: [], totalProducts: 0 };
+  }
+
+  const productIds = collection.products.map((poc) => poc.productId);
+
+  if (productIds.length === 0) {
+    return { products: [], totalProducts: 0 };
+  }
+
+  const matchStage: any = {
+    $and: [{ _id: { $in: productIds.map((id) => ({ $oid: id })) } }],
+  };
+
+  const selectedBrandsArray = Array.isArray(brands) ? brands : [];
+  if (selectedBrandsArray.length > 0) {
+    const brandObjects = await prisma.brand.findMany({
+      where: { name: { in: selectedBrandsArray, mode: "insensitive" } },
+      select: { id: true },
+    });
+    if (brandObjects.length > 0) {
+      matchStage.$and.push({
+        brandId: { $in: brandObjects.map((b) => ({ $oid: b.id })) },
+      });
+    }
+  }
+
+  const priceFilter: any = {};
+  if (priceMin !== undefined) priceFilter.$gte = Number(priceMin);
+  if (priceMax !== undefined) priceFilter.$lte = Number(priceMax);
+  if (Object.keys(priceFilter).length > 0) {
+    matchStage.$and.push({ price: priceFilter });
+  }
+
+  if (search) {
+    matchStage.$and.push({
+      $or: [
+        { name: { $regex: search, $options: "i" } },
+        { description: { $regex: search, $options: "i" } },
+      ],
+    });
+  }
+
+  if (Object.keys(selectedSpecifications).length > 0) {
+    for (const [specId, values] of Object.entries(selectedSpecifications)) {
+      if (values && values.length > 0) {
+        matchStage.$and.push({
+          [`specifications.${specId}`]: { $in: values },
+        });
+      }
+    }
+  }
+
+  let sortStage: any = { createdAt: -1 };
+  switch (sort) {
+    case "price-asc":
+      sortStage = { price: 1 };
+      break;
+    case "price-desc":
+      sortStage = { price: -1 };
+      break;
+    case "name-asc":
+      sortStage = { name: 1 };
+      break;
+    case "name-desc":
+      sortStage = { name: -1 };
+      break;
+  }
+
+  const pipeline = [
+    { $match: matchStage },
+    {
+      $facet: {
+        paginatedResults: [
+          { $sort: sortStage },
+          { $skip: offset },
+          { $limit: perPage },
+          {
+            $lookup: {
+              from: "Brand",
+              localField: "brandId",
+              foreignField: "_id",
+              as: "brandData",
+            },
+          },
+          {
+            $project: {
+              _id: 0,
+              id: { $toString: "$_id" },
+              name: 1,
+              slug: 1,
+              price: 1,
+              mainImage: 1,
+              brand: { $arrayElemAt: ["$brandData", 0] },
+            },
+          },
+        ],
+        totalCount: [{ $count: "count" }],
+      },
+    },
+  ];
+
+  const results = await prisma.product.aggregateRaw({
+    pipeline: pipeline,
+  });
+
+  const data = (results as any)[0];
+  const products = data?.paginatedResults || [];
+  const totalProducts = data?.totalCount[0]?.count || 0;
+
+  return { products, totalProducts };
+}
+
+export interface CollectionFilterData {
+  categories: Category[];
+  brands: Brand[];
+  priceRange: { min: number; max: number };
+}
+
+// Get filter data for a collection (categories, brands, price range)
+export const getCollectionFilterData = cache(
+  async (collectionSlug: string): Promise<CollectionFilterData> => {
+    try {
+      const collection = await prisma.collection.findUnique({
+        where: { slug: collectionSlug },
+        include: {
+          products: {
+            include: {
+              product: {
+                include: {
+                  category: true,
+                  brand: true,
+                },
+              },
+            },
+          },
+        },
+      });
+
+      if (!collection) {
+        return {
+          categories: [],
+          brands: [],
+          priceRange: { min: 0, max: 100 },
+        };
+      }
+
+      const products = collection.products.map((poc) => poc.product);
+
+      // Get unique categories
+      const categoryMap = new Map<string, Category>();
+      products.forEach((product) => {
+        if (product.category) {
+          categoryMap.set(product.category.id, product.category);
+        }
+      });
+
+      // Get unique brands
+      const brandMap = new Map<string, Brand>();
+      products.forEach((product) => {
+        if (product.brand) {
+          brandMap.set(product.brand.id, product.brand);
+        }
+      });
+
+      // Get price range
+      const prices = products
+        .map((p) => p.price)
+        .filter((price) => price !== null);
+      const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
+      const maxPrice = prices.length > 0 ? Math.max(...prices) : 100;
+
+      return {
+        categories: Array.from(categoryMap.values()),
+        brands: Array.from(brandMap.values()),
+        priceRange: { min: minPrice, max: maxPrice },
+      };
+    } catch (error) {
+      console.error("Error fetching collection filter data:", error);
+      return {
+        categories: [],
+        brands: [],
+        priceRange: { min: 0, max: 100 },
+      };
+    }
+  },
+  ["get-collection-filter-data"],
+  {
+    tags: [CACHE_TAG],
+    revalidate: CACHE_DURATION,
+  }
+);
+
+// Get products for a collection with filtering
+export const getCollectionProducts = cache(
+  async (params: GetCollectionProductsParams): Promise<ProductsResponse> => {
+    const {
+      collection: collectionSlug,
+      category,
+      brands,
+      search,
+      sort = "createdAt-desc",
+      perPage = 12,
+      offset = 0,
+      priceMin,
+      priceMax,
+    } = params;
+
+    try {
+      const collection = await prisma.collection.findUnique({
+        where: { slug: collectionSlug },
+        include: {
+          products: {
+            select: { productId: true },
+          },
+        },
+      });
+
+      if (!collection) {
+        return {
+          products: [],
+          totalProducts: 0,
+          priceRange: { min: 0, max: 100 },
+        };
+      }
+
+      const productIds = collection.products.map((poc) => poc.productId);
+
+      if (productIds.length === 0) {
+        return {
+          products: [],
+          totalProducts: 0,
+          priceRange: { min: 0, max: 100 },
+        };
+      }
+
+      const where: Prisma.ProductWhereInput = {
+        id: { in: productIds },
+      };
+
+      // *** FIXED: Category filter now includes sub-categories ***
+      if (category) {
+        // Helper function to recursively get all children category IDs
+        const getCategoryWithChildrenIds = async (slug: string) => {
+          const rootCategory = await prisma.category.findUnique({
+            where: { slug },
+            include: {
+              // You can adjust the depth based on your schema nesting
+              children: {
+                include: {
+                  children: true,
+                },
+              },
+            },
+          });
+
+          if (!rootCategory) return [];
+
+          const ids = new Set<string>();
+          const queue: Category[] = [rootCategory];
+
+          // Breadth-first search to collect all descendant IDs
+          while (queue.length > 0) {
+            const current = queue.shift();
+            if (current) {
+              ids.add(current.id);
+              // Prisma typing for relations can be complex, using `as any` for simplicity here
+              (current as any).children?.forEach((child: Category) =>
+                queue.push(child)
+              );
+            }
+          }
+          return Array.from(ids);
+        };
+
+        const categoryIds = await getCategoryWithChildrenIds(category);
+
+        if (categoryIds.length > 0) {
+          where.categoryId = { in: categoryIds };
+        } else {
+          // If category filter is active but no category found, return no products.
+          where.id = { in: [] };
+        }
+      }
+
+      if (brands && brands.length > 0) {
+        const brandRecords = await prisma.brand.findMany({
+          where: { slug: { in: brands } },
+        });
+        if (brandRecords.length > 0) {
+          where.brandId = { in: brandRecords.map((b) => b.id) };
+        }
+      }
+
+      if (priceMin !== undefined || priceMax !== undefined) {
+        where.price = {};
+        if (priceMin !== undefined) where.price.gte = priceMin;
+        if (priceMax !== undefined) where.price.lte = priceMax;
+      }
+
+      if (search) {
+        where.OR = [
+          { name: { contains: search, mode: "insensitive" } },
+          { description: { contains: search, mode: "insensitive" } },
+        ];
+      }
+
+      const orderBy: Prisma.ProductOrderByWithRelationInput = {};
+      switch (sort) {
+        case "price-asc":
+          orderBy.price = "asc";
+          break;
+        case "price-desc":
+          orderBy.price = "desc";
+          break;
+        case "name-asc":
+          orderBy.name = "asc";
+          break;
+        case "name-desc":
+          orderBy.name = "desc";
+          break;
+        default:
+          orderBy.createdAt = "desc";
+      }
+
+      const [products, totalProducts, priceStats] = await Promise.all([
+        prisma.product.findMany({
+          where,
+          include: {
+            brand: true,
+            category: true,
+          },
+          orderBy,
+          skip: offset,
+          take: perPage,
+        }),
+        prisma.product.count({ where }),
+        prisma.product.aggregate({
+          where: { id: { in: productIds } }, // Aggregate over all collection products for a stable price range
+          _min: { price: true },
+          _max: { price: true },
+        }),
+      ]);
+
+      const priceRange = {
+        min: priceStats._min.price || 0,
+        max: priceStats._max.price || 100,
+      };
+
+      return {
+        products,
+        totalProducts,
+        priceRange,
+      };
+    } catch (error) {
+      console.error("Error fetching collection products:", error);
+      return {
+        products: [],
+        totalProducts: 0,
+        priceRange: { min: 0, max: 100 },
+      };
+    }
+  },
+  ["get-collection-products"],
+  {
+    tags: [CACHE_TAG],
+    revalidate: CACHE_DURATION,
+  }
+);
+
+// Get cached categories (parent categories only)
+export const getCachedCategories = cache(
+  async (): Promise<Category[]> => {
+    try {
+      return await prisma.category.findMany({
+        where: { parentId: null },
+      });
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+      return [];
+    }
+  },
+  ["get-cached-categories"],
+  {
+    tags: [CACHE_TAG],
+    revalidate: CACHE_DURATION * 2,
+  }
+);
+
+// Get cached brands
+export const getCachedBrands = cache(
+  async (): Promise<Brand[]> => {
+    try {
+      return await prisma.brand.findMany({
+        where: { isActive: true },
+        orderBy: { name: "asc" },
+      });
+    } catch (error) {
+      console.error("Error fetching brands:", error);
+      return [];
+    }
+  },
+  ["get-cached-brands"],
+  {
+    tags: [CACHE_TAG],
+    revalidate: CACHE_DURATION * 2,
+  }
+);

@@ -12,6 +12,10 @@ import { Providers } from "./providers";
 const jost = Jost({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
+  icons: {
+    icon: "/favicon.png",
+    apple: "/apple-touch-icon.png",
+  },
   title: {
     default: "Zami Tech Solutions - Premium Electronics",
     template: "%s | Zami Tech Solutions",
@@ -34,7 +38,7 @@ export const metadata: Metadata = {
     title: "Zami Tech Solutions - Premium Electronics",
     description:
       "Your one-stop shop for phones, laptops, printers, and software",
-    creator: "@Zami Tech Solutions",
+    creator: "@Zami_Tech",
   },
   robots: {
     index: true,

@@ -33,7 +33,7 @@ export const slides: CarouselSlide[] = [
     description:
       "Unleash performance with high-speed computers for creators, developers, and businesses.",
     buttonText: "SHOP COMPUTERS",
-    imageUrl: "slideshowV3-bg2_1.webp",
+    imageUrl: "slideshowV3-bg1_1.webp",
   },
   {
     id: 4,
@@ -51,6 +51,6 @@ export const slides: CarouselSlide[] = [
     description:
       "From headphones to keyboards, find the accessories you need to work, play, and create.",
     buttonText: "BROWSE ACCESSORIES",
-    imageUrl: "slideshowV3-bg2_1.webp",
+    imageUrl: "slideshowV3-bg1_1.webp",
   },
 ];

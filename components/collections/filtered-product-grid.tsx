@@ -7,64 +7,45 @@ import { Category, Product } from "@prisma/client";
 interface FilteredProductGridProps {
   products: Product[];
   categories: Category[];
+  totalProducts: number;
   filters: {
     category?: Category;
     sort?: string;
     minPrice?: number;
     maxPrice?: number;
+    brands?: string | string[];
+    search?: string;
   };
 }
 
 export function FilteredProductGrid({
   filters,
   products,
+  totalProducts,
 }: FilteredProductGridProps) {
   const filteredAndSortedProducts = useMemo(() => {
     let filtered = [...products];
 
-    // Apply category filter
-    if (filters.category) {
-      filtered = filtered.filter(
-        (product) => product.categoryId === filters.category!.id
-      );
-    }
-
-    // Apply price range filter
-    if (filters.minPrice !== undefined) {
-      filtered = filtered.filter(
-        (product) => product.price >= filters.minPrice!
-      );
-    }
-    if (filters.maxPrice !== undefined) {
-      filtered = filtered.filter(
-        (product) => product.price <= filters.maxPrice!
-      );
-    }
-
-    // Apply sorting
     switch (filters.sort) {
-      case "price-low":
+      case "price-asc":
         filtered.sort((a, b) => a.price - b.price);
         break;
-      case "price-high":
+      case "price-desc":
         filtered.sort((a, b) => b.price - a.price);
         break;
-      case "newest":
-        filtered.sort(
-          (a, b) =>
-            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-        );
+      case "name-asc":
+        filtered.sort((a, b) => a.name.localeCompare(b.name));
         break;
-      case "rating":
-        filtered.sort((a, b) => b.averageRating - a.averageRating);
+      case "name-desc":
+        filtered.sort((a, b) => b.name.localeCompare(a.name));
         break;
-      case "featured":
+      case "createdAt-desc":
       default:
         break;
     }
 
     return filtered;
-  }, [products, filters]);
+  }, [products, filters.sort]);
 
   if (filteredAndSortedProducts.length === 0) {
     return (
@@ -85,8 +66,7 @@ export function FilteredProductGrid({
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">
-          Showing {filteredAndSortedProducts.length} of {products.length}{" "}
-          products
+          Showing {filteredAndSortedProducts.length} of {totalProducts} products
         </p>
       </div>
 

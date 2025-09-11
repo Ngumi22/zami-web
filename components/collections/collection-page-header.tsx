@@ -3,6 +3,10 @@ import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 import { Collection } from "@prisma/client";
 
+// Small base64 encoded version of your image for blur effect
+const blurDataURL =
+  "data:image/webp;base64,UklGRh4AAABXRUJQVlA4IBIAAAAwAQCdASoBAAEAAQAcJaQAA3AA/vtAAAA=";
+
 interface CollectionPageHeaderProps {
   collection: Collection;
 }
@@ -12,15 +16,22 @@ export function CollectionPageHeader({
 }: CollectionPageHeaderProps) {
   return (
     <div className="relative">
-      {/* Hero Image */}
-      <div className="relative h-64 md:h-80 lg:h-96 overflow-hidden">
-        <div className="absolute inset-0 bg-black/40" />
+      <div className="relative h-32 md:h-40 lg:h-48 overflow-hidden">
+        <div className="absolute inset-0 bg-black/40">
+          <Image
+            src="/collection-banner.webp"
+            height={1000}
+            width={1000}
+            placeholder="blur"
+            blurDataURL={blurDataURL}
+            className="object-cover w-full h-auto"
+            alt="Collections page image"
+          />
+        </div>
 
-        {/* Content Overlay */}
         <div className="absolute inset-0 flex items-center">
           <div className="container mx-auto px-4">
-            <div className="max-w-2xl text-white">
-              {/* Breadcrumb */}
+            <div className="max-w-xl text-white">
               <div className="mb-4">
                 <Link
                   href="/collections"
@@ -30,8 +41,7 @@ export function CollectionPageHeader({
                 </Link>
               </div>
 
-              {/* Collection Info */}
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4 text-balance">
+              <h1 className="text-xl md:text-4xl font-bold mb-4 text-balance">
                 {collection.name}
               </h1>
               <p className="text-lg md:text-xl text-white/90 text-pretty max-w-xl">

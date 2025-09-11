@@ -282,12 +282,14 @@ export const getProducts = cache(
     if (Object.keys(priceFilter).length > 0) {
       matchStage.$and.push({ price: priceFilter });
     }
+    // Escape special regex characters in the search string
+    const escapedSearch = search?.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
     if (search) {
       matchStage.$and.push({
         $or: [
-          { name: { $regex: search, $options: "i" } },
-          { description: { $regex: search, $options: "i" } },
+          { name: { $regex: escapedSearch, $options: "i" } },
+          { description: { $regex: escapedSearch, $options: "i" } },
         ],
       });
     }

@@ -27,7 +27,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 
-import { signInUser } from "@/server/users";
+import { handleLoginWithGoogle, signInUser } from "@/server/users";
 import { authClient } from "@/lib/auth/auth.client";
 
 const formSchema = z.object({
@@ -38,13 +38,6 @@ const formSchema = z.object({
 export function CustomerLoginForm() {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
-
-  const handleLoginWithGoogle = async () => {
-    await authClient.signIn.social({
-      provider: "google",
-      callbackURL: "http://localhost:3000/account",
-    });
-  };
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),

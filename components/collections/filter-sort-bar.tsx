@@ -1,7 +1,6 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useState, useEffect, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -10,127 +9,222 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Slider } from "@/components/ui/slider";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { X, SlidersHorizontal } from "lucide-react";
-import { Category } from "@prisma/client";
+import { X, SlidersHorizontal, ChevronDown } from "lucide-react";
+import { Category, Brand } from "@prisma/client";
+import {
+  useQueryStates,
+  parseAsString,
+  parseAsInteger,
+  parseAsArrayOf,
+} from "nuqs";
 
+// The props for current filter values are no longer needed,
+// as nuqs will manage the state directly from the URL.
 interface FilterSortBarProps {
   categories: Category[];
-  currentCategory?: string;
-  currentSort?: string;
-  currentMinPrice?: string;
-  currentMaxPrice?: string;
+  availableBrands: Brand[];
+  currentSearch?: string;
+  totalProducts: number;
+  priceRange: { min: number; max: number };
 }
 
 export function FilterSortBar({
   categories,
-  currentCategory,
-  currentSort,
-  currentMinPrice,
-  currentMaxPrice,
+  availableBrands,
+  currentSearch,
+  totalProducts,
+  priceRange,
 }: FilterSortBarProps) {
-  const router = useRouter();
-  const searchParams = useSearchParams();
+  // useTransition provides visual feedback for pending state updates
+  const [isPending, startTransition] = useTransition();
+
+  // useQueryStates from nuqs manages all filter states in the URL.
+  // It's type-safe and declarative. `shallow: false` ensures a full
+  // page navigation to refetch server data when filters change.
+  const [filters, setFilters] = useQueryStates(
+    {
+      category: parseAsString.withDefault("all"),
+      brands: parseAsArrayOf(parseAsString).withDefault([]),
+      sort: parseAsString.withDefault("createdAt-desc"),
+      priceMin: parseAsInteger,
+      priceMax: parseAsInteger,
+    },
+    {
+      history: "push",
+      shallow: false,
+    }
+  );
+
   const [showFilters, setShowFilters] = useState(false);
-  const [priceRange, setPriceRange] = useState([
-    currentMinPrice ? Number.parseFloat(currentMinPrice) : 0,
-    currentMaxPrice ? Number.parseFloat(currentMaxPrice) : 1000,
+
+  // A local state is used for the slider to provide a smooth UX while dragging.
+  const [localPriceRange, setLocalPriceRange] = useState([
+    filters.priceMin ?? priceRange.min,
+    filters.priceMax ?? priceRange.max,
   ]);
+  const [debounceTimer, setDebounceTimer] = useState<NodeJS.Timeout | null>(
+    null
+  );
 
-  const updateSearchParams = (key: string, value: string | null) => {
-    const params = new URLSearchParams(searchParams.toString());
+  // Syncs the local slider state if the URL changes (e.g., browser back/forward).
+  useEffect(() => {
+    setLocalPriceRange([
+      filters.priceMin ?? priceRange.min,
+      filters.priceMax ?? priceRange.max,
+    ]);
+  }, [filters.priceMin, filters.priceMax, priceRange.min, priceRange.max]);
 
-    if (value && value !== "all" && value !== "featured") {
-      params.set(key, value);
-    } else {
-      params.delete(key);
-    }
-
-    router.push(`?${params.toString()}`, { scroll: false });
+  // Handlers now use startTransition and the nuqs setter `setFilters`.
+  const handleCategoryChange = (slug: string) => {
+    startTransition(() => {
+      setFilters({ category: slug === "all" ? null : slug });
+    });
   };
 
+  const handleBrandChange = (brandSlug: string, isChecked: boolean) => {
+    const newBrands = new Set(filters.brands);
+    if (isChecked) newBrands.add(brandSlug);
+    else newBrands.delete(brandSlug);
+
+    startTransition(() => {
+      setFilters({ brands: Array.from(newBrands) });
+    });
+  };
+
+  const handleSortChange = (sort: string) => {
+    startTransition(() => {
+      setFilters({ sort: sort === "createdAt-desc" ? null : sort });
+    });
+  };
+
+  // Debounced price update for the slider.
   const handlePriceChange = (values: number[]) => {
-    setPriceRange(values);
-  };
+    setLocalPriceRange(values);
+    if (debounceTimer) clearTimeout(debounceTimer);
 
-  const handlePriceCommit = (values: number[]) => {
-    const params = new URLSearchParams(searchParams.toString());
+    const newTimer = setTimeout(() => {
+      startTransition(() => {
+        setFilters({
+          priceMin: values[0] === priceRange.min ? null : values[0],
+          priceMax: values[1] === priceRange.max ? null : values[1],
+        });
+      });
+    }, 500); // 500ms debounce delay
 
-    if (values[0] > 0) {
-      params.set("minPrice", values[0].toString());
-    } else {
-      params.delete("minPrice");
-    }
-
-    if (values[1] < 1000) {
-      params.set("maxPrice", values[1].toString());
-    } else {
-      params.delete("maxPrice");
-    }
-
-    router.push(`?${params.toString()}`, { scroll: false });
+    setDebounceTimer(newTimer);
   };
 
   const clearFilters = () => {
-    router.push(window.location.pathname, { scroll: false });
-    setPriceRange([0, 1000]);
+    startTransition(() => {
+      setFilters({
+        category: null,
+        brands: [],
+        sort: null,
+        priceMin: null,
+        priceMax: null,
+      });
+    });
   };
 
   const activeFiltersCount = [
-    currentCategory,
-    currentSort && currentSort !== "featured",
-    currentMinPrice,
-    currentMaxPrice,
+    filters.category !== "all",
+    filters.brands.length > 0,
+    filters.sort !== "createdAt-desc",
+    filters.priceMin,
+    filters.priceMax,
+    currentSearch,
   ].filter(Boolean).length;
 
   return (
-    <div className="space-y-4 mb-8">
-      {/* Main Filter Bar */}
+    <div
+      className={`space-y-4 mb-8 transition-opacity ${
+        isPending ? "opacity-70" : "opacity-100"
+      }`}>
+      <div className="text-sm text-muted-foreground">
+        {totalProducts} product{totalProducts !== 1 ? "s" : ""} found
+      </div>
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
         <div className="flex flex-wrap gap-3 items-center">
-          {/* Category Filter */}
           <Select
-            value={currentCategory || "all"}
-            onValueChange={(value) => updateSearchParams("category", value)}>
+            value={filters.category}
+            onValueChange={handleCategoryChange}
+            disabled={isPending}>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="All Categories" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Categories</SelectItem>
               {categories.map((category) => (
-                <SelectItem
-                  key={category.id}
-                  value={category.slug.toLowerCase().replace(/\s+/g, "-")}>
+                <SelectItem key={category.id} value={category.slug}>
                   {category.name}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
 
-          {/* Sort Filter */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                className="w-[180px] justify-between"
+                disabled={isPending}>
+                <span>
+                  {filters.brands.length > 0
+                    ? `${filters.brands.length} Brands Selected`
+                    : "All Brands"}
+                </span>
+                <ChevronDown className="h-4 w-4 opacity-50" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-[180px]">
+              <DropdownMenuLabel>Filter by Brand</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {availableBrands.map((brand) => (
+                <DropdownMenuCheckboxItem
+                  key={brand.id}
+                  checked={filters.brands.includes(brand.slug)}
+                  onCheckedChange={(isChecked) =>
+                    handleBrandChange(brand.slug, isChecked)
+                  }>
+                  {brand.name}
+                </DropdownMenuCheckboxItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
           <Select
-            value={currentSort || "featured"}
-            onValueChange={(value) => updateSearchParams("sort", value)}>
+            value={filters.sort}
+            onValueChange={handleSortChange}
+            disabled={isPending}>
             <SelectTrigger className="w-[160px]">
               <SelectValue placeholder="Sort by" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="featured">Featured</SelectItem>
-              <SelectItem value="price-low">Price: Low to High</SelectItem>
-              <SelectItem value="price-high">Price: High to Low</SelectItem>
-              <SelectItem value="newest">Newest First</SelectItem>
-              <SelectItem value="rating">Highest Rated</SelectItem>
+              <SelectItem value="createdAt-desc">Newest First</SelectItem>
+              <SelectItem value="price-asc">Price: Low to High</SelectItem>
+              <SelectItem value="price-desc">Price: High to Low</SelectItem>
+              <SelectItem value="name-asc">Name: A to Z</SelectItem>
+              <SelectItem value="name-desc">Name: Z to A</SelectItem>
             </SelectContent>
           </Select>
 
-          {/* Advanced Filters Toggle */}
           <Button
             variant="outline"
             size="sm"
             onClick={() => setShowFilters(!showFilters)}
-            className="gap-2">
+            className="gap-2"
+            disabled={isPending}>
             <SlidersHorizontal className="h-4 w-4" />
             Filters
             {activeFiltersCount > 0 && (
@@ -140,21 +234,18 @@ export function FilterSortBar({
             )}
           </Button>
         </div>
-
-        {/* Clear Filters */}
         {activeFiltersCount > 0 && (
           <Button
             variant="ghost"
             size="sm"
             onClick={clearFilters}
-            className="gap-2">
+            className="gap-2"
+            disabled={isPending}>
             <X className="h-4 w-4" />
             Clear all
           </Button>
         )}
       </div>
-
-      {/* Advanced Filters Panel */}
       {showFilters && (
         <Card className="p-6">
           <div className="space-y-6">
@@ -162,74 +253,22 @@ export function FilterSortBar({
               <h3 className="text-sm font-medium mb-4">Price Range</h3>
               <div className="space-y-4">
                 <Slider
-                  value={priceRange}
+                  value={localPriceRange}
                   onValueChange={handlePriceChange}
-                  onValueCommit={handlePriceCommit}
-                  max={1000}
-                  min={0}
-                  step={10}
+                  max={priceRange.max}
+                  min={priceRange.min}
+                  step={1}
                   className="w-full"
+                  disabled={isPending}
                 />
                 <div className="flex items-center justify-between text-sm text-muted-foreground">
-                  <span>${priceRange[0]}</span>
-                  <span>${priceRange[1]}</span>
+                  <span>Ksh{localPriceRange[0]}</span>
+                  <span>Ksh{localPriceRange[1]}</span>
                 </div>
               </div>
             </div>
           </div>
         </Card>
-      )}
-
-      {/* Active Filters Display */}
-      {activeFiltersCount > 0 && (
-        <div className="flex flex-wrap gap-2 items-center">
-          <span className="text-sm text-muted-foreground">Active filters:</span>
-          {currentCategory && (
-            <Badge variant="secondary" className="gap-1">
-              {categories.find((cat) => cat.slug === currentCategory)?.name ||
-                currentCategory}
-              <button
-                onClick={() => updateSearchParams("category", null)}
-                className="ml-1 hover:bg-muted-foreground/20 rounded-full p-0.5">
-                <X className="h-3 w-3" />
-              </button>
-            </Badge>
-          )}
-          {currentSort && currentSort !== "featured" && (
-            <Badge variant="secondary" className="gap-1">
-              {currentSort === "price-low"
-                ? "Price: Low to High"
-                : currentSort === "price-high"
-                ? "Price: High to Low"
-                : currentSort === "newest"
-                ? "Newest First"
-                : currentSort === "rating"
-                ? "Highest Rated"
-                : currentSort}
-              <button
-                onClick={() => updateSearchParams("sort", null)}
-                className="ml-1 hover:bg-muted-foreground/20 rounded-full p-0.5">
-                <X className="h-3 w-3" />
-              </button>
-            </Badge>
-          )}
-          {(currentMinPrice || currentMaxPrice) && (
-            <Badge variant="secondary" className="gap-1">
-              Ksh{currentMinPrice || "0"} - Ksh{currentMaxPrice || "1000"}
-              <button
-                onClick={() => {
-                  const params = new URLSearchParams(searchParams.toString());
-                  params.delete("minPrice");
-                  params.delete("maxPrice");
-                  router.push(`?${params.toString()}`, { scroll: false });
-                  setPriceRange([0, 1000]);
-                }}
-                className="ml-1 hover:bg-muted-foreground/20 rounded-full p-0.5">
-                <X className="h-3 w-3" />
-              </button>
-            </Badge>
-          )}
-        </div>
       )}
     </div>
   );

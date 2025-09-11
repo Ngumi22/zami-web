@@ -1,6 +1,7 @@
 "use server";
 
 import { auth } from "@/lib/auth";
+import { authClient } from "@/lib/auth/auth.client";
 
 export const signInUser = async (email: string, password: string) => {
   try {
@@ -37,4 +38,11 @@ export const signUpUser = async (
     const e = error as Error;
     return { success: false, message: e.message || "Failed to sign up" };
   }
+};
+
+export const handleLoginWithGoogle = async () => {
+  await authClient.signIn.social({
+    provider: "google",
+    callbackURL: process.env.BETTER_AUTH_URL,
+  });
 };

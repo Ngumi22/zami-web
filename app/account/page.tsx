@@ -18,7 +18,7 @@ export default async function AccountPage() {
   const customer = await getCurrentCustomer();
 
   if (!customer) {
-    redirect("/auth/login");
+    redirect("/account/login");
   }
 
   const addresses = await getAddresses(customer);

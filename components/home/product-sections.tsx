@@ -307,7 +307,9 @@ export function DiscountedProducts({ products }: { products: Product[] }) {
       title={
         <div>
           Hottest Sales & Discounts
-          <span className="ml-6 text-sm text-muted-foreground">+ 30% Off</span>
+          <span className="ml-6 text-sm text-muted-foreground hidden md:block">
+            + 30% Off
+          </span>
         </div>
       }
       viewAllHref="/products">
@@ -332,7 +334,7 @@ export function PromotionalSection() {
           imageSrc="/bannerV5-img10.webp"
           imageAlt="Refurbished laptops on sale"
           variant="primary"
-          size="small"
+          size="medium"
         />
         <PromotionalBanner
           title="New Arrivals"
@@ -342,7 +344,7 @@ export function PromotionalSection() {
           imageSrc="/bannerV5-img5.webp"
           imageAlt="New laptops and smartphones"
           variant="primary"
-          size="small"
+          size="medium"
         />
         <PromotionalBanner
           title="Featured Products"
@@ -352,7 +354,7 @@ export function PromotionalSection() {
           imageSrc="/ipho.png"
           imageAlt="Featured tech gadgets"
           variant="primary"
-          size="small"
+          size="medium"
         />
       </div>
     </section>

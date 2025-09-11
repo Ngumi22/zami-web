@@ -15,7 +15,6 @@ import { useRef } from "react";
 export default function SortBar() {
   const [search, setSearch] = useQueryState("search", {
     defaultValue: "",
-    shallow: false,
   });
   const [perPage, setPerPage] = useQueryState(
     "perPage",

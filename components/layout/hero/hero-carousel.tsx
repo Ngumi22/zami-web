@@ -94,10 +94,10 @@ export default function HeroCarousel() {
                   {slide.description}
                 </p>
                 <div className="pt-4 cursor-pointer">
-                  <Link href={"/products"} passHref>
+                  <Link href="/products">
                     <Button
-                      size="lg"
-                      className="text-white text-sm font-bold px-8 py-3 bg-black hover:bg-gray-800 tracking-wide">
+                      size="sm"
+                      className="text-white text-sm font-bold md:px-8 md:py-3 bg-black hover:bg-gray-800 tracking-wide">
                       {slide.buttonText}
                     </Button>
                   </Link>
@@ -149,18 +149,18 @@ export default function HeroCarousel() {
                 <p className="text-sm tracking-[0.2em] uppercase font-bold">
                   {slide.subtitle}
                 </p>
-                <h1 className="text-4xl md:text-5xl font-normal leading-tight text-balance">
+                <h1 className="text-xl md:text-3xl font-normal leading-tight text-balance">
                   {slide.title}
                 </h1>
               </div>
-              <p className="text-lg md:text-xl leading-relaxed max-w-lg text-pretty">
+              <p className="text-sm lg:text-xl leading-relaxed max-w-lg text-pretty">
                 {slide.description}
               </p>
               <div className="pt-4">
-                <Link href={"/products"} passHref>
+                <Link href={"/products"}>
                   <Button
-                    size="lg"
-                    className="text-white text-sm font-bold px-8 py-3 bg-black hover:bg-gray-800 tracking-wide">
+                    size="sm"
+                    className="text-white text-sm font-bold md:px-8 md:py-3 bg-black hover:bg-gray-800 tracking-wide">
                     {slide.buttonText}
                   </Button>
                 </Link>

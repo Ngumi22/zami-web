@@ -19,7 +19,7 @@ export function ProductCarousel({
     <div className="py-4">
       {title && (
         <div className="flex items-center justify-between mb-4">
-          <h2 className="md:text-xl font-semibold">{title}</h2>
+          <h2 className="text-md md:text-xl font-semibold">{title}</h2>
           {viewAllHref && (
             <a
               href={viewAllHref}

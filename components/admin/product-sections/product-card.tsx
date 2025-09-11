@@ -29,6 +29,9 @@ type ProductCardProps = {
         unit?: string | null;
       }[];
     };
+    brand?: {
+      name: string;
+    };
   };
   showQuickView?: boolean;
   priority?: boolean;
@@ -167,7 +170,7 @@ export function ProductCard({
           </Link>
           <div className="flex items-center justify-between mt-1">
             <p className="text-xs text-muted-foreground line-clamp-1 capitalize">
-              {product.category?.name}
+              {product.brand?.name}
             </p>
             {hasVariants && (
               <span className="text-xs text-muted-foreground block">
@@ -182,11 +185,13 @@ export function ProductCard({
             <span className="text-sm font-bold">
               {formatCurrency(displayPrice)}
             </span>
-            {hasDiscount && displayOriginalPrice && (
-              <span className="text-xs text-muted-foreground line-through">
-                {formatCurrency(displayOriginalPrice)}
-              </span>
-            )}
+            <div className="hidden lg:block">
+              {hasDiscount && displayOriginalPrice && (
+                <span className="text-xs text-muted-foreground line-through">
+                  {formatCurrency(displayOriginalPrice)}
+                </span>
+              )}
+            </div>
           </div>
 
           {!isMobile && (
