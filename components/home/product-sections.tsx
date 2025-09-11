@@ -307,7 +307,7 @@ export function DiscountedProducts({ products }: { products: Product[] }) {
       title={
         <div>
           Hottest Sales & Discounts
-          <span className="ml-6 text-sm text-muted-foreground hidden md:block">
+          <span className="ml-6 text-sm text-muted-foreground hidden md:flex">
             + 30% Off
           </span>
         </div>

@@ -19,6 +19,7 @@ import {
   sendWelcomeEmail,
 } from "./email";
 import { randomBytes } from "crypto";
+import { revalidatePath } from "next/cache";
 
 const EXPIRES_IN = 30 * 24 * 60 * 60; // 30 days
 
@@ -103,7 +104,7 @@ export async function signup(
 
     // Send verification email
     await sendVerificationEmail(customer.email, verificationToken);
-
+    revalidatePath("/account/login");
     return {
       success: "Account created! Please check your email for verification.",
     };

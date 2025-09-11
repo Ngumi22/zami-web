@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic";
 
 export default async function SignupPage() {
   return (
-    <section className="py-8 mx-auto">
+    <section className="mx-auto max-w-md py-8">
       <CustomerSignupForm />
     </section>
   );

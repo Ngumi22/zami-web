@@ -173,10 +173,7 @@ const emailTemplates = {
 // Email sending functions
 export async function sendVerificationEmail(email: string, token: string) {
   try {
-    const verificationLink =
-      `${process.env.BETTER_AUTH_URL}/auth/verify-email?token=${token}` ||
-      `http://localhost:3000/auth/verify-email?token=${token}`;
-
+    const verificationLink = `${process.env.BETTER_AUTH_URL}/auth/verify-email?token=${token}`;
     const mailOptions = {
       from: `"Your Store" <${process.env.SMTP_FROM_EMAIL}>`,
       to: email,
