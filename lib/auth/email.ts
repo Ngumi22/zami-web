@@ -29,7 +29,7 @@ const emailTemplates = {
     <head>
       <meta charset="utf-8">
       <style>
-        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        body { font-family: Jost, sans-serif; line-height: 1.6; color: #333; }
         .container { max-width: 600px; margin: 0 auto; padding: 20px; }
         .header { background: #2563eb; color: white; padding: 20px; text-align: center; }
         .content { background: #f9fafb; padding: 30px; }
@@ -66,7 +66,7 @@ const emailTemplates = {
         </div>
         <div class="footer">
           <p>If you didn't create this account, please ignore this email.</p>
-          <p>© ${new Date().getFullYear()} Your Store. All rights reserved.</p>
+          <p>© ${new Date().getFullYear()} Zami Tech Solutions. All rights reserved.</p>
         </div>
       </div>
     </body>
@@ -115,7 +115,7 @@ const emailTemplates = {
           <p>If you didn't request a password reset, please ignore this email and your password will remain unchanged.</p>
         </div>
         <div class="footer">
-          <p>© ${new Date().getFullYear()} Your Store. All rights reserved.</p>
+          <p>© ${new Date().getFullYear()} Zami Tech Solutions. All rights reserved.</p>
         </div>
       </div>
     </body>
@@ -162,7 +162,7 @@ const emailTemplates = {
           }" style="color: #2563eb; text-decoration: none;">Visit Our Store →</a>
         </div>
         <div class="footer">
-          <p>© ${new Date().getFullYear()} Your Store. All rights reserved.</p>
+          <p>© ${new Date().getFullYear()} Zami Tech Solutions. All rights reserved.</p>
         </div>
       </div>
     </body>
@@ -171,11 +171,19 @@ const emailTemplates = {
 };
 
 // Email sending functions
-export async function sendVerificationEmail(email: string, token: string) {
+// lib/email.ts (update the verification template)
+export async function sendVerificationEmail(
+  email: string,
+  token: string,
+  userId: string
+) {
   try {
-    const verificationLink = `${process.env.BETTER_AUTH_URL}/auth/verify-email?token=${token}`;
+    const verificationLink = `${process.env.NEXTAUTH_URL}/api/verify-email?token=${token}&userId=${userId}`;
+
     const mailOptions = {
-      from: `"Your Store" <${process.env.SMTP_FROM_EMAIL}>`,
+      from: `"${process.env.SMTP_FROM_NAME || "Zami Tech"}" <${
+        process.env.SMTP_FROM_EMAIL
+      }>`,
       to: email,
       subject: "Verify Your Email Address",
       html: emailTemplates.verification(verificationLink),
@@ -186,7 +194,9 @@ export async function sendVerificationEmail(email: string, token: string) {
     return result;
   } catch (error) {
     console.error("Error sending verification email:", error);
-    throw new Error("Failed to send verification email");
+    throw new Error(
+      "Failed to send verification email. Please try again later."
+    );
   }
 }
 
@@ -195,7 +205,7 @@ export async function sendPasswordResetEmail(email: string, token: string) {
     const resetLink = `${process.env.BETTER_AUTH_URL}/auth/reset-password?token=${token}`;
 
     const mailOptions = {
-      from: `"Your Store" <${process.env.SMTP_FROM_EMAIL}>`,
+      from: `"Zami Tech Solutions" <${process.env.SMTP_FROM_EMAIL}>`,
       to: email,
       subject: "Reset Your Password",
       html: emailTemplates.passwordReset(resetLink),
@@ -213,7 +223,7 @@ export async function sendPasswordResetEmail(email: string, token: string) {
 export async function sendWelcomeEmail(email: string) {
   try {
     const mailOptions = {
-      from: `"Your Store" <${process.env.SMTP_FROM_EMAIL}>`,
+      from: `"Zami Tech Solutions" <${process.env.SMTP_FROM_EMAIL}>`,
       to: email,
       subject: "Welcome to Our Store!",
       html: emailTemplates.welcome(),
@@ -268,7 +278,7 @@ export async function sendOrderConfirmationEmail(
             <p>You can track your order status in your account dashboard.</p>
           </div>
           <div class="footer">
-            <p>© ${new Date().getFullYear()} Your Store. All rights reserved.</p>
+            <p>© ${new Date().getFullYear()} Zami Tech Solutions. All rights reserved.</p>
           </div>
         </div>
       </body>
@@ -276,7 +286,7 @@ export async function sendOrderConfirmationEmail(
     `;
 
     const mailOptions = {
-      from: `"Your Store" <${process.env.SMTP_FROM_EMAIL}>`,
+      from: `"Zami Tech Solutions" <${process.env.SMTP_FROM_EMAIL}>`,
       to: email,
       subject: `Order Confirmation - #${orderDetails.orderNumber}`,
       html: orderTemplate,

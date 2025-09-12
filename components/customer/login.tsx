@@ -141,7 +141,11 @@ export function CustomerLoginForm() {
                 )}
               />
 
-              <Button type="submit" disabled={isLoading} className="w-full">
+              <Button
+                variant="outline"
+                type="submit"
+                disabled={isLoading}
+                className="w-full">
                 {isLoading ? (
                   <Loader2 className="size-4 animate-spin" />
                 ) : (

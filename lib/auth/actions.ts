@@ -60,6 +60,7 @@ export type ActionResponse = {
 };
 
 // Auth Actions with proper parameter types
+// lib/auth/actions.ts (update the signup function)
 export async function signup(
   email: string,
   name: string,
@@ -102,9 +103,9 @@ export async function signup(
       },
     });
 
-    // Send verification email
-    await sendVerificationEmail(customer.email, verificationToken);
-    revalidatePath("/account/login");
+    // Send verification email with user ID
+    await sendVerificationEmail(customer.email, verificationToken, customer.id);
+
     return {
       success: "Account created! Please check your email for verification.",
     };
@@ -218,6 +219,50 @@ export async function googleSignIn(): Promise<ActionResponse> {
   } catch (error) {
     console.error("Google signin error:", error);
     return { error: "Failed to initiate Google sign in" };
+  }
+}
+
+// lib/auth/actions.ts (add this function)
+export async function resendVerificationEmail(
+  email: string
+): Promise<ActionResponse> {
+  try {
+    const customer = await prisma.customer.findUnique({
+      where: { email },
+    });
+
+    if (!customer) {
+      // Don't reveal whether email exists
+      return {
+        success:
+          "If an account exists with this email, a verification link will be sent.",
+      };
+    }
+
+    if (customer.emailVerified) {
+      return { error: "Email is already verified." };
+    }
+
+    // Generate new verification token
+    const verificationToken = randomBytes(32).toString("hex");
+    const verificationTokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
+    // Update customer with new token
+    await prisma.customer.update({
+      where: { id: customer.id },
+      data: {
+        verificationToken,
+        verificationTokenExpires,
+      },
+    });
+
+    // Send verification email
+    await sendVerificationEmail(customer.email, verificationToken, customer.id);
+
+    return { success: "Verification email sent. Please check your inbox." };
+  } catch (error) {
+    console.error("Resend verification error:", error);
+    return { error: "Failed to resend verification email." };
   }
 }
 
