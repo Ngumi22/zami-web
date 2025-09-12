@@ -176,7 +176,7 @@ export async function sendVerificationEmail(
   userId: string
 ) {
   try {
-    const verificationLink = `${process.env.NEXTAUTH_URL}/api/verify-email?token=${token}&userId=${userId}`;
+    const verificationLink = `${process.env.BETTER_AUTH_URL}/api/verify-email?token=${token}&userId=${userId}`;
 
     const mailOptions = {
       from: `"${process.env.APP_NAME || "Zami Tech"}" <${
