@@ -170,8 +170,6 @@ const emailTemplates = {
   `,
 };
 
-// Email sending functions
-// lib/email.ts (update the verification template)
 export async function sendVerificationEmail(
   email: string,
   token: string,
@@ -181,8 +179,8 @@ export async function sendVerificationEmail(
     const verificationLink = `${process.env.NEXTAUTH_URL}/api/verify-email?token=${token}&userId=${userId}`;
 
     const mailOptions = {
-      from: `"${process.env.SMTP_FROM_NAME || "Zami Tech"}" <${
-        process.env.SMTP_FROM_EMAIL
+      from: `"${process.env.APP_NAME || "Zami Tech"}" <${
+        process.env.SMTP_USER
       }>`,
       to: email,
       subject: "Verify Your Email Address",
@@ -205,7 +203,7 @@ export async function sendPasswordResetEmail(email: string, token: string) {
     const resetLink = `${process.env.BETTER_AUTH_URL}/auth/reset-password?token=${token}`;
 
     const mailOptions = {
-      from: `"Zami Tech Solutions" <${process.env.SMTP_FROM_EMAIL}>`,
+      from: `"Zami Tech Solutions" <${process.env.SMTP_USER}>`,
       to: email,
       subject: "Reset Your Password",
       html: emailTemplates.passwordReset(resetLink),
@@ -223,7 +221,7 @@ export async function sendPasswordResetEmail(email: string, token: string) {
 export async function sendWelcomeEmail(email: string) {
   try {
     const mailOptions = {
-      from: `"Zami Tech Solutions" <${process.env.SMTP_FROM_EMAIL}>`,
+      from: `"Zami Tech Solutions" <${process.env.SMTP_USER}>`,
       to: email,
       subject: "Welcome to Our Store!",
       html: emailTemplates.welcome(),
@@ -286,7 +284,7 @@ export async function sendOrderConfirmationEmail(
     `;
 
     const mailOptions = {
-      from: `"Zami Tech Solutions" <${process.env.SMTP_FROM_EMAIL}>`,
+      from: `"Zami Tech Solutions" <${process.env.SMTP_USER}>`,
       to: email,
       subject: `Order Confirmation - #${orderDetails.orderNumber}`,
       html: orderTemplate,

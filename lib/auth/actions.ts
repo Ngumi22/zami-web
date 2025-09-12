@@ -8,7 +8,6 @@ import {
   logout,
   requireAuth,
 } from "./customer-auth";
-import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { z } from "zod";
 import prisma from "../prisma";
