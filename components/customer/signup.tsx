@@ -26,7 +26,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { signUpUser } from "@/server/users";
 import { authClient } from "@/lib/auth/auth.client";
 import { signup } from "@/lib/auth/actions";
 

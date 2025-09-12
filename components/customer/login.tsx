@@ -28,6 +28,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { signInUser } from "@/server/users";
 import { authClient } from "@/lib/auth/auth.client";
+import { login } from "@/lib/auth/actions";
 
 const formSchema = z.object({
   email: z.string().email(),
@@ -59,12 +60,11 @@ export function CustomerLoginForm() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
       setIsLoading(true);
-      const response = await signInUser(values.email, values.password);
-      if (response.success) {
-        toast.success(response.message);
+      const response = await login(values.email, values.password);
+      if (response.success == "Login successful!") {
         router.push("/account");
       } else {
-        toast.error(response.message);
+        toast.error(response.error);
       }
     } catch (error) {
       console.error(error);
