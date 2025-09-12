@@ -27,7 +27,6 @@ export async function createSession(customerId: string): Promise<string> {
     .setIssuedAt()
     .sign(secret);
 
-  // Store session in database
   await prisma.customerSession.create({
     data: {
       customerId,
@@ -96,7 +95,7 @@ export const getOrders = unstable_cache(
 export async function requireAuth() {
   const customer = await getCurrentCustomer();
   if (!customer) {
-    redirect("/auth/login");
+    redirect("/account/login");
   }
   return customer;
 }
