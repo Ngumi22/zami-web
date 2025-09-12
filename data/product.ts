@@ -155,7 +155,7 @@ export async function getFeaturedProducts(limit: number = 6) {
   }));
 }
 
-export async function newArrivals(limit: number = 8) {
+export async function newArrivals(limit: number = 10) {
   const latest = await prisma.product.findMany({
     orderBy: { createdAt: "desc" },
     take: limit,
@@ -164,7 +164,6 @@ export async function newArrivals(limit: number = 8) {
       category: {
         select: {
           name: true,
-          specifications: true,
         },
       },
     },
@@ -175,10 +174,7 @@ export async function newArrivals(limit: number = 8) {
     },
   });
 
-  return latest.map((product: Product) => ({
-    ...product,
-    specifications: mapSpecifications(product),
-  }));
+  return latest.map((product: Product) => product);
 }
 
 export async function getProductsByCategory(
@@ -279,54 +275,50 @@ export async function getTopProducts(): Promise<Product[]> {
   });
 }
 
-export async function getTopRatedProducts(limit?: number) {
-  const products = await prisma.product.findMany({
-    orderBy: {
-      averageRating: "desc",
-    },
-    take: limit,
-    include: {
-      brand: true,
-      category: {
-        select: {
-          name: true,
-          specifications: true,
+export async function getTopRatedProducts(limit: number = 10) {
+  try {
+    const products = await prisma.product.findMany({
+      where: {
+        averageRating: {
+          gt: 0,
+        },
+        reviewCount: {
+          gt: 0,
         },
       },
-    },
-    cacheStrategy: {
-      ttl: 60 * 60 * 24 * 7,
-      swr: 60 * 60 * 24 * 2,
-    },
-  });
+      orderBy: {
+        averageRating: "desc",
+      },
+      take: limit,
+      include: {
+        brand: true,
+        category: {
+          select: {
+            name: true,
+          },
+        },
+        reviews: {
+          include: {
+            customer: true,
+          },
+          orderBy: {
+            createdAt: "desc",
+          },
+        },
+      },
+      cacheStrategy: {
+        ttl: 60 * 60 * 24 * 7,
+        swr: 60 * 60 * 24 * 2,
+      },
+    });
 
-  if (!products.length) return [];
+    if (!products.length) return [];
 
-  const productIds = products.map((p: Product) => p.id);
-
-  const reviews = await prisma.review.findMany({
-    where: {
-      productId: { in: productIds },
-    },
-    include: {
-      customer: true,
-    },
-    cacheStrategy: {
-      ttl: 60 * 60 * 24 * 7, // 7 days
-      swr: 60 * 60 * 24 * 2, // 2 days stale-while-revalidate
-    },
-  });
-
-  const reviewsByProductId = reviews.reduce((acc: any, review: any) => {
-    (acc[review.productId] ||= []).push(review);
-    return acc;
-  }, {} as Record<string, typeof reviews>);
-
-  return products.map((product: Product) => ({
-    ...product,
-    reviews: reviewsByProductId[product.id] || [],
-    specifications: mapSpecifications(product),
-  }));
+    return products.map((product: Product) => product);
+  } catch (error) {
+    console.error("Error fetching top rated products:", error);
+    throw new Error("Failed to fetch top rated products");
+  }
 }
 
 export async function getFrequentlyBoughtTogetherProducts(slug: string) {
@@ -571,7 +563,7 @@ export async function getTopProductsWithRevenue(): Promise<
     );
 }
 
-export async function discountedProducts(limit?: number) {
+export async function discountedProducts(limit: number = 10) {
   const discounted = await prisma.product.findMany({
     where: {
       originalPrice: {

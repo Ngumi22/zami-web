@@ -25,7 +25,6 @@ import {
   CustomerAddress,
   Order,
 } from "@prisma/client";
-import { useToast } from "@/hooks/use-toast";
 import { signOut } from "@/lib/auth/actions";
 
 export interface CustomerWithRelations extends PrismaCustomer {

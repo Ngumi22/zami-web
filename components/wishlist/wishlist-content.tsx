@@ -105,7 +105,7 @@ export function WishlistContent() {
         <p className="text-gray-600 mb-6">
           Start adding products you love to your wishlist.
         </p>
-        <Button asChild>
+        <Button variant="outline" asChild>
           <Link href="/products">Browse Products</Link>
         </Button>
       </div>

@@ -3,7 +3,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { toast } from "@/components/ui/use-toast";
-import { Product } from "@/generated/prisma/client";
+import { Product } from "@prisma/client";
 
 interface WishlistStore {
   items: Product[];

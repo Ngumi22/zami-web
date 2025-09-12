@@ -1,38 +1,35 @@
 "use client";
 import { Product } from "@prisma/client/edge";
-import { PromotionalBanner } from "../home/promotional-banner";
-import ProductGrid from "../products/product-grid";
+import { ProductCard } from "../admin/product-sections/product-card";
 
 export default function Deals({ productDeals }: { productDeals: Product[] }) {
   return (
-    <div className="flex min-h-screen flex-col">
-      <main className="flex-1 container px-4 py-8 md:px-6 md:py-12">
-        <PromotionalBanner
-          title="Limited Time Offers"
-          description="Save big on our best-selling electronics. Hurry, these deals won't last long!"
-          ctaText="Shop All Deals"
-          ctaLink="#deals-section"
-          imageSrc="/placeholder.svg"
-          imageAlt="Special Deals"
-          variant="primary"
-          size="large"
-        />
+    <div
+      className="flex min-h-screen flex-col container px-4 py-8 md:px-6 md:py-12"
+      id="deals-section">
+      <div className="mx-auto mb-8 md:mb-12">
+        <h1 className="text-lg md:text-2xl font-semibold">
+          Best Deals in Our Catalogue
+        </h1>
+        <p className="text-muted-foreground text-center">
+          Check out the best deals in Kenya
+        </p>
+      </div>
 
-        <div className="mt-12" id="deals-section">
-          <h1 className="text-3xl font-bold mb-6">Current Deals</h1>
-
-          {productDeals.length > 0 ? (
-            <ProductGrid products={productDeals} />
-          ) : (
-            <div className="text-center py-12">
-              <h2 className="text-xl font-medium mb-4">No deals available</h2>
-              <p className="text-muted-foreground">
-                Check back soon for new deals and promotions.
-              </p>
-            </div>
-          )}
+      {productDeals.length > 0 ? (
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
+          {productDeals.map((product) => (
+            <ProductCard key={product.id} product={product} />
+          ))}
         </div>
-      </main>
+      ) : (
+        <div className="text-center py-12">
+          <h2 className="text-xl font-medium mb-4">No deals available</h2>
+          <p className="text-muted-foreground">
+            Check back soon for new deals and promotions.
+          </p>
+        </div>
+      )}
     </div>
   );
 }

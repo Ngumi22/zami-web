@@ -1,7 +1,7 @@
 "use client";
 
 import { Product } from "@prisma/client";
-import ProductGrid from "../products/product-grid";
+import { ProductCard } from "../admin/product-sections/product-card";
 
 export default function TopRatedComponent({
   topRated,
@@ -19,7 +19,11 @@ export default function TopRatedComponent({
         </div>
 
         {topRated.length > 0 ? (
-          <ProductGrid products={topRated} viewMode={"grid"} />
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
+            {topRated.map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </div>
         ) : (
           <div className="text-center py-12">
             <h2 className="text-xl font-medium mb-4">No products rated yet</h2>

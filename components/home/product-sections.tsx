@@ -370,7 +370,7 @@ export function PromotionalSection1() {
           description="Affordable laptops, tablets, and accessories for students of every level."
           ctaText="Shop Student Deals"
           ctaLink="/products?collection=back-to-school"
-          imageSrc="/hp-840.jpg"
+          imageSrc="/lap.webp"
           imageAlt="Back to school laptops and student gadgets"
           variant="primary"
           size="large"

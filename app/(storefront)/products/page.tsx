@@ -7,8 +7,8 @@ import {
 } from "@/data/productspage/getProducts";
 import { HydrationBoundary, dehydrate } from "@tanstack/react-query";
 import ProductsPageClient from "./ProductsPageClient";
-import { getQueryClient } from "../get-query-client";
 import { SearchParams } from "nuqs/server";
+import { getQueryClient } from "@/app/get-query-client";
 
 type PageProps = {
   searchParams: SearchParams;

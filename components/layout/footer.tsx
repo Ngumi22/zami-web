@@ -112,7 +112,7 @@ export function SiteFooter() {
           <div>
             <h3 className="text-lg font-medium text-gray-900">Shop</h3>
             <ul className="mt-4 space-y-2 text-sm">
-              {["phones", "laptops", "printers", "software"].map((cat) => (
+              {["smartphones", "laptops", "printers", "software"].map((cat) => (
                 <li key={cat}>
                   <Link
                     href={`/products?category=${cat}`}

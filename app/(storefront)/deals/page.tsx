@@ -6,9 +6,3 @@ export default async function DealsPage() {
 
   return <Deals productDeals={productDeals} />;
 }
-
-export const viewport = {
-  width: "device-width",
-  initialScale: 1,
-  maximumScale: 1,
-};

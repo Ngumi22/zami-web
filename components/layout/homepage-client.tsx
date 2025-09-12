@@ -2,7 +2,6 @@
 
 import { useMemo } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { PromotionalBanner } from "@/components/home/promotional-banner";
 import {
   TabbedProducts,
   PromotionalSection,

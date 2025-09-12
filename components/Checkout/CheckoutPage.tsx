@@ -23,9 +23,11 @@ import {
   ArrowRight,
   Loader2,
 } from "lucide-react";
+import { formatCurrency } from "@/lib/utils";
 
-export default function CheckoutPage() {
+export default function CheckoutPageComponent() {
   const router = useRouter();
+
   const items = useCartStore((state) => state.items);
   const clearCart = useCartStore((state) => state.clearCart);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -35,8 +37,8 @@ export default function CheckoutPage() {
     (total, item) => total + item.price * item.quantity,
     0
   );
-  const shipping = subtotal > 100000 ? 0 : 9.99; // Free shipping over ksh 100000
-  const tax = subtotal * 0.16; // 16% vat
+  const shipping = subtotal > 100000 ? 0 : 9;
+  const tax = subtotal * 0.16;
   const total = subtotal + shipping + tax;
 
   const [contactInfo, setContactInfo] = useState({
@@ -51,7 +53,7 @@ export default function CheckoutPage() {
     city: "",
     state: "",
     zipCode: "",
-    country: "US",
+    county: "Nbo",
   });
   const [billingAddress, setBillingAddress] = useState({
     sameAsShipping: true,
@@ -62,7 +64,7 @@ export default function CheckoutPage() {
     city: "",
     state: "",
     zipCode: "",
-    country: "US",
+    county: "Nbo",
   });
   const [paymentMethod, setPaymentMethod] = useState("credit-card");
   const [cardDetails, setCardDetails] = useState({
@@ -291,22 +293,22 @@ export default function CheckoutPage() {
                           />
                         </div>
                         <div className="grid gap-2">
-                          <Label htmlFor="country">Country</Label>
+                          <Label htmlFor="county">County</Label>
                           <select
-                            id="country"
-                            name="country"
-                            value={shippingAddress.country}
+                            id="county"
+                            name="county"
+                            value={shippingAddress.county}
                             onChange={(e) =>
                               setShippingAddress({
                                 ...shippingAddress,
-                                country: e.target.value,
+                                county: e.target.value,
                               })
                             }
-                            className="w-full rounded-md border bg-background px-3 py-2 text-sm h-10"
+                            className="w-full rounded-md border bg-white text-black px-3 py-2 text-sm h-10"
                             required>
-                            <option value="US">United States</option>
-                            <option value="CA">Canada</option>
-                            <option value="UK">United Kingdom</option>
+                            <option value="MB">Mombasa</option>
+                            <option value="NK">Nakuru</option>
+                            <option value="KSM">Kisumu</option>
                           </select>
                         </div>
                       </div>
@@ -317,7 +319,7 @@ export default function CheckoutPage() {
                     <Button
                       type="button"
                       onClick={handleContinueToShipping}
-                      className="flex items-center gap-2">
+                      className="flex items-center gap-2 bg-black">
                       Continue to Shipping <ArrowRight className="h-4 w-4" />
                     </Button>
                   </div>
@@ -343,12 +345,12 @@ export default function CheckoutPage() {
                               <div>
                                 <p className="font-medium">Standard Shipping</p>
                                 <p className="text-sm text-muted-foreground">
-                                  3-5 business days
+                                  1-2 business days
                                 </p>
                               </div>
                             </div>
                             <div className="font-medium">
-                              {subtotal > 100 ? "Free" : "$9.99"}
+                              {subtotal > 100000 ? "Free" : "1500"}
                             </div>
                           </div>
                         </Label>
@@ -364,11 +366,11 @@ export default function CheckoutPage() {
                               <div>
                                 <p className="font-medium">Express Shipping</p>
                                 <p className="text-sm text-muted-foreground">
-                                  1-2 business days
+                                  Same Day Delivery
                                 </p>
                               </div>
                             </div>
-                            <div className="font-medium">$19.99</div>
+                            <div className="font-medium">1500</div>
                           </div>
                         </Label>
                       </div>
@@ -382,7 +384,7 @@ export default function CheckoutPage() {
                       Delivery Notes (Optional)
                     </h2>
                     <textarea
-                      className="w-full rounded-md border bg-background px-3 py-2 text-sm min-h-[100px]"
+                      className="w-full rounded-md border bg-white text-black px-3 py-2 text-sm min-h-[100px]"
                       placeholder="Add any special instructions for delivery"></textarea>
                   </div>
 
@@ -396,7 +398,7 @@ export default function CheckoutPage() {
                     <Button
                       type="button"
                       onClick={handleContinueToPayment}
-                      className="flex items-center gap-2">
+                      className="flex items-center gap-2 bg-black">
                       Continue to Payment <ArrowRight className="h-4 w-4" />
                     </Button>
                   </div>
@@ -419,7 +421,7 @@ export default function CheckoutPage() {
                             <div>
                               <p className="font-medium">Credit / Debit Card</p>
                               <p className="text-sm text-muted-foreground">
-                                Visa, Mastercard, American Express
+                                Visa, Mastercard, M-Pesa
                               </p>
                             </div>
                           </div>
@@ -599,22 +601,22 @@ export default function CheckoutPage() {
                             />
                           </div>
                           <div className="grid gap-2">
-                            <Label htmlFor="billingCountry">Country</Label>
+                            <Label htmlFor="billingCounty">County</Label>
                             <select
-                              id="billingCountry"
-                              name="country"
-                              value={billingAddress.country}
+                              id="billingCounty"
+                              name="county"
+                              value={billingAddress.county}
                               onChange={(e) =>
                                 setBillingAddress({
                                   ...billingAddress,
-                                  country: e.target.value,
+                                  county: e.target.value,
                                 })
                               }
-                              className="w-full rounded-md border bg-background px-3 py-2 text-sm h-10"
+                              className="w-full rounded-md border bg-white text-black px-3 py-2 text-sm h-10"
                               required={!billingAddress.sameAsShipping}>
-                              <option value="US">United States</option>
-                              <option value="CA">Canada</option>
-                              <option value="UK">United Kingdom</option>
+                              <option value="MB">Mombasa</option>
+                              <option value="NK">Nakuru</option>
+                              <option value="KSM">Kisumu</option>
                             </select>
                           </div>
                         </div>
@@ -632,7 +634,7 @@ export default function CheckoutPage() {
                     <Button
                       type="submit"
                       disabled={isSubmitting}
-                      className="flex items-center gap-2">
+                      className="flex items-center gap-2 bg-black">
                       {isSubmitting ? (
                         <>
                           <Loader2 className="h-4 w-4 animate-spin" />
@@ -654,13 +656,13 @@ export default function CheckoutPage() {
                 <div className="space-y-4 mb-6">
                   {items.map((item) => (
                     <div key={item.key} className="flex gap-4">
-                      <div className="relative h-16 w-16 overflow-hidden rounded-md border bg-muted">
+                      <div className="relative h-16 w-16">
                         {item.mainImage && (
                           <Image
                             src={item.mainImage || "/placeholder.svg"}
                             alt={item.name}
                             fill
-                            className="object-cover"
+                            className="object-contain"
                           />
                         )}
                       </div>
@@ -668,23 +670,11 @@ export default function CheckoutPage() {
                         <div className="flex justify-between">
                           <h3 className="font-medium">{item.name}</h3>
                           <p className="font-medium">
-                            ${(item.price * item.quantity).toFixed(2)}
+                            {formatCurrency(item.price * item.quantity)}
                           </p>
                         </div>
                         <div className="flex items-center text-sm text-muted-foreground">
                           <p>Qty: {item.quantity}</p>
-                          {/* {item.color && (
-                            <>
-                              <span className="mx-1">•</span>
-                              <p>Color: {item.color}</p>
-                            </>
-                          )}
-                          {item.size && (
-                            <>
-                              <span className="mx-1">•</span>
-                              <p>Size: {item.size}</p>
-                            </>
-                          )} */}
                         </div>
                       </div>
                     </div>
@@ -696,15 +686,17 @@ export default function CheckoutPage() {
                 <div className="space-y-2">
                   <div className="flex justify-between">
                     <p className="text-muted-foreground">Subtotal</p>
-                    <p>${subtotal.toFixed(2)}</p>
+                    <p>{formatCurrency(subtotal)}</p>
                   </div>
                   <div className="flex justify-between">
                     <p className="text-muted-foreground">Shipping</p>
-                    <p>{shipping === 0 ? "Free" : `$${shipping.toFixed(2)}`}</p>
+                    <p>
+                      {shipping === 0 ? "Free" : `${formatCurrency(shipping)}`}
+                    </p>
                   </div>
                   <div className="flex justify-between">
                     <p className="text-muted-foreground">Tax</p>
-                    <p>${tax.toFixed(2)}</p>
+                    <p>{formatCurrency(tax)}</p>
                   </div>
                 </div>
 
@@ -712,7 +704,7 @@ export default function CheckoutPage() {
 
                 <div className="flex justify-between font-medium text-lg">
                   <p>Total</p>
-                  <p>${total.toFixed(2)}</p>
+                  <p>{formatCurrency(total)}</p>
                 </div>
 
                 <div className="mt-8 space-y-4">
