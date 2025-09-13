@@ -9,6 +9,15 @@ interface BlockIpOptions {
   durationSeconds?: number;
 }
 
+export async function isBotUserAgent() {
+  const hdrs = await headers();
+  const userAgent = hdrs.get("User-Agent");
+  if (!userAgent || /bot|crawl|slurp|spider/i.test(userAgent)) {
+    return true;
+  }
+  return false;
+}
+
 export async function blockIp({ ip, reason, durationSeconds }: BlockIpOptions) {
   if (!ip) {
     return { success: false, message: "IP address is required." };
@@ -54,5 +63,19 @@ export async function isIpBlockedForAuth() {
     return true;
   } catch {
     return false;
+  }
+}
+
+export async function handleFailedAuth(ip: string) {
+  const failedAttempts = await prisma.rateLimit.findUnique({
+    where: { key: ip },
+  });
+
+  if (failedAttempts && failedAttempts.count >= 10) {
+    await blockIp({
+      ip,
+      reason: "Repeated failed login attempts.",
+      durationSeconds: 7 * 24 * 60 * 60,
+    });
   }
 }

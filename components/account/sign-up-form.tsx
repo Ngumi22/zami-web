@@ -34,8 +34,13 @@ const formSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8),
   token: z.string().min(1),
+  honeypot: z.string().optional(),
 });
 
+interface SignupFormProps extends React.ComponentProps<"div"> {
+  email: string;
+  token: string;
+}
 type FormValues = z.infer<typeof formSchema>;
 
 interface SignupFormProps extends React.ComponentProps<"div"> {
@@ -43,7 +48,7 @@ interface SignupFormProps extends React.ComponentProps<"div"> {
   token: string;
 }
 
-export function SignupForm({ className, email, token }: SignupFormProps) {
+export function SignUpForm({ className, email, token }: SignupFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
@@ -66,18 +71,21 @@ export function SignupForm({ className, email, token }: SignupFormProps) {
 
   const onSubmit = async (values: FormValues) => {
     setIsLoading(true);
+
     const { success, message } = await signUpUser({
       email: values.email,
       password: values.password,
       name: values.username,
       inviteToken: values.token,
+      honeypot: values.honeypot,
     });
 
     if (success) {
       toast.success(`Signed Up Successfully`);
-      router.push("/login");
+      router.push("/admin/login");
     } else {
-      toast.error(message as string);
+      toast.error("An error occurred. Please try again.");
+      console.error("Signup failed:", message);
     }
 
     setIsLoading(false);
@@ -93,6 +101,13 @@ export function SignupForm({ className, email, token }: SignupFormProps) {
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+              <input
+                type="text"
+                style={{ display: "none" }}
+                tabIndex={-1}
+                autoComplete="off"
+                {...form.register("honeypot")}
+              />
               <input type="hidden" readOnly {...form.register("email")} />
               <input type="hidden" readOnly {...form.register("token")} />
 

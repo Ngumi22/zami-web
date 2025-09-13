@@ -6,27 +6,22 @@ import { requireRateLimit } from "./ratelimit";
 export async function requireAuth() {
   try {
     const { currentUser } = await getCurrentUser();
-
     if (!currentUser) {
-      redirect("/login");
+      redirect("/admin/login");
     }
-
     return currentUser;
   } catch {
-    redirect("/login");
+    redirect("/admin/login");
   }
 }
 
 export async function requireAdmin() {
   const user = await requireAuth();
-
-  if (user.role !== "ADMIN") {
-    throw new Error("Forbidden: Admins only");
+  if (user?.role !== "ADMIN") {
+    redirect("/unauthorized");
   }
-
   return user;
 }
-
 type ActionFunction<T> = (...args: any[]) => Promise<ActionResult<T>>;
 
 export function withAdminAuth<T>(action: ActionFunction<T>): ActionFunction<T> {

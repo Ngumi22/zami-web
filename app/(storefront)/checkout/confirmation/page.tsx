@@ -1,7 +1,6 @@
 import CheckoutConfirmationPage from "@/components/Checkout/CheckoutConfirmationPage";
 import { useCartStore } from "@/hooks/use-cart";
 import { getCurrentCustomer } from "@/lib/auth/customer-auth";
-import { Customer, Order } from "@prisma/client";
 import { redirect } from "next/navigation";
 
 export default async function ConfirmationPage() {

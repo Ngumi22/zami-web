@@ -1,12 +1,12 @@
-import { SignupForm } from "@/components/account/sign-up-form";
+import { SignUpForm } from "@/components/account/sign-up-form";
 import { validateInviteToken } from "@/data/users";
 import { redirect } from "next/navigation";
 export const dynamic = "force-dynamic";
 
-export default async function SignupPage({
+export default async function SignUpPage({
   searchParams,
 }: {
-  searchParams: { email?: string; token?: string };
+  searchParams: { email: string; token: string };
 }) {
   const { email, token } = await searchParams;
 
@@ -20,5 +20,9 @@ export default async function SignupPage({
     redirect("/unauthorized");
   }
 
-  return <SignupForm email={email} token={token} />;
+  return (
+    <section className="m-auto max-w-md">
+      <SignUpForm email={email} token={token} />
+    </section>
+  );
 }

@@ -89,9 +89,9 @@ async function DashboardContent() {
   );
 }
 
-export default function AdminDashboard() {
+export default async function AdminDashboard() {
   return (
-    <div className="">
+    <div>
       <Suspense fallback={<DashboardSkeleton />}>
         <DashboardContent />
       </Suspense>

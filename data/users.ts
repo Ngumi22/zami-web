@@ -3,8 +3,10 @@
 import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { headers } from "next/headers";
-import { User, Customer } from "@prisma/client";
+import { User } from "@prisma/client";
 import crypto from "crypto";
+import { requireRateLimit } from "@/lib/ratelimit";
+import { getIp, handleFailedAuth, isBotUserAgent } from "@/lib/security";
 
 const INVITE_SECRET = process.env.INVITE_SECRET;
 if (!INVITE_SECRET) throw new Error("INVITE_SECRET is required");
@@ -70,12 +72,31 @@ export async function signUpUser({
   password,
   name,
   inviteToken,
+  honeypot,
 }: {
   email: string;
   password: string;
   name: string;
   inviteToken: string;
+  honeypot?: string;
 }) {
+  if (honeypot) {
+    console.warn(
+      `Bot detected: Honeypot field was filled. IP: ${await getIp()}`
+    );
+    return { success: false, message: "Invalid request." };
+  }
+
+  if (await isBotUserAgent()) {
+    console.warn(`Bot detected: User-Agent check failed. IP: ${await getIp()}`);
+    return { success: false, message: "Invalid request." };
+  }
+
+  await requireRateLimit({
+    windowSec: 60,
+    max: 5,
+  });
+
   try {
     const invite = await validateInviteToken(email, inviteToken);
 
@@ -108,7 +129,24 @@ export async function signUpUser({
   }
 }
 
-export const signInUser = async (email: string, password: string) => {
+export const signInUser = async (
+  email: string,
+  password: string,
+  honeypot?: string
+) => {
+  if (honeypot || (await isBotUserAgent())) {
+    console.warn("Bot detected during login attempt.");
+    return {
+      success: false,
+      message: "Invalid credentials.",
+    };
+  }
+
+  await requireRateLimit({
+    windowSec: 60,
+    max: 5,
+  });
+
   try {
     await auth.api.signInEmail({
       body: {
@@ -124,6 +162,10 @@ export const signInUser = async (email: string, password: string) => {
   } catch (error) {
     const e = error as Error;
     console.error("Sign-in error:", e.message);
+
+    const ip = await getIp();
+    await handleFailedAuth(ip);
+
     return {
       success: false,
       message: "Invalid credentials or server error.",

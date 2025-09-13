@@ -27,12 +27,12 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
-import Link from "next/link";
 import { signInUser } from "@/data/users";
 
 const formSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8),
+  honeypot: z.string().optional(),
 });
 
 export function LoginForm({
@@ -47,22 +47,24 @@ export function LoginForm({
     defaultValues: {
       email: "",
       password: "",
+      honeypot: "",
     },
   });
-
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
 
     const { success, message } = await signInUser(
       values.email,
-      values.password
+      values.password,
+      values.honeypot
     );
 
     if (success) {
       toast.success(message as string);
       router.push("/admin");
     } else {
-      toast.error(message as string);
+      toast.error("Invalid email or password.");
+      console.error("Login failed:", message);
     }
 
     setIsLoading(false);
@@ -78,6 +80,13 @@ export function LoginForm({
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+              <input
+                type="text"
+                style={{ display: "none" }}
+                tabIndex={-1}
+                autoComplete="off"
+                {...form.register("honeypot")}
+              />
               <div className="grid gap-6">
                 <div className="grid gap-6">
                   <div className="grid gap-3">
@@ -114,11 +123,6 @@ export function LoginForm({
                           </FormItem>
                         )}
                       />
-                      <Link
-                        href="/forgot-password"
-                        className="ml-auto text-sm underline-offset-4 hover:underline">
-                        Forgot your password?
-                      </Link>
                     </div>
                   </div>
                   <Button type="submit" className="w-full" disabled={isLoading}>
