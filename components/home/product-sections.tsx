@@ -381,7 +381,7 @@ export function PromotionalSection1() {
           description="Powerful laptops and printers built for productivity and performance."
           ctaText="Shop Business"
           ctaLink="/products?collection=business-laptops"
-          imageSrc="/slideshowv3-bg1_1.webp"
+          imageSrc="/promo.webp"
           imageAlt="Business laptops and office printers"
           variant="secondary"
           size="large"

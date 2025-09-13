@@ -9,6 +9,9 @@ import Image from "next/image";
 import Link from "next/link";
 
 export default function BlogSection({ blogPosts }: { blogPosts: BlogPost[] }) {
+  if (blogPosts.length == 0) {
+    return null;
+  }
   return (
     <section className="w-full max-w-7xl mx-auto">
       <div className="flex items-center justify-between mb-12">

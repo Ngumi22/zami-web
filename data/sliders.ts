@@ -24,7 +24,7 @@ export const slides: CarouselSlide[] = [
     description:
       "From business-ready ultrabooks to gaming beasts — find the laptop that works for you.",
     buttonText: "EXPLORE LAPTOPS",
-    imageUrl: "slideshowV3-bg1_1.webp",
+    imageUrl: "promo.webp",
   },
   {
     id: 3,
@@ -33,24 +33,6 @@ export const slides: CarouselSlide[] = [
     description:
       "Unleash performance with high-speed computers for creators, developers, and businesses.",
     buttonText: "SHOP COMPUTERS",
-    imageUrl: "slideshowV3-bg1_1.webp",
-  },
-  {
-    id: 4,
-    title: "Printers & Scanners Made Simple",
-    subtitle: "ESSENTIALS",
-    description:
-      "Get reliable printers and scanners designed for homes, offices, and businesses of all sizes.",
-    buttonText: "SHOP NOW",
-    imageUrl: "slideshowV3-bg1_1.webp",
-  },
-  {
-    id: 5,
-    title: "Accessories That Complete Your Setup",
-    subtitle: "MUST-HAVES",
-    description:
-      "From headphones to keyboards, find the accessories you need to work, play, and create.",
-    buttonText: "BROWSE ACCESSORIES",
-    imageUrl: "slideshowV3-bg1_1.webp",
+    imageUrl: "promo.webp",
   },
 ];

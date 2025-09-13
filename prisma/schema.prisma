@@ -488,7 +488,7 @@ model BlogPost {
   views           Int            @default(0)
   publishedAt     DateTime?
   authorId        String         @db.ObjectId
-  author          User           @relation("BlogAuthor", fields: [authorId], references: [id])
+  author          User           @relation("BlogAuthor", fields: [authorId], references: [id], onDelete: Cascade)
   categoryId      String         @db.ObjectId
   category        BlogCategory   @relation(fields: [categoryId], references: [id])
   createdAt       DateTime       @default(now())

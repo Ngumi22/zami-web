@@ -14,8 +14,8 @@ export default async function BaseLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={jost.className}>
-      <body className={`pb-16 md:pb-0`}>
+    <html lang="en">
+      <body className={`${jost} antialiased`}>
         <NextSSRPlugin routerConfig={extractRouterConfig(ourFileRouter)} />
         {children}
         <Toaster />

@@ -8,8 +8,6 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import Link from "next/link";
 import { Loader2 } from "lucide-react";
-
-import { cn } from "@/lib/utils";
 import { signUpUser } from "@/data/users";
 import { Button } from "@/components/ui/button";
 import {
@@ -92,83 +90,81 @@ export function SignUpForm({ className, email, token }: SignupFormProps) {
   };
 
   return (
-    <div className={cn("flex flex-col gap-6 w-1/2", className)}>
-      <Card>
-        <CardHeader className="text-center">
-          <CardTitle className="text-xl">Welcome</CardTitle>
-          <CardDescription>Signup with your Google account</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-              <input
-                type="text"
-                style={{ display: "none" }}
-                tabIndex={-1}
-                autoComplete="off"
-                {...form.register("honeypot")}
+    <Card className="max-w-md">
+      <CardHeader className="text-center">
+        <CardTitle className="text-xl">Welcome</CardTitle>
+        <CardDescription>Signup with your Google account</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+            <input
+              type="text"
+              style={{ display: "none" }}
+              tabIndex={-1}
+              autoComplete="off"
+              {...form.register("honeypot")}
+            />
+            <input type="hidden" readOnly {...form.register("email")} />
+            <input type="hidden" readOnly {...form.register("token")} />
+
+            <div className="grid gap-3">
+              <FormField
+                control={form.control}
+                name="username"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Username</FormLabel>
+                    <FormControl>
+                      <Input placeholder="e.g. shadcn" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-              <input type="hidden" readOnly {...form.register("email")} />
-              <input type="hidden" readOnly {...form.register("token")} />
 
-              <div className="grid gap-3">
-                <FormField
-                  control={form.control}
-                  name="username"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Username</FormLabel>
-                      <FormControl>
-                        <Input placeholder="e.g. shadcn" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Password</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="********"
+                        {...field}
+                        type="password"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-                <FormField
-                  control={form.control}
-                  name="password"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Password</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="********"
-                          {...field}
-                          type="password"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+              <Link
+                href="/forgot-password"
+                className="ml-auto text-sm underline-offset-4 hover:underline">
+                Forgot your password?
+              </Link>
 
-                <Link
-                  href="/forgot-password"
-                  className="ml-auto text-sm underline-offset-4 hover:underline">
-                  Forgot your password?
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  "Signup"
+                )}
+              </Button>
+
+              <div className="text-center text-sm">
+                Already have an account?{" "}
+                <Link href="/login" className="underline underline-offset-4">
+                  Login
                 </Link>
-
-                <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? (
-                    <Loader2 className="size-4 animate-spin" />
-                  ) : (
-                    "Signup"
-                  )}
-                </Button>
-
-                <div className="text-center text-sm">
-                  Already have an account?{" "}
-                  <Link href="/login" className="underline underline-offset-4">
-                    Login
-                  </Link>
-                </div>
               </div>
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
-    </div>
+            </div>
+          </form>
+        </Form>
+      </CardContent>
+    </Card>
   );
 }

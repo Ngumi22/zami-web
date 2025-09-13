@@ -11,8 +11,8 @@ export default function PublicLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={jost.className}>
-      <body className={`pb-16 md:pb-0`}>{children}</body>
+    <html lang="en">
+      <body className={`${jost} antialiased`}>{children}</body>
     </html>
   );
 }
