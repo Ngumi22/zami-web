@@ -7,6 +7,7 @@ import { User } from "@prisma/client";
 import crypto from "crypto";
 import { requireRateLimit } from "@/lib/ratelimit";
 import { getIp, handleFailedAuth, isBotUserAgent } from "@/lib/security";
+import { redirect } from "next/navigation";
 
 const INVITE_SECRET = process.env.INVITE_SECRET;
 if (!INVITE_SECRET) throw new Error("INVITE_SECRET is required");
@@ -107,18 +108,39 @@ export async function signUpUser({
       };
     }
 
-    await auth.api.signUpEmail({
-      body: { email, password, name },
+    const existingUser = await prisma.user.findUnique({
+      where: { email: email.trim().toLowerCase() },
     });
 
-    await markInviteAsUsed(email);
+    if (existingUser) {
+      return {
+        success: false,
+        message: "A user with this email already exists.",
+      };
+    }
 
-    return {
-      success: true,
-      message: "Account created. Please sign in.",
-    };
+    await prisma.$transaction(async (tx) => {
+      await tx.user.create({
+        data: {
+          email: email.trim().toLowerCase(),
+          name,
+          role: "ADMIN",
+          emailVerified: true,
+          updatedAt: new Date(),
+        },
+      });
+
+      await auth.api.signUpEmail({
+        body: { email, password, name },
+      });
+
+      await markInviteAsUsed(email);
+    });
+
+    redirect("/admin/login");
   } catch (error) {
     const e = error as Error;
+    console.error("Sign-up error:", e.message);
 
     return {
       success: false,
@@ -148,6 +170,18 @@ export const signInUser = async (
   });
 
   try {
+    const user = await prisma.user.findUnique({
+      where: { email: email.trim().toLowerCase() },
+    });
+
+    if (!user) {
+      await handleFailedAuth(await getIp());
+      return {
+        success: false,
+        message: "Invalid credentials or unauthorized access.",
+      };
+    }
+
     await auth.api.signInEmail({
       body: {
         email,

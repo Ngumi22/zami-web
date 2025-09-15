@@ -1,5 +1,5 @@
 "use server";
-// lib/actions/product-actions.ts
+
 import { revalidatePath, revalidateTag } from "next/cache";
 import prisma from "@/lib/prisma";
 import { productFormSchema, type ProductFormData } from "./schema";
@@ -12,7 +12,6 @@ type ActionResult = {
   errors?: Record<string, string[]>;
 };
 
-// Simple logger - replace with console if needed
 const log = (
   level: "error" | "warn" | "info",
   message: string,
@@ -29,10 +28,8 @@ const log = (
 
 const validateProductData = async (data: ProductFormData) => {
   try {
-    // Basic schema validation
     const validatedData = productFormSchema.parse(data);
 
-    // Check category and brand in parallel
     const [category, brand] = await Promise.all([
       prisma.category.findUnique({ where: { id: validatedData.categoryId } }),
       prisma.brand.findUnique({ where: { id: validatedData.brandId } }),
@@ -92,7 +89,6 @@ export const createProduct = async (data: ProductFormData) =>
         },
       });
 
-      // Update caches
       revalidatePath("/admin/products");
       revalidateTag("products");
 
@@ -129,7 +125,6 @@ export const updateProduct = async (id: string, data: ProductFormData) =>
         },
       });
 
-      // Update caches
       revalidatePath("/admin/products");
       revalidatePath(`/admin/products/${id}`);
       revalidateTag("products");
@@ -152,7 +147,6 @@ export const deleteProduct = async (id: string) =>
     try {
       await prisma.product.delete({ where: { id } });
 
-      // Update caches
       revalidatePath("/admin/products");
       revalidateTag("products");
 

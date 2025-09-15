@@ -1,4 +1,3 @@
-// lib/actions/product-actions.ts
 "use server";
 
 import { revalidatePath, revalidateTag } from "next/cache";
@@ -6,14 +5,12 @@ import prisma from "@/lib/prisma";
 import { productFormSchema, type ProductFormData } from "./schema";
 import z from "zod";
 
-// Define proper return type
 type ActionResult = {
   success: boolean;
   message: string;
   errors?: Record<string, string[]>;
 };
 
-// Helper to get parent category with specifications
 const getParentCategoryWithSpecs = async (categoryId: string) => {
   const category = await prisma.category.findUnique({
     where: { id: categoryId },
@@ -29,13 +26,11 @@ export const createProduct = async (
   try {
     const validatedData = productFormSchema.parse(data);
 
-    // Get parent category to transform specifications
     const parentCategory = await getParentCategoryWithSpecs(
       validatedData.categoryId
     );
     const parentSpecs = parentCategory?.specifications || [];
 
-    // Transform specifications from ID-based to name-based
     const transformedSpecifications: Record<string, string> = {};
 
     for (const [specId, value] of Object.entries(
@@ -64,7 +59,6 @@ export const createProduct = async (
   } catch (error) {
     console.error("Create product failed:", error);
 
-    // Handle validation errors
     if (error instanceof z.ZodError) {
       const errors: Record<string, string[]> = {};
       error.errors.forEach((err) => {
@@ -93,13 +87,11 @@ export const updateProduct = async (
   try {
     const validatedData = productFormSchema.parse(data);
 
-    // Get parent category to transform specifications
     const parentCategory = await getParentCategoryWithSpecs(
       validatedData.categoryId
     );
     const parentSpecs = parentCategory?.specifications || [];
 
-    // Transform specifications from ID-based to name-based
     const transformedSpecifications: Record<string, string> = {};
 
     for (const [specId, value] of Object.entries(
@@ -130,7 +122,6 @@ export const updateProduct = async (
   } catch (error) {
     console.error("Update product failed:", error);
 
-    // Handle validation errors
     if (error instanceof z.ZodError) {
       const errors: Record<string, string[]> = {};
       error.errors.forEach((err) => {

@@ -1,4 +1,4 @@
-import { getFlashSaleData } from "@/lib/flash-sale-actions";
+import { getFlashSaleData } from "@/data/collections/collectionsPage";
 import { FlashSaleClient } from "./flash-sale-section-client";
 
 export async function FlashSaleSection() {

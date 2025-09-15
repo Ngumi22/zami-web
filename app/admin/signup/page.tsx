@@ -21,7 +21,7 @@ export default async function SignUpPage({
   }
 
   return (
-    <section className="m-auto max-w-md">
+    <section className="min-h-screen flex items-center justify-center">
       <SignUpForm email={email} token={token} />
     </section>
   );

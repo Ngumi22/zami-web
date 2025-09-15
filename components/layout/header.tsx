@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react"; // NEW: Import hooks
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
@@ -15,7 +15,6 @@ import type { Brand, Category, Product } from "@prisma/client";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { CartSheet } from "./cart-sheet";
 
-// SVG Icons remain the same...
 const UserIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg
     {...props}
@@ -73,16 +72,13 @@ export function SiteHeader({
   const compareItems = useCompareStore((state) => state.items);
   const wishItems = useWishlistStore((state) => state.items);
 
-  // NEW: State to control the sheet's open/closed status
   const [isCartOpen, setIsCartOpen] = useState(false);
 
-  // NEW: Effect to close the sheet whenever the user navigates to a new page
   useEffect(() => {
     setIsCartOpen(false);
   }, [pathname]);
 
   return (
-    // MODIFIED: Control the Sheet component with state
     <Sheet open={isCartOpen} onOpenChange={setIsCartOpen}>
       <header className="sticky top-0 z-40 w-full border-b bg-white">
         <div className="container flex items-center justify-between h-20 md-h-24">
@@ -157,7 +153,6 @@ export function SiteHeader({
                   </span>
                 </div>
               </Link>
-              {/* Cart icon still triggers the sheet, but now its state is controlled */}
               <SheetTrigger asChild>
                 <button
                   className={cn(

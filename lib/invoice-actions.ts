@@ -21,12 +21,11 @@ export async function createInvoiceAction(
     throw new Error("Sign In");
   }
   await requireRateLimit({
-    windowSec: 60, // 1 minute window
-    max: 10, //10 uploads per minute
+    windowSec: 60,
+    max: 10,
     identifier: user.id,
   });
   try {
-    // Extract and parse data
     const invoiceNumber = formData.get("invoiceNumber") as string;
     const orderNumber = formData.get("orderNumber") as string;
     const invoiceDate = new Date(formData.get("invoiceDate") as string);
@@ -112,8 +111,8 @@ export async function updateInvoiceAction(
     throw new Error("Sign In");
   }
   await requireRateLimit({
-    windowSec: 60, // 1 minute window
-    max: 10, //10 uploads per minute
+    windowSec: 60,
+    max: 10,
     identifier: user.id,
   });
   try {
@@ -202,8 +201,8 @@ export async function deleteInvoiceAction(
     throw new Error("Sign In");
   }
   await requireRateLimit({
-    windowSec: 60, // 1 minute window
-    max: 10, //10 uploads per minute
+    windowSec: 60,
+    max: 10,
     identifier: user.id,
   });
   try {
@@ -230,8 +229,8 @@ export async function createInvoiceFromOrder(order: Order): Promise<Invoice> {
     throw new Error("Sign In");
   }
   await requireRateLimit({
-    windowSec: 60, // 1 minute window
-    max: 10, //10 uploads per minute
+    windowSec: 60,
+    max: 10,
     identifier: user.id,
   });
   const invoiceDate = order.completedAt || order.createdAt;

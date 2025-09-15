@@ -1,4 +1,3 @@
-// lib/actions.ts
 "use server";
 
 import {
@@ -18,11 +17,9 @@ import {
   sendWelcomeEmail,
 } from "./email";
 import { randomBytes } from "crypto";
-import { revalidatePath } from "next/cache";
 
-const EXPIRES_IN = 30 * 24 * 60 * 60; // 30 days
+const EXPIRES_IN = 30 * 24 * 60 * 60;
 
-// Validation schemas
 const signupSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   email: z.string().email("Invalid email address"),
@@ -51,15 +48,12 @@ const addressSchema = z.object({
   isDefault: z.boolean().default(false),
 });
 
-// Response types for better type safety
 export type ActionResponse = {
   success?: string;
   error?: string;
   redirect?: string;
 };
 
-// Auth Actions with proper parameter types
-// lib/auth/actions.ts (update the signup function)
 export async function signup(
   email: string,
   name: string,
@@ -68,7 +62,6 @@ export async function signup(
   try {
     const validatedData = signupSchema.parse({ email, name, password });
 
-    // Check if email already exists
     const existingCustomer = await prisma.customer.findUnique({
       where: { email: validatedData.email },
     });
@@ -77,11 +70,9 @@ export async function signup(
       return { error: "Email already exists" };
     }
 
-    // Generate verification token
     const verificationToken = randomBytes(32).toString("hex");
-    const verificationTokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+    const verificationTokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
-    // Create customer
     const hashedPassword = await hashPassword(validatedData.password);
     const customer = await prisma.customer.create({
       data: {
@@ -102,7 +93,6 @@ export async function signup(
       },
     });
 
-    // Send verification email with user ID
     await sendVerificationEmail(customer.email, verificationToken, customer.id);
 
     return {
@@ -132,25 +122,22 @@ export async function login(
       return { error: "Invalid email or password" };
     }
 
-    // Check if account is locked
     if (customer.lockedUntil && customer.lockedUntil > new Date()) {
       return {
         error: "Account is temporarily locked. Please try again later.",
       };
     }
 
-    // Verify password
     const isValidPassword = await verifyPassword(
       validatedData.password,
       customer.password
     );
     if (!isValidPassword) {
-      // Increment login attempts
       const attempts = customer.loginAttempts + 1;
       let lockedUntil = null;
 
       if (attempts >= 5) {
-        lockedUntil = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+        lockedUntil = new Date(Date.now() + 15 * 60 * 1000);
       }
 
       await prisma.customer.update({
@@ -161,27 +148,23 @@ export async function login(
       return { error: "Invalid email or password" };
     }
 
-    // Check if email is verified
     if (!customer.emailVerified) {
       return { error: "Please verify your email before logging in" };
     }
 
-    // Check if account is active
     if (customer.status !== "ACTIVE") {
       return { error: "Your account is not active. Please contact support." };
     }
 
-    // Create session
     const token = await createSession(customer.id);
     const cookieStore = await cookies();
     cookieStore.set("session", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
-      maxAge: 30 * 24 * 60 * 60, // 30 days
+      maxAge: 30 * 24 * 60 * 60,
     });
 
-    // Reset login attempts and update last login
     await prisma.customer.update({
       where: { id: customer.id },
       data: {
@@ -221,7 +204,6 @@ export async function googleSignIn(): Promise<ActionResponse> {
   }
 }
 
-// lib/auth/actions.ts (add this function)
 export async function resendVerificationEmail(
   email: string
 ): Promise<ActionResponse> {
@@ -231,7 +213,6 @@ export async function resendVerificationEmail(
     });
 
     if (!customer) {
-      // Don't reveal whether email exists
       return {
         success:
           "If an account exists with this email, a verification link will be sent.",
@@ -242,11 +223,9 @@ export async function resendVerificationEmail(
       return { error: "Email is already verified." };
     }
 
-    // Generate new verification token
     const verificationToken = randomBytes(32).toString("hex");
-    const verificationTokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+    const verificationTokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
-    // Update customer with new token
     await prisma.customer.update({
       where: { id: customer.id },
       data: {
@@ -255,7 +234,6 @@ export async function resendVerificationEmail(
       },
     });
 
-    // Send verification email
     await sendVerificationEmail(customer.email, verificationToken, customer.id);
 
     return { success: "Verification email sent. Please check your inbox." };
@@ -275,7 +253,6 @@ export async function signOut(): Promise<ActionResponse> {
   }
 }
 
-// Email verification action
 export async function verifyEmail(token: string): Promise<ActionResponse> {
   try {
     const customer = await prisma.customer.findFirst({
@@ -301,7 +278,6 @@ export async function verifyEmail(token: string): Promise<ActionResponse> {
       },
     });
 
-    // Send welcome email
     await sendWelcomeEmail(customer.email);
 
     return { success: "Email verified successfully! You can now login." };
@@ -311,7 +287,6 @@ export async function verifyEmail(token: string): Promise<ActionResponse> {
   }
 }
 
-// Password reset actions
 export async function requestPasswordReset(
   email: string
 ): Promise<ActionResponse> {
@@ -321,16 +296,14 @@ export async function requestPasswordReset(
     });
 
     if (!customer) {
-      // Don't reveal whether email exists
       return {
         success:
           "If an account exists with this email, you will receive a password reset link.",
       };
     }
 
-    // Generate reset token
     const resetToken = randomBytes(32).toString("hex");
-    const resetTokenExpires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+    const resetTokenExpires = new Date(Date.now() + 60 * 60 * 1000);
 
     await prisma.customer.update({
       where: { id: customer.id },
@@ -340,7 +313,6 @@ export async function requestPasswordReset(
       },
     });
 
-    // Send password reset email
     await sendPasswordResetEmail(customer.email, resetToken);
 
     return { success: "Password reset link sent to your email." };
@@ -440,7 +412,6 @@ export async function deleteAccount() {
   }
 }
 
-// Address Actions
 export async function addAddress(prevState: any, formData: FormData) {
   try {
     const customer = await requireAuth();
@@ -456,7 +427,6 @@ export async function addAddress(prevState: any, formData: FormData) {
       isDefault: formData.get("isDefault") === "on",
     });
 
-    // If setting as default, remove default from other addresses
     if (validatedData.isDefault) {
       await prisma.customerAddress.updateMany({
         where: { customerId: customer.id, isDefault: true },
@@ -499,7 +469,6 @@ export async function updateAddress(
       isDefault: formData.get("isDefault") === "on",
     });
 
-    // Verify address belongs to customer
     const address = await prisma.customerAddress.findFirst({
       where: { id, customerId: customer.id },
     });
@@ -508,7 +477,6 @@ export async function updateAddress(
       return { error: "Address not found" };
     }
 
-    // If setting as default, remove default from other addresses
     if (validatedData.isDefault) {
       await prisma.customerAddress.updateMany({
         where: { customerId: customer.id, isDefault: true, id: { not: id } },
@@ -534,7 +502,6 @@ export async function deleteAddress(id: string) {
   try {
     const customer = await requireAuth();
 
-    // Verify address belongs to customer
     const address = await prisma.customerAddress.findFirst({
       where: { id, customerId: customer.id },
     });
@@ -553,7 +520,6 @@ export async function deleteAddress(id: string) {
   }
 }
 
-// Wishlist Actions
 export async function addToWishlist(productId: string) {
   try {
     const customer = await requireAuth();
@@ -566,7 +532,6 @@ export async function addToWishlist(productId: string) {
       return { error: "Wishlist not found" };
     }
 
-    // Check if product is already in wishlist
     const existingItem = await prisma.wishlistItem.findFirst({
       where: {
         wishlistId: wishlist.id,
