@@ -81,15 +81,8 @@ export async function signUpUser({
   inviteToken: string;
   honeypot?: string;
 }) {
-  if (honeypot) {
-    console.warn(
-      `Bot detected: Honeypot field was filled. IP: ${await getIp()}`
-    );
-    return { success: false, message: "Invalid request." };
-  }
-
-  if (await isBotUserAgent()) {
-    console.warn(`Bot detected: User-Agent check failed. IP: ${await getIp()}`);
+  if (honeypot || (await isBotUserAgent())) {
+    console.warn(`Bot detected. IP: ${await getIp()}`);
     return { success: false, message: "Invalid request." };
   }
 
@@ -100,45 +93,35 @@ export async function signUpUser({
 
   try {
     const invite = await validateInviteToken(email, inviteToken);
-
     if (!invite) {
-      return {
-        success: false,
-        message: "Invalid or expired invite token.",
-      };
+      return { success: false, message: "Invalid or expired invite token." };
     }
 
-    const existingUser = await prisma.user.findUnique({
+    await auth.api.signUpEmail({
+      body: { email, password, name },
+    });
+
+    await prisma.user.update({
       where: { email: email.trim().toLowerCase() },
+      data: {
+        role: "ADMIN",
+        emailVerified: true,
+      },
     });
 
-    if (existingUser) {
-      return {
-        success: false,
-        message: "A user with this email already exists.",
-      };
-    }
-
-    await prisma.$transaction(async (tx) => {
-      await tx.user.create({
-        data: {
-          email: email.trim().toLowerCase(),
-          name,
-          role: "ADMIN",
-          emailVerified: true,
-          updatedAt: new Date(),
-        },
-      });
-
-      await auth.api.signUpEmail({
-        body: { email, password, name },
-      });
-
-      await markInviteAsUsed(email);
-    });
+    await markInviteAsUsed(email);
 
     redirect("/admin/login");
   } catch (error) {
+    if (
+      typeof error === "object" &&
+      error !== null &&
+      "message" in error &&
+      error.message === "NEXT_REDIRECT"
+    ) {
+      throw error;
+    }
+
     const e = error as Error;
     console.error("Sign-up error:", e.message);
 
