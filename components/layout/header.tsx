@@ -81,8 +81,7 @@ export function SiteHeader({
   return (
     <Sheet open={isCartOpen} onOpenChange={setIsCartOpen}>
       <header className="sticky top-0 z-40 w-full border-b bg-white">
-        <div className="container flex items-center justify-between h-20 md-h-24">
-          {/* ... Mobile Menu and Logo ... */}
+        <div className="md:container flex items-center justify-between h-20 md-h-24 px-2 md:px-0">
           <div className="lg:hidden">
             <MobileMenu
               mainCategories={categories}
@@ -108,9 +107,7 @@ export function SiteHeader({
             </div>
           </div>
 
-          {/* Navigation Icons */}
           <nav className="flex items-center justify-end gap-2">
-            {/* ... Account, Compare, Wishlist Links ... */}
             <Link
               href="/account"
               className={cn(
@@ -127,7 +124,7 @@ export function SiteHeader({
               </div>
             </Link>
             <div className="hidden lg:flex items-center gap-2">
-              <Link href="/compare" className={cn(/* ... styles ... */)}>
+              <Link href="/compare">
                 <div className="flex flex-col items-center justify-center relative">
                   <CompareIcon className="h-6 w-6 font-semibold text-[#2E2E2E]" />
                   {compareItems.length > 0 && (
@@ -140,7 +137,7 @@ export function SiteHeader({
                   </span>
                 </div>
               </Link>
-              <Link href="/wishlist" className={cn(/* ... styles ... */)}>
+              <Link href="/wishlist">
                 <div className="flex flex-col items-center justify-center relative">
                   <WishlistIcon className="h-6 w-6 font-semibold text-[#2E2E2E]" />
                   {wishItems.length > 0 && (
@@ -178,7 +175,6 @@ export function SiteHeader({
           </nav>
         </div>
 
-        {/* ... MegaMenu ... */}
         <div className="hidden lg:block">
           <MegaMenu
             categories={categories}

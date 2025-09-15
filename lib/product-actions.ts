@@ -90,6 +90,8 @@ export const createProduct = async (data: ProductFormData) =>
       });
 
       revalidatePath("/admin/products");
+      revalidatePath("/");
+      revalidatePath("/products");
       revalidateTag("products");
 
       return {
@@ -126,6 +128,8 @@ export const updateProduct = async (id: string, data: ProductFormData) =>
       });
 
       revalidatePath("/admin/products");
+      revalidatePath("/products");
+      revalidatePath("/");
       revalidatePath(`/admin/products/${id}`);
       revalidateTag("products");
 
@@ -148,6 +152,7 @@ export const deleteProduct = async (id: string) =>
       await prisma.product.delete({ where: { id } });
 
       revalidatePath("/admin/products");
+      revalidatePath("/");
       revalidateTag("products");
 
       return {

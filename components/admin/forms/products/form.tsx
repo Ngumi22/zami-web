@@ -59,12 +59,10 @@ export default function ProductForm({
 
   const isEditing = !!product;
 
-  // Memoized category map for fast lookups
   const categoryMap = useMemo(() => {
     return new Map(categories.map((cat) => [cat.id, cat]));
   }, [categories]);
 
-  // Get parent specifications for a category
   const getParentSpecifications = useCallback(
     (categoryId: string) => {
       const category = categoryMap.get(categoryId);
@@ -73,14 +71,12 @@ export default function ProductForm({
     [categoryMap]
   );
 
-  // Initialize form with optimized default values
   const defaultValues = useMemo(() => {
     const initialSpecs: Record<string, string> = {};
 
     if (product?.specifications && typeof product.specifications === "object") {
       const productSpecs = product.specifications as Record<string, string>;
 
-      // For editing: Convert stored specification names back to IDs for form
       if (product.categoryId) {
         const parentSpecs = getParentSpecifications(product.categoryId);
         for (const [name, value] of Object.entries(productSpecs)) {
@@ -125,12 +121,10 @@ export default function ProductForm({
   const watchedName = watch("name");
   const watchedCategoryId = watch("categoryId");
 
-  // Get current category's parent specifications
   const currentParentSpecifications = useMemo(() => {
     return watchedCategoryId ? getParentSpecifications(watchedCategoryId) : [];
   }, [watchedCategoryId, getParentSpecifications]);
 
-  // Handle name change with debounced slug generation
   const handleNameChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const newName = e.target.value;
@@ -144,13 +138,11 @@ export default function ProductForm({
     [setValue, isEditing]
   );
 
-  // Handle category change
   const handleCategoryChange = useCallback(
     (value: string) => {
       setValue("categoryId", value);
 
       if (!isEditing) {
-        // Reset specifications for new category
         const parentSpecs = getParentSpecifications(value);
         const newSpecs: Record<string, string> = {};
         parentSpecs.forEach((spec: any) => {
@@ -161,9 +153,7 @@ export default function ProductForm({
     },
     [setValue, getParentSpecifications, isEditing]
   );
-  // components/admin/forms/products/form.tsx
 
-  // Remove the onChange handlers from the useUploader hooks
   const { imageUrls: mainImageUrls, ...mainImageUploader } = useUploader({
     initialValue: product?.mainImage ? [product.mainImage] : [],
     maxFiles: 1,
@@ -187,7 +177,6 @@ export default function ProductForm({
     setValue("thumbnailImages", thumbnailUrls);
     clearErrors("thumbnailImages");
   }, [thumbnailUrls, setValue, clearErrors]);
-  // Variant management
   const addVariant = useCallback(() => {
     const currentVariants = getValues("variants");
     const newVariant: ProductVariant = {
@@ -223,7 +212,6 @@ export default function ProductForm({
     [getValues, setValue]
   );
 
-  // Form submission
   const onSubmit: SubmitHandler<ProductFormData> = useCallback(
     async (data) => {
       try {
@@ -288,7 +276,6 @@ export default function ProductForm({
     <div className="max-w-7xl mx-auto p-4">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-          {/* Header and buttons */}
           <div className="flex justify-between items-center mb-4">
             <h1 className="text-2xl font-bold">
               {isEditing ? "Edit Product" : "Add New Product"}
@@ -318,7 +305,6 @@ export default function ProductForm({
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            {/* Left Column - Basic Info, Pricing, Tags */}
             <div className="space-y-4">
               <Card className="h-fit">
                 <CardHeader className="pb-3">
@@ -446,7 +432,6 @@ export default function ProductForm({
                 </CardContent>
               </Card>
 
-              {/* Pricing & Inventory */}
               <Card className="h-fit">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-lg">Pricing & Inventory</CardTitle>
@@ -580,9 +565,7 @@ export default function ProductForm({
               </Card>
             </div>
 
-            {/* Middle Column - Description & Specifications */}
             <div className="space-y-4">
-              {/* Description */}
               <Card className="h-fit">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-lg">Description *</CardTitle>
@@ -608,7 +591,6 @@ export default function ProductForm({
                 </CardContent>
               </Card>
 
-              {/* Dynamic Specifications */}
               {currentParentSpecifications.length > 0 && (
                 <Card className="h-fit">
                   <CardHeader className="pb-3">
@@ -676,7 +658,6 @@ export default function ProductForm({
               )}
             </div>
 
-            {/* Right Column - Images & Variants */}
             <div className="space-y-4">
               <Card className="h-fit">
                 <CardHeader className="pb-3">
