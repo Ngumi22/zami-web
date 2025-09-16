@@ -26,7 +26,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { signInUser } from "@/server/users";
 import { authClient } from "@/lib/auth/auth.client";
 import { login } from "@/lib/auth/actions";
 
@@ -145,7 +144,7 @@ export function CustomerLoginForm() {
                 variant="outline"
                 type="submit"
                 disabled={isLoading}
-                className="w-full">
+                className="bg-black w-full hover:bg-black/80">
                 {isLoading ? (
                   <Loader2 className="size-4 animate-spin" />
                 ) : (

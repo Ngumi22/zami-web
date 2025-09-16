@@ -75,6 +75,7 @@ export function CustomerSignupForm() {
 
       if (response.success) {
         router.push("/account/login");
+        toast.success("Signed in successfully");
       } else {
         toast.error(response.error);
       }
@@ -168,7 +169,10 @@ export function CustomerSignupForm() {
                 )}
               />
 
-              <Button type="submit" disabled={isLoading} className="w-full">
+              <Button
+                type="submit"
+                disabled={isLoading}
+                className="bg-black w-full hover:bg-black/80">
                 {isLoading ? (
                   <Loader2 className="size-4 animate-spin" />
                 ) : (
