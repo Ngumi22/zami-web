@@ -136,7 +136,10 @@ export function SignUpForm({ email, token }: SignupFormProps) {
                 )}
               />
 
-              <Button type="submit" className="w-full" disabled={isLoading}>
+              <Button
+                type="submit"
+                className="bg-black w-full hover:bg-black/80"
+                disabled={isLoading}>
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 size-4 animate-spin" />

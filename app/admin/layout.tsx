@@ -6,6 +6,8 @@ import { Toaster } from "@/components/ui/toaster";
 import "./dashboard.css";
 
 import { Jost } from "next/font/google";
+import { AdminSidebar } from "@/components/admin/dashboard/admin-sidebar";
+import { Navbar } from "@/components/admin/dashboard/admin-navbar";
 const jost = Jost({ subsets: ["latin"] });
 
 export default async function BaseLayout({
@@ -17,7 +19,13 @@ export default async function BaseLayout({
     <html lang="en">
       <body className={`${jost} antialiased`}>
         <NextSSRPlugin routerConfig={extractRouterConfig(ourFileRouter)} />
-        {children}
+        <div className="min-h-screen bg-slate-50 dark:bg-slate-950 grid grid-cols-1 md:grid-cols-[16rem_1fr]">
+          <AdminSidebar />
+          <div className="min-h-screen">
+            <Navbar />
+            <section className="mt-16 flex-1 p-2 text-sm">{children}</section>
+          </div>
+        </div>
         <Toaster />
       </body>
     </html>
