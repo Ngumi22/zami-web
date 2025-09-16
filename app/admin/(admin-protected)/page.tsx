@@ -10,6 +10,9 @@ import { InventoryOverview } from "@/components/admin/admin-home-sections/invent
 import { ConversionMetrics } from "@/components/admin/admin-home-sections/conversion-metrics";
 import { AdminStats } from "@/components/admin/admin-home-sections/admin-stats";
 import { getAdminStats } from "@/data/adminstats";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 
 function DashboardSkeleton() {
   return (
@@ -90,11 +93,15 @@ async function DashboardContent() {
 }
 
 export default async function AdminDashboard() {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+  if (!session) {
+    redirect("/admin/login");
+  }
   return (
-    <div>
-      <Suspense fallback={<DashboardSkeleton />}>
-        <DashboardContent />
-      </Suspense>
-    </div>
+    <Suspense fallback={<DashboardSkeleton />}>
+      <DashboardContent />
+    </Suspense>
   );
 }

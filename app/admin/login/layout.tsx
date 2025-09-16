@@ -1,18 +1,21 @@
-import type React from "react";
 import { Jost } from "next/font/google";
 
 import "../dashboard.css";
+import { Toaster } from "@/components/ui/sonner";
 
 const jost = Jost({ subsets: ["latin"] });
 
-export default function PublicLayout({
+export default function LoginLayout({
   children,
-}: {
+}: Readonly<{
   children: React.ReactNode;
-}) {
+}>) {
   return (
     <html lang="en">
-      <body className={`${jost} antialiased`}>{children}</body>
+      <body className={`${jost} antialiased`}>
+        {children}
+        <Toaster />
+      </body>
     </html>
   );
 }

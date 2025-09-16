@@ -85,81 +85,79 @@ export function SignUpForm({ email, token }: SignupFormProps) {
   };
 
   return (
-    <div className="flex items-center justify-center m-auto">
-      <Card className="max-w-md">
-        <CardHeader className="text-center">
-          <CardTitle className="text-xl">Welcome</CardTitle>
-          <CardDescription>Create your admin account</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-              <input
-                type="text"
-                style={{ display: "none" }}
-                tabIndex={-1}
-                autoComplete="off"
-                {...form.register("honeypot")}
+    <Card className="w-full max-w-md">
+      <CardHeader className="text-center">
+        <CardTitle className="text-xl">Welcome</CardTitle>
+        <CardDescription>Create your admin account</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+            <input
+              type="text"
+              style={{ display: "none" }}
+              tabIndex={-1}
+              autoComplete="off"
+              {...form.register("honeypot")}
+            />
+            <input type="hidden" readOnly {...form.register("email")} />
+            <input type="hidden" readOnly {...form.register("token")} />
+
+            <div className="grid gap-3">
+              <FormField
+                control={form.control}
+                name="username"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Username</FormLabel>
+                    <FormControl>
+                      <Input placeholder="e.g. zami" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-              <input type="hidden" readOnly {...form.register("email")} />
-              <input type="hidden" readOnly {...form.register("token")} />
 
-              <div className="grid gap-3">
-                <FormField
-                  control={form.control}
-                  name="username"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Username</FormLabel>
-                      <FormControl>
-                        <Input placeholder="e.g. zami" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Password</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="********"
+                        {...field}
+                        type="password"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-                <FormField
-                  control={form.control}
-                  name="password"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Password</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="********"
-                          {...field}
-                          type="password"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="mr-2 size-4 animate-spin" />
-                      Signing up...
-                    </>
-                  ) : (
-                    "Signup"
-                  )}
-                </Button>
-              </div>
-              <div className="text-center text-sm">
-                Already have an account?{" "}
-                <Link
-                  href="/admin/login"
-                  className="underline underline-offset-4">
-                  Login
-                </Link>
-              </div>
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
-    </div>
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 size-4 animate-spin" />
+                    Signing up...
+                  </>
+                ) : (
+                  "Signup"
+                )}
+              </Button>
+            </div>
+            <div className="text-center text-sm">
+              Already have an account?{" "}
+              <Link
+                href="/admin/login"
+                className="underline underline-offset-4">
+                Login
+              </Link>
+            </div>
+          </form>
+        </Form>
+      </CardContent>
+    </Card>
   );
 }

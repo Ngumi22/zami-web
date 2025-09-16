@@ -33,6 +33,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Logout } from "@/components/account/logout";
 import { User as PrismaUser } from "@prisma/client";
+import UserButton from "./user-button";
 
 type MenuItem = {
   title: string;
@@ -218,7 +219,7 @@ interface NavbarProps {
   user: PrismaUser;
 }
 
-export function AdminSidebar({ user }: NavbarProps) {
+export function AdminSidebar() {
   const pathname = usePathname();
   const [openSubmenus, setOpenSubmenus] = useState<string[]>([]);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
@@ -314,54 +315,7 @@ export function AdminSidebar({ user }: NavbarProps) {
         </nav>
 
         <div className="border-t border-slate-200 dark:border-slate-800 p-3 bg-slate-50/50 dark:bg-slate-800/50">
-          <DropdownMenu modal={false}>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                className="w-full justify-start h-12 px-3 hover:bg-slate-100 dark:hover:bg-slate-800">
-                <Avatar className="h-8 w-8 mr-3">
-                  <AvatarImage
-                    src={user.image || "/placeholder.svg"}
-                    alt={user.name}
-                  />
-                  <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white text-sm">
-                    {user.name.charAt(0)}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex flex-col items-start flex-1 min-w-0">
-                  <span className="text-sm font-medium text-slate-900 dark:text-slate-100 truncate">
-                    {user.name}
-                  </span>
-                  <span className="text-xs text-slate-500 dark:text-slate-400 truncate">
-                    {user.email}
-                  </span>
-                </div>
-                <ChevronDown className="w-4 h-4 text-slate-400" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent
-              className="w-56"
-              align="end"
-              side="top"
-              sideOffset={8}>
-              <DropdownMenuItem asChild>
-                <Link href="/admin/profile" className="cursor-pointer">
-                  <User className="mr-2 h-4 w-4" />
-                  Profile Settings
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href="/admin/help" className="cursor-pointer">
-                  <HelpCircle className="mr-2 h-4 w-4" />
-                  Help & Support
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-red-600 focus:text-red-600 cursor-pointer">
-                <Logout />
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <UserButton />
         </div>
       </aside>
     </>

@@ -62,18 +62,13 @@ export function LoginForm({
       router.push("/admin");
     } else {
       toast.error("Invalid email or password.");
-      console.error("Login failed:", message);
     }
 
     setIsLoading(false);
   }
 
   return (
-    <Card className="max-w-md">
-      <CardHeader className="text-center">
-        <CardTitle className="text-xl">Welcome back</CardTitle>
-        <CardDescription>Login with your Google account</CardDescription>
-      </CardHeader>
+    <Card className="w-full max-w-md">
       <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
@@ -122,7 +117,10 @@ export function LoginForm({
                     />
                   </div>
                 </div>
-                <Button type="submit" className="w-full" disabled={isLoading}>
+                <Button
+                  type="submit"
+                  className="bg-black w-full hover:bg-black/80"
+                  disabled={isLoading}>
                   {isLoading ? (
                     <Loader2 className="size-4 animate-spin" />
                   ) : (
