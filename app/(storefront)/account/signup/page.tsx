@@ -1,10 +1,9 @@
-import { CustomerSignupForm } from "@/components/customer/signup";
-export const dynamic = "force-dynamic";
+import { CustomerSignUpForm } from "@/components/customer/sign-up-form";
 
-export default async function SignupPage() {
+export default function SignupPage() {
   return (
     <section className="mx-auto max-w-md py-8">
-      <CustomerSignupForm />
+      <CustomerSignUpForm />
     </section>
   );
 }

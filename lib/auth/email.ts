@@ -1,7 +1,5 @@
-// lib/email.ts
 import nodemailer from "nodemailer";
 
-// Email transporter configuration
 const transporter = nodemailer.createTransport({
   service: "gmail",
   host: process.env.SMTP_HOST,
@@ -12,7 +10,6 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-// Verify transporter configuration
 transporter.verify((error) => {
   if (error) {
     console.error("SMTP configuration error:", error);
@@ -21,7 +18,6 @@ transporter.verify((error) => {
   }
 });
 
-// Email templates
 const emailTemplates = {
   verification: (verificationLink: string) => `
     <!DOCTYPE html>
@@ -79,13 +75,13 @@ const emailTemplates = {
     <head>
       <meta charset="utf-8">
       <style>
-        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        body { font-family: Jost, sans-serif; line-height: 1.6; color: #333; }
         .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-        .header { background: #dc2626; color: white; padding: 20px; text-align: center; }
+        .header { background: #2563eb; color: white; padding: 20px; text-align: center; }
         .content { background: #f9fafb; padding: 30px; }
         .button {
           display: inline-block;
-          background: #dc2626;
+          background: #e8e2e1;
           color: white;
           padding: 12px 24px;
           text-decoration: none;
@@ -130,7 +126,7 @@ const emailTemplates = {
       <style>
         body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
         .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-        .header { background: #059669; color: white; padding: 20px; text-align: center; }
+        .header { background: #2563eb; color: white; padding: 20px; text-align: center; }
         .content { background: #f9fafb; padding: 30px; }
         .footer {
           text-align: center;
@@ -198,10 +194,8 @@ export async function sendVerificationEmail(
   }
 }
 
-export async function sendPasswordResetEmail(email: string, token: string) {
+export async function sendPasswordResetEmail(email: string, resetLink: string) {
   try {
-    const resetLink = `${process.env.BETTER_AUTH_URL}/auth/reset-password?token=${token}`;
-
     const mailOptions = {
       from: `"Zami Tech Solutions" <${process.env.SMTP_USER}>`,
       to: email,
@@ -211,6 +205,41 @@ export async function sendPasswordResetEmail(email: string, token: string) {
 
     const result = await transporter.sendMail(mailOptions);
     console.log("Password reset email sent to:", email);
+    return result;
+  } catch (error) {
+    console.error("Error sending password reset email:", error);
+    throw new Error("Failed to send password reset email");
+  }
+}
+
+export async function sendOTP(email: string, otp: string) {
+  try {
+    const mailOptions = {
+      from: `"Zami Tech Solutions" <${process.env.SMTP_USER}>`,
+      to: email,
+      subject: "Two Factor",
+      html: `Your OTP is ${otp}`,
+    };
+
+    const result = await transporter.sendMail(mailOptions);
+    console.log("Password reset email sent to:", email);
+    return result;
+  } catch (error) {
+    console.error("Error sending password reset email:", error);
+    throw new Error("Failed to send password reset email");
+  }
+}
+
+export async function sendMagicLink(email: string, url: string) {
+  try {
+    const mailOptions = {
+      from: `"Zami Tech Solutions" <${process.env.SMTP_USER}>`,
+      to: email,
+      subject: "Magic Link",
+      html: `Click the link to login into your account: ${url}`,
+    };
+
+    const result = await transporter.sendMail(mailOptions);
     return result;
   } catch (error) {
     console.error("Error sending password reset email:", error);

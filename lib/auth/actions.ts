@@ -17,6 +17,7 @@ import {
   sendWelcomeEmail,
 } from "./email";
 import { randomBytes } from "crypto";
+import { auth } from "../auth";
 
 const EXPIRES_IN = 30 * 24 * 60 * 60;
 
@@ -81,12 +82,12 @@ export async function signup(
         password: hashedPassword,
         authProvider: "EMAIL",
         status: "PENDING_VERIFICATION",
+        emailVerified: false,
         verificationToken,
         verificationTokenExpires,
       },
     });
 
-    // Create wishlist
     await prisma.wishlist.create({
       data: {
         customerId: customer.id,
@@ -96,7 +97,8 @@ export async function signup(
     await sendVerificationEmail(customer.email, verificationToken, customer.id);
 
     return {
-      success: "Account created! Please check your email for verification.",
+      success:
+        "Account created! Please check your email for a verification link.",
     };
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -578,5 +580,36 @@ export async function removeFromWishlist(productId: string) {
     return { success: "Product removed from wishlist" };
   } catch (error) {
     return { error: "Failed to remove from wishlist" };
+  }
+}
+
+const forgotPasswordSchema = z.object({
+  email: z.string().email(),
+});
+
+export async function forgotPasswordAction(
+  email: string
+): Promise<ActionResponse> {
+  try {
+    const { email: validatedEmail } = forgotPasswordSchema.parse({ email });
+
+    // Use better-auth's built-in forgot password method
+    const result = await auth.api.email({
+      identity: "customer", // Or 'user' depending on your model
+      email: validatedEmail,
+    });
+
+    if (result.ok) {
+      return { success: "Password reset code sent to your email." };
+    } else {
+      // Better-auth returns a clear message on failure
+      return { error: result.message || "Failed to send reset code." };
+    }
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return { error: "Invalid email format." };
+    }
+    console.error("Forgot password error:", error);
+    return { error: "An unexpected error occurred. Please try again." };
   }
 }

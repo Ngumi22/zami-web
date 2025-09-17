@@ -79,7 +79,6 @@ export const getAddresses = unstable_cache(
 
 export const getOrders = unstable_cache(
   async (customer: Customer) => {
-    // Fetch recent orders
     const orders = await prisma.order.findMany({
       where: { customerId: customer.id },
       orderBy: { createdAt: "desc" },

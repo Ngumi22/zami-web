@@ -48,8 +48,6 @@ function calculateOrderTotals(
   };
 }
 
-// --- Update Order ---
-
 export async function updateOrder(
   orderId: string,
   formData: FormData
@@ -59,8 +57,8 @@ export async function updateOrder(
     return { success: false, message: "Sign In" };
   }
   await requireRateLimit({
-    windowSec: 60, // 1 minute window
-    max: 10, //10 uploads per minute
+    windowSec: 60,
+    max: 10,
     identifier: user.id,
   });
   try {
@@ -187,8 +185,6 @@ export async function updateOrder(
   }
 }
 
-// --- Update Order Status ---
-
 export async function updateOrderStatus(
   orderId: string,
   newStatus: string,
@@ -199,8 +195,8 @@ export async function updateOrderStatus(
     return { success: false, message: "Sign In" };
   }
   await requireRateLimit({
-    windowSec: 60, // 1 minute window
-    max: 10, //10 uploads per minute
+    windowSec: 60,
+    max: 10,
     identifier: user.id,
   });
   try {
@@ -263,28 +259,26 @@ export async function createOrder(input: CreateOrderInput) {
     return { success: false, message: "Sign In" };
   }
   await requireRateLimit({
-    windowSec: 60, // 1 minute window
-    max: 10, //10 uploads per minute
+    windowSec: 60,
+    max: 10,
     identifier: user.id,
   });
   const parsed = createOrderSchema.safeParse(input);
   if (!parsed.success) throw new Error("Invalid order data");
 
-  // Prevent duplicate purchases
   const existing = await prisma.order.findFirst({
     where: {
       customerId: parsed.data.customerId,
       items: parsed.data.items,
       total: parsed.data.total,
       createdAt: {
-        gte: new Date(Date.now() - 1000 * 60), // within last 1 minute
+        gte: new Date(Date.now() - 1000 * 60),
       },
     },
   });
   if (existing)
     throw new Error("Duplicate order detected. Please wait a moment.");
 
-  // Create order and update products in transaction
   const result = await prisma.$transaction(async (tx) => {
     const order = await tx.order.create({
       data: {
@@ -320,8 +314,8 @@ export async function refundOrder(
     return { success: false, message: "Sign In" };
   }
   await requireRateLimit({
-    windowSec: 60, // 1 minute window
-    max: 10, //10 uploads per minute
+    windowSec: 60,
+    max: 10,
     identifier: user.id,
   });
   try {
