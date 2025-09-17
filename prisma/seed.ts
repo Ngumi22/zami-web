@@ -39,16 +39,17 @@ async function seedAdminInvites() {
     data: { name: SEED_KEY },
   });
 
-  console.log(`Seed "${SEED_KEY}" completed and logged.`);
+  console.log(`✅ Seed "${SEED_KEY}" completed and logged.`);
 }
 
 seedAdminInvites()
   .then(async () => {
     await prisma.$disconnect();
-    process.exit(0);
   })
   .catch(async (err) => {
-    console.error("Seed script failed:", err);
+    console.error("❌ Seed script failed:", err);
     await prisma.$disconnect();
-    process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
   });

@@ -1,12 +1,12 @@
+// app/sitemap.ts
 import { getAllCategories } from "@/data/category";
 import { getAllProducts } from "@/data/product";
 import { MetadataRoute } from "next";
 
+export const dynamic = "force-dynamic";
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
-  if (!baseUrl) {
-    throw new Error("NEXT_PUBLIC_BASE_URL is not defined");
-  }
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "https://yourdomain.com";
 
   const staticPaths = [
     "",
@@ -21,15 +21,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticUrls: MetadataRoute.Sitemap = staticPaths.map((path) => ({
     url: `${baseUrl}${path}`,
     lastModified: new Date(),
-    changeFrequency: "daily" as const,
+    changeFrequency: "daily",
     priority: 1.0,
   }));
 
   const categories = await getAllCategories();
   const categoryUrls: MetadataRoute.Sitemap = categories.map((cat) => ({
-    url: `${baseUrl}/products?category=${cat.slug}`,
+    url: `${baseUrl}/categories/${cat.slug}`, // cleaner than query param
     lastModified: new Date(cat.updatedAt ?? new Date()),
-    changeFrequency: "weekly" as const,
+    changeFrequency: "weekly",
     priority: 0.7,
   }));
 
@@ -37,7 +37,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const productUrls: MetadataRoute.Sitemap = products.map((prod) => ({
     url: `${baseUrl}/products/${prod.slug}`,
     lastModified: new Date(prod.updatedAt ?? new Date()),
-    changeFrequency: "weekly" as const,
+    changeFrequency: "weekly",
     priority: 0.8,
   }));
 

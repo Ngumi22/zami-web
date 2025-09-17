@@ -1,7 +1,7 @@
 import type React from "react";
 import { Jost } from "next/font/google";
 
-import "../dashboard.css";
+import "@/app/globals.css";
 import { Toaster } from "@/components/ui/sonner";
 
 const jost = Jost({ subsets: ["latin"] });
