@@ -3,7 +3,7 @@ import { NextSSRPlugin } from "@uploadthing/react/next-ssr-plugin";
 import { extractRouterConfig } from "uploadthing/server";
 import { ourFileRouter } from "../api/uploadthing/core";
 import { Toaster } from "@/components/ui/toaster";
-import "./dashboard.css";
+import "@/app/globals.css";
 
 import { Jost } from "next/font/google";
 const jost = Jost({ subsets: ["latin"] });

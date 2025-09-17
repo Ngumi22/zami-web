@@ -2,7 +2,7 @@ import type React from "react";
 import { NextSSRPlugin } from "@uploadthing/react/next-ssr-plugin";
 import { extractRouterConfig } from "uploadthing/server";
 import { Toaster } from "@/components/ui/toaster";
-import "../dashboard.css";
+import "@/app/globals.css";
 
 import { Jost } from "next/font/google";
 import { AdminSidebar } from "@/components/admin/dashboard/admin-sidebar";
