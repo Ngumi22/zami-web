@@ -13,13 +13,13 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "../ui/input";
-import { useRouter } from "next/navigation";
 import CardWrapper from "./card-wrapper";
 import { useAuthState } from "@/hooks/useAuthState";
 import FormError from "./form-error";
 import { FormSuccess } from "./form-success";
 import { authClient } from "@/lib/auth/auth.client";
 import { ResetPasswordSchema } from "@/lib/auth/schemas";
+import { useRouter } from "next/navigation";
 
 const ResetPassword = () => {
   const router = useRouter();

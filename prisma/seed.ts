@@ -26,12 +26,11 @@ async function seedAdminInvites() {
 
   if (existing) {
     console.log(`⚠️ Seed "${SEED_KEY}" already applied. Skipping.`);
-    return; // Exit function, allowing .then() block to handle disconnect.
+    return;
   }
 
   console.log("📨 Seeding admin invites...");
   for (const email of ADMIN_EMAILS) {
-    // Send invites and let errors propagate to the final catch block.
     await sendAdminInvite(email);
     console.log(`Invite processed for ${email}`);
   }
@@ -45,12 +44,10 @@ async function seedAdminInvites() {
 
 seedAdminInvites()
   .then(async () => {
-    // All tasks completed successfully.
     await prisma.$disconnect();
     process.exit(0);
   })
   .catch(async (err) => {
-    // A task failed. Handle the error and then disconnect.
     console.error("Seed script failed:", err);
     await prisma.$disconnect();
     process.exit(1);
