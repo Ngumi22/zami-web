@@ -1,5 +1,7 @@
 "use client";
-import React from "react";
+
+import React, { useEffect } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { Button } from "../ui/button";
 import {
   Form,
@@ -19,10 +21,12 @@ import FormError from "./form-error";
 import { FormSuccess } from "./form-success";
 import { authClient } from "@/lib/auth/auth.client";
 import { ResetPasswordSchema } from "@/lib/auth/schemas";
-import { useRouter } from "next/navigation";
 
 const ResetPassword = () => {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const token = searchParams.get("token");
+
   const {
     error,
     success,
@@ -42,10 +46,16 @@ const ResetPassword = () => {
   });
 
   const onSubmit = async (values: z.infer<typeof ResetPasswordSchema>) => {
+    if (!token) {
+      setError("No reset token found in URL.");
+      return;
+    }
+
     try {
       await authClient.resetPassword(
         {
           newPassword: values.password,
+          token: token, // ⬅️ Add the token to the payload
         },
         {
           onResponse: () => {
@@ -65,10 +75,17 @@ const ResetPassword = () => {
         }
       );
     } catch (error) {
-      console.log(error);
       setError("Something went wrong");
     }
   };
+
+  useEffect(() => {
+    if (!token) {
+      setError(
+        "No reset token found in URL. Please request a new password reset link."
+      );
+    }
+  }, [token, setError]);
 
   return (
     <CardWrapper
@@ -117,7 +134,10 @@ const ResetPassword = () => {
           />
           <FormError message={error} />
           <FormSuccess message={success} />
-          <Button type="submit" className="w-full" disabled={loading}>
+          <Button
+            type="submit"
+            className="w-full "
+            disabled={loading || !token}>
             Submit
           </Button>
         </form>

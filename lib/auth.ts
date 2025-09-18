@@ -4,14 +4,7 @@ import { nextCookies } from "better-auth/next-js";
 import { isIpBlockedForAuth } from "./security";
 import prisma from "./prisma";
 import { sendMagicLink, sendOTP, sendPasswordResetEmail } from "./auth/email";
-import {
-  anonymous,
-  magicLink,
-  oneTap,
-  twoFactor,
-  username,
-} from "better-auth/plugins";
-import { passkey } from "better-auth/plugins/passkey";
+import { magicLink, twoFactor } from "better-auth/plugins";
 
 export const auth = betterAuth({
   customer: {
@@ -126,11 +119,5 @@ export const auth = betterAuth({
         await sendMagicLink(email, url);
       },
     }),
-    passkey({ origin: process.env.NEXT_PUBLIC_APP_URL }),
-    username(),
-    anonymous({
-      emailDomainName: "example.com",
-    }),
-    oneTap(),
   ],
 });

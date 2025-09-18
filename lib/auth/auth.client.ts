@@ -17,7 +17,7 @@ export const authClient = createAuthClient({
     magicLinkClient(),
     passkeyClient(),
     oneTapClient({
-      clientId: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID as string,
+      clientId: process.env.GOOGLE_CLIENT_ID as string,
     }),
   ],
 });

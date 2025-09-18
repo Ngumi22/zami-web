@@ -112,10 +112,7 @@ export function CustomerSignInForm() {
                 Forgot password?
               </a>
             </div>
-            <Button
-              type="submit"
-              className={`w-full mt-6`}
-              disabled={isPending}>
+            <Button type="submit" className="w-full mt-6" disabled={isPending}>
               {isPending ? <Loader2 className="animate-spin" /> : "Continue"}
             </Button>
           </form>
