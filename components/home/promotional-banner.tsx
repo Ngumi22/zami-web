@@ -33,8 +33,8 @@ export function PromotionalBanner({
 
   const sizeStyles = {
     small: "h-32 md:h-40",
-    medium: "h-48 md:h-64",
-    large: "h-72 md:h-80",
+    medium: "h-40 md:h-52",
+    large: "h-52 md:h-64",
     full: "h-[calc(100vh-4rem)]",
   };
 
@@ -66,9 +66,9 @@ export function PromotionalBanner({
         />
       </div>
 
-      <div className="relative z-10 flex h-full flex-col justify-center p-6 md:p-8">
+      <div className="relative z-10 flex h-full flex-col justify-center p-2 md:p-4">
         <div className="max-w-md">
-          <h2 className="mb-2 text-2xl font-bold md:text-3xl lg:text-4xl">
+          <h2 className="mb-2 text-xl font-bold md:text-2xl lg:text-3xl">
             {title}
           </h2>
           {description && (

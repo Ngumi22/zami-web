@@ -324,8 +324,18 @@ export function DiscountedProducts({ products }: { products: Product[] }) {
 
 export function PromotionalSection() {
   return (
-    <section>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <section className="w-full">
+      <div
+        className="
+          grid
+          grid-flow-col auto-cols-[80%] md:auto-cols-[60%] lg:auto-cols-[32%]
+          gap-4 md:gap-6
+          overflow-x-auto lg:overflow-visible
+          scroll-smooth
+          snap-x snap-mandatory lg:snap-none
+          scrollbar-hide
+          px-4 lg:px-0
+        ">
         <PromotionalBanner
           title="Pre-Loved Laptops"
           description="Save big on certified refurbished laptops for work, school, and gaming."
@@ -335,7 +345,9 @@ export function PromotionalSection() {
           imageAlt="Refurbished laptops on sale"
           variant="primary"
           size="medium"
+          className="snap-start lg:snap-none"
         />
+
         <PromotionalBanner
           title="New Arrivals"
           description="Explore the newest laptops, smartphones, and accessories today."
@@ -345,7 +357,9 @@ export function PromotionalSection() {
           imageAlt="New laptops and smartphones"
           variant="primary"
           size="medium"
+          className="snap-start lg:snap-none"
         />
+
         <PromotionalBanner
           title="Featured Products"
           description="Shop our handpicked bestsellers in laptops, phones, and more."
@@ -355,6 +369,7 @@ export function PromotionalSection() {
           imageAlt="Featured tech gadgets"
           variant="primary"
           size="medium"
+          className="snap-start lg:snap-none"
         />
       </div>
     </section>

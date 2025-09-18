@@ -48,7 +48,7 @@ export function SiteFooter() {
       link: "https://www.instagram.com/zami.tech",
     },
     {
-      name: "X (Twitter)",
+      name: "Twitter",
       icon: (
         <svg
           xmlns="http://www.w3.org/2000/svg"

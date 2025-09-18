@@ -34,8 +34,8 @@ export function CustomerSignUpForm() {
     defaultValues: {
       name: "",
       email: "",
-      password: "Password123.",
-      confirmPassword: "Password123.",
+      password: "",
+      confirmPassword: "",
     },
   });
 
@@ -72,16 +72,16 @@ export function CustomerSignUpForm() {
 
   return (
     <Card className="w-full max-w-md">
-      <CardHeader>
+      <CardHeader className="text-center">
         <CardTitle>Sign up</CardTitle>
         <CardDescription>Create a new account to get started</CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-3">
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(handleSubmit)}
-            className="space-y-4">
-            <div className="flex gap-4">
+            className="space-y-3">
+            <div className="flex gap-3">
               <FormField
                 control={form.control}
                 name="name"
@@ -89,7 +89,12 @@ export function CustomerSignUpForm() {
                   <FormItem className="flex-1">
                     <FormLabel>User Name</FormLabel>
                     <FormControl>
-                      <Input type="text" {...field} disabled={isPending} />
+                      <Input
+                        type="text"
+                        {...field}
+                        disabled={isPending}
+                        placeholder="John"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -103,7 +108,12 @@ export function CustomerSignUpForm() {
                 <FormItem>
                   <FormLabel>Email</FormLabel>
                   <FormControl>
-                    <Input type="email" {...field} disabled={isPending} />
+                    <Input
+                      type="email"
+                      {...field}
+                      disabled={isPending}
+                      placeholder="example@email.com"
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -116,7 +126,12 @@ export function CustomerSignUpForm() {
                 <FormItem>
                   <FormLabel>Password</FormLabel>
                   <FormControl>
-                    <Input type="password" {...field} disabled={isPending} />
+                    <Input
+                      type="password"
+                      {...field}
+                      disabled={isPending}
+                      placeholder="******"
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -129,13 +144,21 @@ export function CustomerSignUpForm() {
                 <FormItem>
                   <FormLabel>Confirm password</FormLabel>
                   <FormControl>
-                    <Input type="password" {...field} disabled={isPending} />
+                    <Input
+                      type="password"
+                      {...field}
+                      disabled={isPending}
+                      placeholder="******"
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            <Button type="submit" className="w-full" disabled={isPending}>
+            <Button
+              type="submit"
+              className="w-full bg-black hover:bg-black/70"
+              disabled={isPending}>
               {isPending ? <Loader2 className="animate-spin" /> : "Continue"}
             </Button>
           </form>
@@ -154,15 +177,6 @@ export function CustomerSignUpForm() {
             className="w-full"
             onClick={handleGoogleSignIn}
             disabled={isPending}>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              className="size-4">
-              <path
-                d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z"
-                fill="currentColor"
-              />
-            </svg>
             Continue with Google
           </Button>
         </>
@@ -171,8 +185,8 @@ export function CustomerSignUpForm() {
         <span className="text-sm text-muted-foreground">
           Already have an account?{" "}
           <a
-            href="/account/sign-in"
-            className="text-primary underline hover:opacity-80">
+            href="/account/login"
+            className="text-black underline hover:opacity-80">
             Sign in
           </a>
         </span>

@@ -2,7 +2,7 @@ import ForgotPassword from "@/components/customer/forgot-password";
 
 export default function ForgotPasswordPage() {
   return (
-    <section className="mx-auto max-w-md py-8">
+    <section className="mx-auto max-w-md my-8 max-h-screen">
       <ForgotPassword />
     </section>
   );

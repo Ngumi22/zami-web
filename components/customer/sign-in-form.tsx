@@ -69,11 +69,11 @@ export function CustomerSignInForm() {
 
   return (
     <Card className="w-full max-w-md">
-      <CardHeader>
+      <CardHeader className="text-center">
         <CardTitle>Sign in</CardTitle>
         <CardDescription>Welcome back! Sign in to your account</CardDescription>
       </CardHeader>
-      <CardContent className="space-y-6">
+      <CardContent className="space-y-4">
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(handleSubmit)}
@@ -85,7 +85,12 @@ export function CustomerSignInForm() {
                 <FormItem>
                   <FormLabel>Email</FormLabel>
                   <FormControl>
-                    <Input type="email" {...field} disabled={isPending} />
+                    <Input
+                      type="email"
+                      {...field}
+                      disabled={isPending}
+                      placeholder="example@email.com"
+                    />
                   </FormControl>
                   <FormMessage className="min-h-[20px]" />
                 </FormItem>
@@ -98,7 +103,12 @@ export function CustomerSignInForm() {
                 <FormItem>
                   <FormLabel>Password</FormLabel>
                   <FormControl>
-                    <Input type="password" {...field} disabled={isPending} />
+                    <Input
+                      type="password"
+                      {...field}
+                      disabled={isPending}
+                      placeholder="******"
+                    />
                   </FormControl>
                   <FormMessage className="min-h-[20px]" />
                 </FormItem>
@@ -108,11 +118,14 @@ export function CustomerSignInForm() {
             <div className="flex justify-end">
               <a
                 href="/account/forgot-password"
-                className="text-sm text-primary underline hover:opacity-80">
+                className="text-sm text-black underline hover:opacity-80">
                 Forgot password?
               </a>
             </div>
-            <Button type="submit" className="w-full mt-6" disabled={isPending}>
+            <Button
+              type="submit"
+              className="w-full bg-black hover:bg-black/70 mt-6"
+              disabled={isPending}>
               {isPending ? <Loader2 className="animate-spin" /> : "Continue"}
             </Button>
           </form>
@@ -140,7 +153,7 @@ export function CustomerSignInForm() {
           Don&apos;t have an account?{" "}
           <a
             href="/account/signup"
-            className="text-primary underline hover:opacity-80">
+            className="text-black underline hover:opacity-80">
             Sign up
           </a>
         </span>
