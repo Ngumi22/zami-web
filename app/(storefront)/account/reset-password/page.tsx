@@ -1,4 +1,5 @@
 import ResetPassword from "@/components/customer/reset-password";
+export const dynamic = "force-dynamic";
 
 export default function ForgotPasswordPage() {
   return (

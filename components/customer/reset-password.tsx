@@ -55,7 +55,7 @@ const ResetPassword = () => {
       await authClient.resetPassword(
         {
           newPassword: values.password,
-          token: token, // ⬅️ Add the token to the payload
+          token: token,
         },
         {
           onResponse: () => {
