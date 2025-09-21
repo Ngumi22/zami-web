@@ -16,6 +16,11 @@ export async function getAllProducts(limit?: number) {
           specifications: true,
         },
       },
+      collections: {
+        include: {
+          collection: true,
+        },
+      },
     },
     take: limit,
     cacheStrategy: {

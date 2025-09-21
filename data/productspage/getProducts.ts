@@ -1,5 +1,6 @@
 "use server";
 
+import { cacheKeys } from "@/lib/cache-keys";
 import prisma from "@/lib/prisma";
 import {
   Brand,
@@ -45,18 +46,21 @@ export interface SpecificationFilter {
   unit?: string;
 }
 
-export const getCachedCategories = cache(async (): Promise<Category[]> => {
-  const categories = await prisma.category.findMany({
-    where: { parentId: null },
-    include: {
-      children: true,
-    },
-  });
-  return categories;
-});
+export const getCachedCategories = cache(
+  async (): Promise<Category[]> => {
+    return prisma.category.findMany({
+      where: { parentId: null },
+      include: {
+        children: true,
+      },
+    });
+  },
+  ["categories"],
+  { tags: ["categories"] }
+);
 
 const CACHE_TAG = "brands";
-const CACHE_DURATION = 60 * 30; // 30 minutes
+const CACHE_DURATION = 60 * 30;
 
 export const getCachedBrands = cache(
   async () => {
@@ -70,7 +74,6 @@ export const getCachedBrands = cache(
           name: true,
           slug: true,
           logo: true,
-          // Only include fields you actually need
           // isActive: true,
           // description: true,
           // productCount: true,

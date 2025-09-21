@@ -1,4 +1,4 @@
-import { GetProductsParams } from "@/data/product-page-product";
+import { GetProductsParams } from "@/data/productspage/getProducts";
 
 export const cacheKeys = {
   product: (id: string) => ["product", id],

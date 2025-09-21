@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidateTag } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { cacheTags } from "./cache-keys";
 import {
   createCategorySchema,
@@ -13,11 +13,6 @@ import { ActionResult } from "./types";
 import DOMPurify from "isomorphic-dompurify";
 import { withAdminAuth } from "./auth-action";
 
-/**
- * Prepares and validates category specifications from form data.
- * @param specs - The raw specifications data.
- * @returns An array of sanitized and structured specifications.
- */
 function prepareSpecifications(specs: unknown) {
   const parsedSpecs = categorySpecificationSchema.array().safeParse(specs);
   if (!parsedSpecs.success) {
@@ -34,10 +29,6 @@ function prepareSpecifications(specs: unknown) {
   }));
 }
 
-/**
- * Creates a new category. The slug uniqueness check and creation are wrapped in a transaction
- * to prevent race conditions and ensure data integrity.
- */
 export const createCategory = withAdminAuth(
   async (formData: FormData): Promise<ActionResult<Category>> => {
     try {
@@ -82,8 +73,10 @@ export const createCategory = withAdminAuth(
         });
       });
 
-      // Revalidate relevant cache tags
       revalidateTag(cacheTags.categoriesCollection());
+      revalidateTag("categories");
+      revalidatePath("/admin/categories");
+      revalidatePath("/");
 
       return {
         success: true,

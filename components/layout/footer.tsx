@@ -97,11 +97,11 @@ export function SiteFooter() {
 
   return (
     <footer className="border-t bg-gray-100 text-gray-800">
-      <div className="container px-4 py-8 md:px-6">
+      <div className="container px-4 pt-4 md:px-6">
         <div className="grid grid-cols-1 gap-8 md:grid-cols-4">
           <div>
             <Link href="/" className="text-xl font-bold text-gray-900">
-              Zami Tech Solutions
+              Zami Digital Solutions
             </Link>
             <p className="mt-4 text-sm">
               Your one-stop shop for all electronics needs. Quality products at
@@ -180,8 +180,11 @@ export function SiteFooter() {
 
         <div className="mt-3 border-t pt-3 text-center text-sm text-gray-600">
           <p>
-            © {new Date().getFullYear()} Zami Tech Solutions. All rights
+            © {new Date().getFullYear()} Zami Digital Solutions. All rights
             reserved.
+          </p>
+          <p>
+            Developed By <Link href={"https://ngumi.vercel.app/"}>Ngumi.</Link>
           </p>
         </div>
       </div>
