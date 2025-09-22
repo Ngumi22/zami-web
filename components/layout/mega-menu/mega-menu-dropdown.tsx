@@ -24,7 +24,6 @@ export function MegaMenuDropdown({
     <div className="absolute left-0 top-full w-full bg-background border-b shadow-lg z-40">
       <div className="container mx-auto py-8 px-4">
         <div className="grid grid-cols-12 gap-4 lg:gap-8">
-          {/* Subcategories */}
           <div className="col-span-12 md:col-span-3 md:border-r md:pr-4 lg:pr-8">
             <h3 className="font-medium text-lg mb-4">
               {category.name} Categories
@@ -51,7 +50,6 @@ export function MegaMenuDropdown({
             </ul>
           </div>
 
-          {/* Featured Products */}
           <div className="col-span-12 md:col-span-6 mt-6 md:mt-0">
             <h3 className="font-medium text-lg mb-4">Featured Products</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 lg:gap-6">
@@ -81,7 +79,6 @@ export function MegaMenuDropdown({
             </div>
           </div>
 
-          {/* Popular Brands */}
           <div className="col-span-12 md:col-span-3 mt-6 md:mt-0">
             <div className="mb-6">
               <div className="relative rounded-lg overflow-hidden bg-muted">
@@ -102,21 +99,23 @@ export function MegaMenuDropdown({
             </div>
 
             <div>
-              <h3 className="font-medium text-lg mb-4">Popular Brands</h3>
+              <h3 className="font-normal text-lg mb-4 text-black">
+                Popular Brands
+              </h3>
               <div className="grid grid-cols-3 gap-3">
                 {popularBrands.map((brand) => (
                   <Link
                     key={brand.id}
                     href={`/products?brand=${brand.slug}`}
-                    className="flex items-center p-1 border rounded-md hover:border-primary transition-colors"
+                    className="flex items-center p-1 bg-black border rounded-md hover:border-primary transition-colors"
                     onClick={onClose}>
-                    <div className="w-6 h-6 bg-muted rounded-full flex items-center justify-center mr-2">
+                    <div className="w-6 h-6 bg-muted flex items-center justify-center mr-2">
                       <Image
                         src={brand.logo || "/placeholder.jpg"}
                         height={50}
                         width={50}
                         alt={brand.slug}
-                        className="h-auto w-auto"
+                        className="h-full w-auto"
                       />
                     </div>
                     <span className="text-sm font-medium">{brand.name}</span>

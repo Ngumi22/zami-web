@@ -1,9 +1,9 @@
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { getAllBrands } from "@/data/brands";
-import { getAllCategories } from "@/data/category";
-import ProductForm from "@/components/admin/forms/products/product-form";
+import { getCategoriesWithParents } from "@/data/category";
 import { getProductById } from "@/data/consolidated-products-fetch";
+import ProductForm from "@/components/admin/forms/products/form";
 
 export default async function EditProductPage({
   params,
@@ -13,7 +13,7 @@ export default async function EditProductPage({
   const { id } = await params;
   const [product, categories, brands] = await Promise.all([
     getProductById(id),
-    getAllCategories(),
+    getCategoriesWithParents(),
     getAllBrands(),
   ]);
 

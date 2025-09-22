@@ -19,7 +19,6 @@ import { Brand, Category, Product } from "@prisma/client";
 import { formatCurrency } from "@/lib/utils";
 
 interface ProductDetailsProps {
-  products: Product[];
   product: Product;
   categories: Category[];
   brands: Brand[];
@@ -38,12 +37,10 @@ export function ProductDetails({
   const [isSaving, setIsSaving] = useState(false);
   const [editedProduct, setEditedProduct] = useState<Product>(product);
 
-  // Keeps a deep copy of the original so we can rollback if the update fails
   const previousProductRef = useRef<Product>(
     JSON.parse(JSON.stringify(product))
   );
 
-  // keeps editedProduct in sync when parent product prop changes (e.g. navigation / refresh)
   useEffect(() => {
     setEditedProduct(product);
     previousProductRef.current = JSON.parse(JSON.stringify(product));
@@ -94,11 +91,8 @@ export function ProductDetails({
   const brand = brands.find((b) => b.id === editedProduct.brandId);
 
   const handleSave = async () => {
-    // Saves a snapshot of current server-known product for safe rollback
     previousProductRef.current = JSON.parse(JSON.stringify(product));
 
-    // Immediately apply UI changes (editedProduct already reflects the changes),
-    // close the editor to create a snappy feel.
     setIsSaving(true);
     setIsEditing(false);
 
@@ -139,7 +133,6 @@ export function ProductDetails({
           description: result.message || "Changes saved.",
         });
       } else {
-        // Back to previous product state on server-declared failure
         setEditedProduct(previousProductRef.current);
         setIsEditing(true);
         toast({
@@ -149,7 +142,6 @@ export function ProductDetails({
         });
       }
     } catch (error) {
-      // rollback on network / unexpected error
       setEditedProduct(previousProductRef.current);
       setIsEditing(true);
       toast({
@@ -361,7 +353,6 @@ export function ProductDetails({
         </Card>
       </div>
 
-      {/* Main Content Tabs */}
       <Tabs defaultValue="basic" className="space-y-6">
         <TabsList className="grid w- grid-cols-6">
           <TabsTrigger value="basic">Basic Info</TabsTrigger>

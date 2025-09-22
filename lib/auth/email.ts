@@ -62,7 +62,7 @@ const emailTemplates = {
         </div>
         <div class="footer">
           <p>If you didn't create this account, please ignore this email.</p>
-          <p>© ${new Date().getFullYear()} Zami Tech Solutions. All rights reserved.</p>
+          <p>© ${new Date().getFullYear()} Zami Digital Solutions. All rights reserved.</p>
         </div>
       </div>
     </body>
@@ -111,7 +111,7 @@ const emailTemplates = {
           <p>If you didn't request a password reset, please ignore this email and your password will remain unchanged.</p>
         </div>
         <div class="footer">
-          <p>© ${new Date().getFullYear()} Zami Tech Solutions. All rights reserved.</p>
+          <p>© ${new Date().getFullYear()} Zami Digital Solutions. All rights reserved.</p>
         </div>
       </div>
     </body>
@@ -158,7 +158,7 @@ const emailTemplates = {
           }" style="color: #2563eb; text-decoration: none;">Visit Our Store →</a>
         </div>
         <div class="footer">
-          <p>© ${new Date().getFullYear()} Zami Tech Solutions. All rights reserved.</p>
+          <p>© ${new Date().getFullYear()} Zami Digital Solutions. All rights reserved.</p>
         </div>
       </div>
     </body>
@@ -197,7 +197,7 @@ export async function sendVerificationEmail(
 export async function sendPasswordResetEmail(email: string, resetLink: string) {
   try {
     const mailOptions = {
-      from: `"Zami Tech Solutions" <${process.env.SMTP_USER}>`,
+      from: `"Zami Digital Solutions" <${process.env.SMTP_USER}>`,
       to: email,
       subject: "Reset Your Password",
       html: emailTemplates.passwordReset(resetLink),
@@ -215,7 +215,7 @@ export async function sendPasswordResetEmail(email: string, resetLink: string) {
 export async function sendOTP(email: string, otp: string) {
   try {
     const mailOptions = {
-      from: `"Zami Tech Solutions" <${process.env.SMTP_USER}>`,
+      from: `"Zami Digital Solutions" <${process.env.SMTP_USER}>`,
       to: email,
       subject: "Two Factor",
       html: `Your OTP is ${otp}`,
@@ -233,7 +233,7 @@ export async function sendOTP(email: string, otp: string) {
 export async function sendMagicLink(email: string, url: string) {
   try {
     const mailOptions = {
-      from: `"Zami Tech Solutions" <${process.env.SMTP_USER}>`,
+      from: `"Zami Digital Solutions" <${process.env.SMTP_USER}>`,
       to: email,
       subject: "Magic Link",
       html: `Click the link to login into your account: ${url}`,
@@ -250,7 +250,7 @@ export async function sendMagicLink(email: string, url: string) {
 export async function sendWelcomeEmail(email: string) {
   try {
     const mailOptions = {
-      from: `"Zami Tech Solutions" <${process.env.SMTP_USER}>`,
+      from: `"Zami Digital Solutions" <${process.env.SMTP_USER}>`,
       to: email,
       subject: "Welcome to Our Store!",
       html: emailTemplates.welcome(),
@@ -305,7 +305,7 @@ export async function sendOrderConfirmationEmail(
             <p>You can track your order status in your account dashboard.</p>
           </div>
           <div class="footer">
-            <p>© ${new Date().getFullYear()} Zami Tech Solutions. All rights reserved.</p>
+            <p>© ${new Date().getFullYear()} Zami Digital Solutions. All rights reserved.</p>
           </div>
         </div>
       </body>
@@ -313,7 +313,7 @@ export async function sendOrderConfirmationEmail(
     `;
 
     const mailOptions = {
-      from: `"Zami Tech Solutions" <${process.env.SMTP_USER}>`,
+      from: `"Zami Digital Solutions" <${process.env.SMTP_USER}>`,
       to: email,
       subject: `Order Confirmation - #${orderDetails.orderNumber}`,
       html: orderTemplate,

@@ -14,6 +14,7 @@ import {
 } from "@dnd-kit/sortable";
 import { DndContext } from "@dnd-kit/core";
 import { toast, useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
 
 const ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/svg+xml"];
 const MAX_SIZE_MB = 4;
@@ -143,13 +144,13 @@ function SortableImage({
           className="object-cover"
           sizes="(max-width: 500px) 50vw, 200px"
         />
-        <button
+        <Button
           type="button"
           onClick={() => onRemove(url)}
           className="absolute top-2 right-2 p-1 rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors z-10"
           aria-label="Remove image">
           <Trash2 className="h-4 w-4" />
-        </button>
+        </Button>
         <span
           {...attributes}
           {...listeners}
@@ -239,7 +240,7 @@ export default function Uploader({
                   variant: "destructive",
                 });
               }}
-              className="ut-button:bg-primary ut-button:rounded-md ut-button:text-white"
+              className="ut-button:bg-black ut-button:rounded-sm ut-button:text-white"
             />
           </div>
         </Card>
