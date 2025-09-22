@@ -93,12 +93,12 @@ async function DashboardContent() {
 }
 
 export default async function AdminDashboard() {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-  if (!session) {
-    redirect("/admin/login");
-  }
+  // const session = await auth.api.getSession({
+  //   headers: await headers(),
+  // });
+  // if (!session) {
+  //   redirect("/admin/login");
+  // }
   return (
     <Suspense fallback={<DashboardSkeleton />}>
       <DashboardContent />
