@@ -1,7 +1,5 @@
 "use client";
 
-import type React from "react";
-
 import { useForm, type SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
@@ -19,7 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-
+import { Plus, Trash2, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
   Form,
@@ -36,11 +34,10 @@ import {
   type ProductVariant,
 } from "@/lib/schema";
 import { createProduct, updateProduct } from "@/lib/product-actions";
-import type { Brand, Category, Product } from "@prisma/client";
+import { Brand, Category, Product } from "@prisma/client";
 import Uploader, { useUploader } from "../imageUploader";
 import RichTextEditor from "./Editor";
 import ArrayInput from "../array-input";
-import { Loader2, Plus, Trash2 } from "lucide-react";
 
 export interface EnhancedCategory extends Category {
   parent?: Category | null;
@@ -52,7 +49,6 @@ export interface ProductFormProps {
   categories: EnhancedCategory[];
   brands: Brand[];
 }
-
 export default function ProductForm({
   product,
   categories,
@@ -181,7 +177,6 @@ export default function ProductForm({
     setValue("thumbnailImages", thumbnailUrls);
     clearErrors("thumbnailImages");
   }, [thumbnailUrls, setValue, clearErrors]);
-
   const addVariant = useCallback(() => {
     const currentVariants = getValues("variants");
     const newVariant: ProductVariant = {
@@ -278,83 +273,189 @@ export default function ProductForm({
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
-      <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 shadow-sm">
-        <div className="max-w-7xl mx-auto p-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div>
-                <h1 className="text-xl font-medium text-slate-900 dark:text-slate-100">
-                  {isEditing ? "Edit Product" : "Create New Product"}
-                </h1>
-                <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
-                  {isEditing
-                    ? "Update product information and settings"
-                    : "Add a new product to your catalog"}
-                </p>
-              </div>
-            </div>
-            <div className="flex gap-3">
+    <div className="max-w-7xl mx-auto p-4">
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <div className="flex justify-between items-center mb-4">
+            <h1 className="text-2xl font-bold">
+              {isEditing ? "Edit Product" : "Add New Product"}
+            </h1>
+            <div className="flex gap-2">
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => router.back()}
-                disabled={formState.isSubmitting}
-                className="px-6">
+                size="sm"
+                disabled={formState.isSubmitting}>
                 Cancel
               </Button>
-              <Button
-                type="submit"
-                disabled={formState.isSubmitting}
-                className="px-3 bg-black text-white"
-                form="product-form">
+              <Button type="submit" disabled={formState.isSubmitting} size="sm">
                 {formState.isSubmitting ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                     {isEditing ? "Updating..." : "Creating..."}
                   </>
                 ) : isEditing ? (
-                  "Update Product"
+                  "Update"
                 ) : (
-                  "Create Product"
+                  "Create"
                 )}
               </Button>
             </div>
           </div>
-        </div>
-      </div>
 
-      <div className="max-w-full mx-auto p-2">
-        <Form {...form}>
-          <form
-            id="product-form"
-            onSubmit={form.handleSubmit(onSubmit)}
-            className="space-y-2">
-            <div className="grid grid-cols-1 xl:grid-cols-12 gap-2">
-              <div className="xl:col-span-4 space-y-3">
-                <Card className="shadow-sm border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
-                  <CardHeader className="pb-4 border-b border-slate-100 dark:border-slate-800">
-                    <div className="flex items-center gap-2">
-                      <CardTitle className="text-lg font-medium">
-                        Basic Information
-                      </CardTitle>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="pt-6 space-y-5">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <div className="space-y-4">
+              <Card className="h-fit">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-lg">Basic Information</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm">
+                          Product Name *
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            onChange={handleNameChange}
+                            placeholder="Enter product name"
+                            className="h-8"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="slug"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm">SEO Slug</FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            readOnly
+                            className="h-8 bg-muted cursor-not-allowed"
+                            placeholder="Auto-generated from name"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="shortDescription"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm">
+                          Short Description *
+                        </FormLabel>
+                        <FormControl>
+                          <Textarea
+                            {...field}
+                            placeholder="Brief description"
+                            rows={2}
+                            className="text-sm"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <div className="grid grid-cols-2 gap-2">
                     <FormField
                       control={form.control}
-                      name="name"
+                      name="categoryId"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                            Product Name
-                          </FormLabel>
+                          <FormLabel className="text-sm">Category *</FormLabel>
+                          <Select
+                            onValueChange={handleCategoryChange}
+                            value={field.value ?? ""}>
+                            <FormControl>
+                              <SelectTrigger className="h-8">
+                                <SelectValue placeholder="Select" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {categories.map((category) => (
+                                <SelectItem
+                                  key={category.id}
+                                  value={category.id}>
+                                  {category.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="brandId"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-sm">Brand *</FormLabel>
+                          <Select
+                            onValueChange={field.onChange}
+                            value={field.value ?? ""}>
+                            <FormControl>
+                              <SelectTrigger className="h-8">
+                                <SelectValue placeholder="Select" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {brands.map((brand) => (
+                                <SelectItem key={brand.id} value={brand.id}>
+                                  {brand.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="h-fit">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-lg">Pricing & Inventory</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="grid grid-cols-3 gap-2">
+                    <FormField
+                      control={form.control}
+                      name="price"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-sm">Price *</FormLabel>
                           <FormControl>
                             <Input
                               {...field}
-                              onChange={handleNameChange}
-                              placeholder="Enter product name"
-                              className="h-10 border-slate-300 dark:border-slate-600 focus:border-black dark:focus:border-black"
+                              type="number"
+                              step="0.01"
+                              placeholder="0.00"
+                              className="h-8"
+                              onChange={(e) =>
+                                field.onChange(
+                                  Number.parseFloat(e.target.value) || 0
+                                )
+                              }
                             />
                           </FormControl>
                           <FormMessage />
@@ -364,18 +465,25 @@ export default function ProductForm({
 
                     <FormField
                       control={form.control}
-                      name="slug"
+                      name="originalPrice"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                            SEO Slug
-                          </FormLabel>
+                          <FormLabel className="text-sm">Original</FormLabel>
                           <FormControl>
                             <Input
                               {...field}
-                              readOnly
-                              className="h-10 bg-slate-50 dark:bg-slate-800 border-slate-300 dark:border-slate-600 cursor-not-allowed"
-                              placeholder="Auto-generated from name"
+                              type="number"
+                              step="0.01"
+                              placeholder="0.00"
+                              className="h-8"
+                              value={field.value || ""}
+                              onChange={(e) =>
+                                field.onChange(
+                                  e.target.value
+                                    ? Number.parseFloat(e.target.value)
+                                    : null
+                                )
+                              }
                             />
                           </FormControl>
                           <FormMessage />
@@ -385,548 +493,338 @@ export default function ProductForm({
 
                     <FormField
                       control={form.control}
-                      name="shortDescription"
+                      name="stock"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                            Short Description
-                          </FormLabel>
+                          <FormLabel className="text-sm">Stock *</FormLabel>
                           <FormControl>
-                            <Textarea
+                            <Input
                               {...field}
-                              placeholder="Brief description for product listings"
-                              rows={3}
-                              className="border-slate-300 dark:border-slate-600 focus:border-black dark:focus:border-black resize-none"
+                              type="number"
+                              placeholder="0"
+                              className="h-8"
+                              onChange={(e) =>
+                                field.onChange(
+                                  Number.parseInt(e.target.value) || 0
+                                )
+                              }
                             />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
+                  </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                      <FormField
-                        control={form.control}
-                        name="categoryId"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                              Category
-                            </FormLabel>
-                            <Select
-                              onValueChange={handleCategoryChange}
-                              value={field.value ?? ""}>
-                              <FormControl>
-                                <SelectTrigger className="h-10 border-slate-300 dark:border-slate-600">
-                                  <SelectValue placeholder="Select category" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {categories.map((category) => (
-                                  <SelectItem
-                                    key={category.id}
-                                    value={category.id}>
-                                    {category.name}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                  <FormField
+                    control={form.control}
+                    name="featured"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                        <div className="space-y-1 leading-none">
+                          <FormLabel className="text-sm">
+                            Featured Product
+                          </FormLabel>
+                        </div>
+                      </FormItem>
+                    )}
+                  />
+                </CardContent>
+              </Card>
 
-                      <FormField
-                        control={form.control}
-                        name="brandId"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                              Brand
-                            </FormLabel>
-                            <Select
-                              onValueChange={field.onChange}
-                              value={field.value ?? ""}>
-                              <FormControl>
-                                <SelectTrigger className="h-10 border-slate-300 dark:border-slate-600">
-                                  <SelectValue placeholder="Select brand" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {brands.map((brand) => (
-                                  <SelectItem key={brand.id} value={brand.id}>
-                                    {brand.name}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                  </CardContent>
-                </Card>
+              {/* Tags */}
+              <Card className="h-fit">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-lg">Tags</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <FormField
+                    control={form.control}
+                    name="tags"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormControl>
+                          <ArrayInput
+                            value={field.value}
+                            onChange={field.onChange}
+                            placeholder="Add tag (e.g., electronics, gaming)"
+                            maxItems={20}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </CardContent>
+              </Card>
+            </div>
 
-                <Card className="shadow-sm border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
-                  <CardHeader className="pb-4 border-b border-slate-100 dark:border-slate-800">
-                    <div className="flex items-center gap-2">
-                      <CardTitle className="text-lg font-medium">
-                        Pricing & Inventory
-                      </CardTitle>
-                    </div>
+            <div className="space-y-4">
+              <Card className="h-fit">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-lg">Description *</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <FormField
+                    control={form.control}
+                    name="description"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormControl>
+                          <RichTextEditor
+                            value={field.value}
+                            onChange={field.onChange}
+                            error={!!form.formState.errors.description}
+                            className="min-h-[200px]"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </CardContent>
+              </Card>
+
+              {currentParentSpecifications.length > 0 && (
+                <Card className="h-fit">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-lg">Specifications</CardTitle>
                   </CardHeader>
-                  <CardContent className="pt-6 space-y-5">
-                    <div className="grid grid-cols-3 gap-4">
+                  <CardContent className="space-y-3">
+                    {currentParentSpecifications.map((spec: any) => (
                       <FormField
+                        key={spec.id}
                         control={form.control}
-                        name="price"
+                        name={`specifications.${spec.id}` as any}
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                              Price
+                            <FormLabel className="text-sm">
+                              {spec.name} {spec.required && "*"}
+                              {spec.unit && `(${spec.unit})`}
                             </FormLabel>
                             <FormControl>
+                              {spec.type === "SELECT" ? (
+                                <Select
+                                  onValueChange={field.onChange}
+                                  value={field.value || ""}>
+                                  <SelectTrigger className="h-8">
+                                    <SelectValue
+                                      placeholder={`Select ${spec.name.toLowerCase()}`}
+                                    />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {spec.options?.map((option: string) => (
+                                      <SelectItem key={option} value={option}>
+                                        {option}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              ) : spec.type === "BOOLEAN" ? (
+                                <div className="flex items-center space-x-2 mt-2">
+                                  <Checkbox
+                                    checked={field.value === "true"}
+                                    onCheckedChange={(checked) =>
+                                      field.onChange(checked ? "true" : "false")
+                                    }
+                                  />
+                                  <Label className="text-sm">Yes</Label>
+                                </div>
+                              ) : (
+                                <Input
+                                  {...field}
+                                  type={
+                                    spec.type === "NUMBER" ? "number" : "text"
+                                  }
+                                  placeholder={`Enter ${spec.name.toLowerCase()}`}
+                                  className="h-8"
+                                  value={field.value ?? ""}
+                                />
+                              )}
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    ))}
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+
+            <div className="space-y-4">
+              <Card className="h-fit">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-lg">Images</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <FormField
+                    control={form.control}
+                    name="mainImage"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm">Main Image *</FormLabel>
+                        <FormControl>
+                          <div>
+                            <Uploader
+                              imageUrls={mainImageUrls}
+                              {...mainImageUploader}
+                              endpoint="imageUploader"
+                            />
+                            {mainImageUrls.length === 0 && (
+                              <p className="text-xs text-muted-foreground mt-1">
+                                Please upload a main image for your product
+                              </p>
+                            )}
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <div>
+                    <Label className="text-sm">Thumbnails (Max 4)</Label>
+                    <Uploader
+                      imageUrls={thumbnailUrls}
+                      {...thumbnailUploader}
+                      endpoint="imageUploader"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {thumbnailUrls.length} thumbnail
+                      {thumbnailUrls.length !== 1 ? "s" : ""} selected
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card className="h-fit">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-lg">Variants</CardTitle>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={addVariant}>
+                      <Plus className="w-3 h-3 mr-1" />
+                      Add
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {watch("variants").length === 0 ? (
+                    <p className="text-gray-500 text-center py-4 text-sm">
+                      No variants added
+                    </p>
+                  ) : (
+                    <div className="space-y-3">
+                      {watch("variants").map((variant, index) => (
+                        <div
+                          key={variant.id}
+                          className="border rounded-lg p-3 relative">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => removeVariant(index)}
+                            className="absolute top-1 right-1 h-6 w-6 p-0 bg-red-500 text-white hover:bg-red-600">
+                            <Trash2 className="w-3 h-3" />
+                          </Button>
+                          <div className="grid grid-cols-2 gap-2 pr-8">
+                            <div>
+                              <Label className="text-xs">Name *</Label>
                               <Input
-                                {...field}
-                                type="number"
-                                step="100"
-                                min="0"
-                                placeholder="0"
-                                className="h-10 border-slate-300 dark:border-slate-600"
+                                placeholder="Color"
+                                value={variant.name}
                                 onChange={(e) =>
-                                  field.onChange(
+                                  updateVariant(index, "name", e.target.value)
+                                }
+                                className="h-7 text-sm"
+                              />
+                            </div>
+                            <div>
+                              <Label className="text-xs">Type *</Label>
+                              <Input
+                                placeholder="color"
+                                value={variant.type}
+                                onChange={(e) =>
+                                  updateVariant(index, "type", e.target.value)
+                                }
+                                className="h-7 text-sm"
+                              />
+                            </div>
+                            <div>
+                              <Label className="text-xs">Value *</Label>
+                              <Input
+                                placeholder="Red"
+                                value={variant.value}
+                                onChange={(e) =>
+                                  updateVariant(index, "value", e.target.value)
+                                }
+                                className="h-7 text-sm"
+                              />
+                            </div>
+                            <div>
+                              <Label className="text-xs">Price +/-</Label>
+                              <Input
+                                type="number"
+                                step="0.01"
+                                placeholder="0.00"
+                                value={variant.priceModifier}
+                                onChange={(e) =>
+                                  updateVariant(
+                                    index,
+                                    "priceModifier",
                                     Number.parseFloat(e.target.value) || 0
                                   )
                                 }
+                                className="h-7 text-sm"
                               />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="originalPrice"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                              Original
-                            </FormLabel>
-                            <FormControl>
+                            </div>
+                            <div>
+                              <Label className="text-xs">Stock *</Label>
                               <Input
-                                {...field}
-                                type="number"
-                                step="100"
-                                min="0"
-                                placeholder="0"
-                                className="h-10 border-slate-300 dark:border-slate-600"
-                                value={field.value || ""}
-                                onChange={(e) =>
-                                  field.onChange(
-                                    e.target.value
-                                      ? Number.parseFloat(e.target.value)
-                                      : null
-                                  )
-                                }
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="stock"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                              Stock
-                            </FormLabel>
-                            <FormControl>
-                              <Input
-                                {...field}
                                 type="number"
                                 placeholder="0"
-                                className="h-10 border-slate-300 dark:border-slate-600"
+                                value={variant.stock}
                                 onChange={(e) =>
-                                  field.onChange(
+                                  updateVariant(
+                                    index,
+                                    "stock",
                                     Number.parseInt(e.target.value) || 0
                                   )
                                 }
+                                className="h-7 text-sm"
                               />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-
-                    <FormField
-                      control={form.control}
-                      name="featured"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border border-slate-200 dark:border-slate-700 p-4 bg-slate-50 dark:bg-slate-800/50">
-                          <FormControl>
-                            <Checkbox
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
-                              className="border-slate-400 dark:border-slate-500"
-                            />
-                          </FormControl>
-                          <div className="space-y-1 leading-none">
-                            <FormLabel className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                              Featured Product
-                            </FormLabel>
-                            <p className="text-xs text-slate-500 dark:text-slate-400">
-                              Display this product prominently on your store
-                            </p>
+                            </div>
+                            <div>
+                              <Label className="text-xs">SKU</Label>
+                              <Input
+                                placeholder="SKU"
+                                value={variant.sku || ""}
+                                onChange={(e) =>
+                                  updateVariant(index, "sku", e.target.value)
+                                }
+                                className="h-7 text-sm"
+                              />
+                            </div>
                           </div>
-                        </FormItem>
-                      )}
-                    />
-                  </CardContent>
-                </Card>
-
-                <Card className="shadow-sm border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
-                  <CardHeader className="pb-4 border-b border-slate-100 dark:border-slate-800">
-                    <div className="flex items-center gap-2">
-                      <CardTitle className="text-lg font-medium">
-                        Tags
-                      </CardTitle>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="pt-6">
-                    <FormField
-                      control={form.control}
-                      name="tags"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormControl>
-                            <ArrayInput
-                              value={field.value}
-                              onChange={field.onChange}
-                              placeholder="Add tag (e.g., electronics, gaming)"
-                              maxItems={20}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </CardContent>
-                </Card>
-              </div>
-
-              <div className="xl:col-span-4 space-y-3">
-                <Card className="shadow-sm border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
-                  <CardHeader className="pb-4 border-b border-slate-100 dark:border-slate-800">
-                    <div className="flex items-center gap-2">
-                      <CardTitle className="text-lg font-medium">
-                        Description
-                      </CardTitle>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="pt-6">
-                    <FormField
-                      control={form.control}
-                      name="description"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormControl>
-                            <RichTextEditor
-                              value={field.value}
-                              onChange={field.onChange}
-                              error={!!form.formState.errors.description}
-                              className="min-h-[300px] border-slate-300 dark:border-slate-600"
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </CardContent>
-                </Card>
-
-                {currentParentSpecifications.length > 0 && (
-                  <Card className="shadow-sm border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
-                    <CardHeader className="pb-4 border-b border-slate-100 dark:border-slate-800">
-                      <div className="flex items-center gap-2">
-                        <CardTitle className="text-lg font-medium">
-                          Specifications
-                        </CardTitle>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="pt-6 space-y-5">
-                      {currentParentSpecifications.map((spec: any) => (
-                        <FormField
-                          key={spec.id}
-                          control={form.control}
-                          name={`specifications.${spec.id}` as any}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                                {spec.name} {spec.required && ""}
-                                {spec.unit && ` (${spec.unit})`}
-                              </FormLabel>
-                              <FormControl>
-                                {spec.type === "SELECT" ? (
-                                  <Select
-                                    onValueChange={field.onChange}
-                                    value={field.value || ""}>
-                                    <SelectTrigger className="h-10 border-slate-300 dark:border-slate-600">
-                                      <SelectValue
-                                        placeholder={`Select ${spec.name.toLowerCase()}`}
-                                      />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      {spec.options?.map((option: string) => (
-                                        <SelectItem key={option} value={option}>
-                                          {option}
-                                        </SelectItem>
-                                      ))}
-                                    </SelectContent>
-                                  </Select>
-                                ) : spec.type === "BOOLEAN" ? (
-                                  <div className="flex items-center space-x-2 mt-2">
-                                    <Checkbox
-                                      checked={field.value === "true"}
-                                      onCheckedChange={(checked) =>
-                                        field.onChange(
-                                          checked ? "true" : "false"
-                                        )
-                                      }
-                                      className="border-slate-400 dark:border-slate-500"
-                                    />
-                                    <Label className="text-sm">Yes</Label>
-                                  </div>
-                                ) : (
-                                  <Input
-                                    {...field}
-                                    type={
-                                      spec.type === "NUMBER" ? "number" : "text"
-                                    }
-                                    placeholder={`Enter ${spec.name.toLowerCase()}`}
-                                    className="h-10 border-slate-300 dark:border-slate-600"
-                                    value={field.value ?? ""}
-                                  />
-                                )}
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
+                        </div>
                       ))}
-                    </CardContent>
-                  </Card>
-                )}
-              </div>
-
-              <div className="xl:col-span-4 space-y-3">
-                <Card className="shadow-sm border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
-                  <CardHeader className="pb-4 border-b border-slate-100 dark:border-slate-800">
-                    <div className="flex items-center gap-2">
-                      <CardTitle className="text-lg font-medium">
-                        Images
-                      </CardTitle>
                     </div>
-                  </CardHeader>
-                  <CardContent className="pt-6 space-y-3">
-                    <FormField
-                      control={form.control}
-                      name="mainImage"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                            Main Image
-                          </FormLabel>
-                          <FormControl>
-                            <div className="space-y-3">
-                              <Uploader
-                                imageUrls={mainImageUrls}
-                                {...mainImageUploader}
-                                endpoint="imageUploader"
-                              />
-                              {mainImageUrls.length === 0 && (
-                                <p className="text-xs text-slate-500 dark:text-slate-400 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-md p-2">
-                                  Please upload a main image for your product
-                                </p>
-                              )}
-                            </div>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <div>
-                      <Label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                        Thumbnails (Max 4)
-                      </Label>
-                      <div className="mt-2">
-                        <Uploader
-                          imageUrls={thumbnailUrls}
-                          {...thumbnailUploader}
-                          endpoint="imageUploader"
-                        />
-                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
-                          {thumbnailUrls.length} thumbnail
-                          {thumbnailUrls.length !== 1 ? "s" : ""} selected
-                        </p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card className="shadow-sm border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
-                  <CardHeader className="pb-4 border-b border-slate-100 dark:border-slate-800">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <CardTitle className="text-lg font-medium">
-                          Variants
-                        </CardTitle>
-                      </div>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={addVariant}
-                        className="border-teal-200 text-teal-700 hover:bg-teal-50 dark:border-teal-700 dark:text-teal-300 dark:hover:bg-teal-900/20 bg-transparent">
-                        <Plus className="w-4 h-4 mr-1" />
-                        Add Variant
-                      </Button>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="pt-6">
-                    {watch("variants").length === 0 ? (
-                      <div className="text-center py-8 text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/50 rounded-lg border-2 border-dashed border-slate-200 dark:border-slate-700">
-                        <p className="text-sm">No variants added</p>
-                        <p className="text-xs mt-1">
-                          Add variants like size, color, or style
-                        </p>
-                      </div>
-                    ) : (
-                      <div className="space-y-4">
-                        {watch("variants").map((variant, index) => (
-                          <div
-                            key={variant.id}
-                            className="border border-slate-200 dark:border-slate-700 rounded-lg p-4 relative bg-slate-50 dark:bg-slate-800/50">
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              onClick={() => removeVariant(index)}
-                              className="absolute top-2 right-2 h-7 w-7 p-0 bg-red-500 text-white hover:bg-red-600 border-red-500">
-                              <Trash2 className="w-3 h-3" />
-                            </Button>
-                            <div className="grid grid-cols-2 gap-3 pr-10">
-                              <div>
-                                <Label className="text-xs font-medium text-slate-600 dark:text-slate-400">
-                                  Name
-                                </Label>
-                                <Input
-                                  placeholder="Color"
-                                  value={variant.name}
-                                  onChange={(e) =>
-                                    updateVariant(index, "name", e.target.value)
-                                  }
-                                  className="h-8 text-sm mt-1 border-slate-300 dark:border-slate-600"
-                                />
-                              </div>
-                              <div>
-                                <Label className="text-xs font-medium text-slate-600 dark:text-slate-400">
-                                  Type
-                                </Label>
-                                <Input
-                                  placeholder="color"
-                                  value={variant.type}
-                                  onChange={(e) =>
-                                    updateVariant(index, "type", e.target.value)
-                                  }
-                                  className="h-8 text-sm mt-1 border-slate-300 dark:border-slate-600"
-                                />
-                              </div>
-                              <div>
-                                <Label className="text-xs font-medium text-slate-600 dark:text-slate-400">
-                                  Value
-                                </Label>
-                                <Input
-                                  placeholder="Red"
-                                  value={variant.value}
-                                  onChange={(e) =>
-                                    updateVariant(
-                                      index,
-                                      "value",
-                                      e.target.value
-                                    )
-                                  }
-                                  className="h-8 text-sm mt-1 border-slate-300 dark:border-slate-600"
-                                />
-                              </div>
-                              <div>
-                                <Label className="text-xs font-medium text-slate-600 dark:text-slate-400">
-                                  Price +/-
-                                </Label>
-                                <Input
-                                  type="number"
-                                  step="0.01"
-                                  placeholder="0.00"
-                                  value={variant.priceModifier}
-                                  onChange={(e) =>
-                                    updateVariant(
-                                      index,
-                                      "priceModifier",
-                                      Number.parseFloat(e.target.value) || 0
-                                    )
-                                  }
-                                  className="h-8 text-sm mt-1 border-slate-300 dark:border-slate-600"
-                                />
-                              </div>
-                              <div>
-                                <Label className="text-xs font-medium text-slate-600 dark:text-slate-400">
-                                  Stock
-                                </Label>
-                                <Input
-                                  type="number"
-                                  placeholder="0"
-                                  value={variant.stock}
-                                  onChange={(e) =>
-                                    updateVariant(
-                                      index,
-                                      "stock",
-                                      Number.parseInt(e.target.value) || 0
-                                    )
-                                  }
-                                  className="h-8 text-sm mt-1 border-slate-300 dark:border-slate-600"
-                                />
-                              </div>
-                              <div>
-                                <Label className="text-xs font-medium text-slate-600 dark:text-slate-400">
-                                  SKU
-                                </Label>
-                                <Input
-                                  placeholder="SKU"
-                                  value={variant.sku || ""}
-                                  onChange={(e) =>
-                                    updateVariant(index, "sku", e.target.value)
-                                  }
-                                  className="h-8 text-sm mt-1 border-slate-300 dark:border-slate-600"
-                                />
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </div>
+                  )}
+                </CardContent>
+              </Card>
             </div>
-          </form>
-        </Form>
-      </div>
+          </div>
+        </form>
+      </Form>
     </div>
   );
 }
