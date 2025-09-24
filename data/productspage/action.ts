@@ -1,9 +1,13 @@
 "use server";
 
+import { cacheKeys } from "@/lib/cache-keys";
 import prisma from "@/lib/prisma";
-import type { Prisma } from "@prisma/client";
-import { CategorySpecificationType, Category } from "@prisma/client";
-import { ProductCardData } from "../fetch-all";
+import {
+  Brand,
+  Category,
+  CategorySpecificationType,
+  Prisma,
+} from "@prisma/client";
 import { unstable_cache as cache } from "next/cache";
 
 export interface GetProductsParams {
@@ -20,7 +24,9 @@ export interface GetProductsParams {
 }
 
 export interface ProductsResponse {
-  products: ProductCardData[];
+  products: Prisma.ProductGetPayload<{
+    include: { brand: true };
+  }>[];
   totalProducts: number;
 }
 
@@ -68,6 +74,9 @@ export const getCachedBrands = cache(
           name: true,
           slug: true,
           logo: true,
+          // isActive: true,
+          // description: true,
+          // productCount: true,
         },
         orderBy: {
           name: "asc",
@@ -86,9 +95,7 @@ export const getCachedBrands = cache(
   }
 );
 
-export async function getDescendantCategoryIds(
-  slug: string
-): Promise<string[]> {
+async function getDescendantCategoryIds(slug: string): Promise<string[]> {
   const category = await prisma.category.findUnique({
     where: { slug },
     select: {
@@ -143,68 +150,68 @@ export const getFilterData = cache(
       };
     }
 
-    const [products, mainCategory, availableSubcategories] = await Promise.all([
-      prisma.product.findMany({
-        where: { categoryId: { in: allDescendantIds } },
-        select: {
-          price: true,
-          brand: { select: { name: true } },
-          specifications: true,
-        },
-      }),
-      prisma.category.findUnique({
-        where: { slug: categorySlug },
-        select: { specifications: true },
-      }),
-      prisma.category.findMany({
-        where: { parentId: allDescendantIds[0] },
-      }),
-    ]);
+    const [productStats, mainCategoryWithSpecs, availableSubcategories] =
+      await Promise.all([
+        prisma.product.findMany({
+          where: { categoryId: { in: allDescendantIds } },
+          select: { price: true, brand: { select: { name: true } } },
+        }),
 
-    const prices = products.map((p) => p.price);
+        prisma.category.findUnique({
+          where: { slug: categorySlug },
+          select: { specifications: true },
+        }),
+
+        prisma.category.findMany({
+          where: { parentId: allDescendantIds[0] },
+        }),
+      ]);
+
+    const prices = productStats.map((p) => p.price);
     const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
     const maxPrice = prices.length > 0 ? Math.max(...prices) : 100;
 
     const availableBrands = Array.from(
       new Set(
-        products
+        productStats
           .filter((product) => product.brand)
           .map((product) => product.brand!.name)
       )
     );
 
-    const specOptionsMap = new Map<string, Set<string>>();
-    products.forEach((product) => {
-      const specs = product.specifications as Record<string, any>;
-      if (specs) {
-        for (const [key, value] of Object.entries(specs)) {
-          if (
-            value !== null &&
-            value !== undefined &&
-            String(value).trim() !== ""
-          ) {
-            if (!specOptionsMap.has(key)) {
-              specOptionsMap.set(key, new Set<string>());
-            }
-            specOptionsMap.get(key)!.add(String(value));
-          }
+    const specMetadataMap = new Map();
+    if (
+      mainCategoryWithSpecs &&
+      Array.isArray(mainCategoryWithSpecs.specifications)
+    ) {
+      mainCategoryWithSpecs.specifications.forEach((spec) => {
+        const normalizedId = spec.id.toLowerCase().trim();
+        if (!specMetadataMap.has(normalizedId)) {
+          specMetadataMap.set(normalizedId, {
+            id: spec.id,
+            name: spec.name,
+            type: spec.type,
+            unit: spec.unit ?? undefined,
+            options: new Set<string>(),
+          });
         }
-      }
-    });
 
-    const categorySpecs = (mainCategory?.specifications || []) as any[];
-    const availableSpecifications: SpecificationFilter[] = categorySpecs
-      .map((specDef) => {
-        const options = specOptionsMap.get(specDef.id) || new Set();
-        return {
-          id: specDef.id,
-          name: specDef.name,
-          type: specDef.type,
-          unit: specDef.unit ?? undefined,
-          options: Array.from(options).sort(),
-        };
-      })
-      .filter((spec) => spec.options.length > 0);
+        const currentSpec = specMetadataMap.get(normalizedId);
+        if (Array.isArray(spec.options)) {
+          spec.options.forEach((option) => currentSpec.options.add(option));
+        }
+      });
+    }
+
+    const availableSpecifications = Array.from(specMetadataMap.values())
+      .filter((spec) => spec.options.size > 0)
+      .map((spec) => ({
+        id: spec.id,
+        name: spec.name,
+        type: spec.type,
+        unit: spec.unit,
+        options: Array.from(spec.options) as string[],
+      }));
 
     return {
       minPrice,
@@ -230,10 +237,6 @@ export const getProducts = cache(
       priceMin,
       priceMax,
     } = params;
-
-    // Log the category and selected specifications for debugging
-    console.log(`Fetching products for category: ${categorySlug}`);
-    console.log("Selected specifications:", selectedSpecifications);
 
     if (!categorySlug) {
       return { products: [], totalProducts: 0 };
@@ -282,7 +285,7 @@ export const getProducts = cache(
     if (Object.keys(priceFilter).length > 0) {
       matchStage.$and.push({ price: priceFilter });
     }
-
+    // Escape special regex characters in the search string
     const escapedSearch = search?.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
     if (search) {
@@ -371,106 +374,28 @@ export const getProducts = cache(
     const pipeline = [
       { $match: matchStage },
       {
-        $lookup: {
-          from: "Brand",
-          localField: "brandId",
-          foreignField: "_id",
-          as: "brandData",
-        },
-      },
-      {
-        $lookup: {
-          from: "Category",
-          localField: "categoryId",
-          foreignField: "_id",
-          as: "categoryData",
-        },
-      },
-      {
-        $addFields: {
-          parentCategoryId: {
-            $getField: {
-              field: "parentId",
-              input: { $arrayElemAt: ["$categoryData", 0] },
-            },
-          },
-        },
-      },
-      {
-        $lookup: {
-          from: "Collection",
-          localField: "collectionId",
-          foreignField: "_id",
-          as: "collectionData",
-        },
-      },
-      {
-        $lookup: {
-          from: "ProductVariant",
-          localField: "_id",
-          foreignField: "productId",
-          as: "variantsData",
-        },
-      },
-      {
-        $lookup: {
-          from: "Category",
-          localField: "parentCategoryId",
-          foreignField: "_id",
-          as: "parentCategoryData",
-        },
-      },
-      {
         $facet: {
           paginatedResults: [
             { $sort: sortStage },
             { $skip: offset },
             { $limit: perPage },
             {
+              $lookup: {
+                from: "Brand",
+                localField: "brandId",
+                foreignField: "_id",
+                as: "brandData",
+              },
+            },
+            {
               $project: {
                 _id: 0,
                 id: { $toString: "$_id" },
-                slug: 1,
                 name: 1,
+                slug: 1,
                 price: 1,
-                originalPrice: 1,
                 mainImage: 1,
-                stock: 1,
-                hasVariants: {
-                  $gt: [
-                    {
-                      $size: "$variantsData",
-                    },
-                    0,
-                  ],
-                },
-                priceRange: 1,
-                brand: { $arrayElemAt: ["$brandData.name", 0] },
-                category: {
-                  $ifNull: [
-                    {
-                      name: {
-                        $ifNull: [
-                          { $arrayElemAt: ["$parentCategoryData.name", 0] },
-                          { $arrayElemAt: ["$categoryData.name", 0] },
-                        ],
-                      },
-                      slug: {
-                        $ifNull: [
-                          { $arrayElemAt: ["$parentCategoryData.slug", 0] },
-                          { $arrayElemAt: ["$categoryData.slug", 0] },
-                        ],
-                      },
-                    },
-                    {
-                      name: "Uncategorized",
-                      slug: "uncategorized",
-                    },
-                  ],
-                },
-                collection: { $arrayElemAt: ["$collectionData.name", 0] },
-                variants: "$variantsData",
-                specifications: "$specifications",
+                brand: { $arrayElemAt: ["$brandData", 0] },
               },
             },
           ],

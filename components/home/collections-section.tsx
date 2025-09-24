@@ -7,14 +7,15 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import { Collection, Product } from "@prisma/client";
-import { ProductCard } from "../admin/product-sections/product-card";
 import Link from "next/link";
+import ProductCard from "./card-product";
+import { ProductCardData } from "@/data/fetch-all";
 
-type CollectionWithProduct = Collection & {
-  products: Product[];
+export type CollectionWithProduct = Collection & {
+  products: ProductCardData[];
 };
 
-interface CollectionsDisplayProps {
+export interface CollectionsDisplayProps {
   collections: CollectionWithProduct[];
   className?: string;
 }

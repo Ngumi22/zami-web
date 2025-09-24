@@ -1,7 +1,5 @@
 "use client";
 
-import { useMemo } from "react";
-import { Skeleton } from "@/components/ui/skeleton";
 import {
   TabbedProducts,
   PromotionalSection,
@@ -10,36 +8,25 @@ import {
   CategoryProductsSection,
   PromotionalSection1,
 } from "@/components/home/product-sections";
-import { useHomeData } from "@/lib/hooks";
-import { BlogPost, Brand, Category, Collection, Product } from "@prisma/client";
+import { BlogPost, Category } from "@prisma/client";
 import HeroCarousel from "./hero/hero-carousel";
 import { BrandProductsGrid } from "../home/brand-sections";
 import { SpecialOffers } from "../home/offers-section";
 import { RecentlyViewed } from "../home/recently-viewed";
 import { FlashSaleClient } from "../home/flash-sale-section-client";
 import BlogSection from "../home/blog-section";
-import { CollectionsDisplay } from "../home/collections-section";
-
-type CollectionWithProduct = Collection & {
-  products: Product[];
-};
-
-type ProductWithBrand = Product & {
-  brand?: Brand;
-  saleEndDate?: Date;
-};
+import {
+  CollectionsDisplay,
+  CollectionWithProduct,
+} from "../home/collections-section";
+import { getFlashSaleData, ProductCardData } from "@/data/fetch-all";
 
 interface HomePageClientProps {
-  initialProducts: ProductWithBrand[];
-  initialFeatured: ProductWithBrand[];
-  initialNewArrivals: ProductWithBrand[];
+  initialProducts: ProductCardData[];
+  initialFeatured: ProductCardData[];
+  initialNewArrivals: ProductCardData[];
   initialCategories: Category[];
-  flashSaleData?: {
-    products: Product[];
-    saleEndDate: Date;
-    collectionName: string;
-  } | null;
-
+  initialFlashSaleData: Awaited<ReturnType<typeof getFlashSaleData>>;
   blogPosts: BlogPost[];
   collections: CollectionWithProduct[];
 }
@@ -49,71 +36,25 @@ export default function HomePageClient({
   initialFeatured,
   initialNewArrivals,
   initialCategories,
-  flashSaleData,
+  initialFlashSaleData,
   blogPosts,
   collections,
 }: HomePageClientProps) {
-  const {
-    products,
-    featured,
-    newProducts,
-    categories,
-    queries: {
-      productsQuery,
-      featuredQuery,
-      newArrivalsQuery,
-      categoriesQuery,
-    },
-  } = useHomeData({
-    initialProducts,
-    initialFeatured,
-    initialNewArrivals,
-    initialCategories,
-  }) as {
-    products: ProductWithBrand[];
-    featured: ProductWithBrand[];
-    newProducts: ProductWithBrand[];
-    categories: Category[];
-    queries: any;
-  };
+  // Use the props directly, no need for the useHomeData hook.
+  const products = initialProducts;
+  const featured = initialFeatured;
+  const newProducts = initialNewArrivals;
+  const categories = initialCategories;
+  const flashSaleData = initialFlashSaleData;
 
-  const isLoading = useMemo(
-    () =>
-      productsQuery.isLoading ||
-      featuredQuery.isLoading ||
-      newArrivalsQuery.isLoading ||
-      categoriesQuery.isLoading,
-    [
-      productsQuery.isLoading,
-      featuredQuery.isLoading,
-      newArrivalsQuery.isLoading,
-      categoriesQuery.isLoading,
-    ]
-  );
+  const topLevelCategories = categories.filter((cat) => !cat.parentId);
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex flex-col">
-        <main className="flex-1">
-          <HeroCarousel />
-          <div className="md:container px-4 md:px-6 space-y-6">
-            <PromotionalSection />
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <Skeleton key={i} className="h-80 w-full rounded-lg" />
-              ))}
-            </div>
-          </div>
-        </main>
-      </div>
-    );
-  }
-
+  // The condition below has been updated to no longer check for flashSaleData.
+  // getFlashSaleData returns null when there is no active sale, which is the
+  // expected behavior, not an error state.
   if (!products || !featured || !newProducts || !categories) {
     return <div>Error loading data</div>;
   }
-
-  const topLevelCategories = categories.filter((cat) => !cat.parentId);
 
   return (
     <main className="min-h-screen flex flex-col">
@@ -122,6 +63,7 @@ export default function HomePageClient({
         <div className="md:container p-4 md:px-6 space-y-12">
           <PromotionalSection />
 
+          {/* This conditional rendering is the correct way to handle optional data. */}
           {flashSaleData && (
             <FlashSaleClient
               products={flashSaleData.products}

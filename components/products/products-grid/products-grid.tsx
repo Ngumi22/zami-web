@@ -2,9 +2,9 @@
 
 import { useState, useCallback, useMemo, memo } from "react";
 import { cn } from "@/lib/utils";
-import { Product } from "@prisma/client";
 import { ProductGridProps, TabbedGrid } from "./tabbed-grid";
-import { ProductCard } from "@/components/admin/product-sections/product-card";
+import { ProductCardData } from "@/data/product";
+import ProductCard from "@/components/home/card-product";
 
 export default function ProductGrid({
   tabs,
@@ -22,11 +22,14 @@ export default function ProductGrid({
   }, [activeTab, tabs]);
 
   const renderProductItem = useCallback(
-    (product: Product) => <ProductCard product={product} />,
+    (product: ProductCardData) => <ProductCard product={product} />,
     []
   );
 
-  const getProductId = useCallback((product: Product) => product.id, []);
+  const getProductId = useCallback(
+    (product: ProductCardData) => product.id,
+    []
+  );
 
   const gridClasses = cn(
     "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6",
@@ -38,7 +41,7 @@ export default function ProductGrid({
 
   return (
     <div className={cn("w-full mx-auto", className)}>
-      <TabbedGrid<Product>
+      <TabbedGrid<ProductCardData>
         tabs={tabs.map((tab) => ({ label: tab.label }))}
         items={activeProducts}
         renderItem={renderProductItem}

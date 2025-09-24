@@ -1,15 +1,13 @@
-import {
-  getAllProducts,
-  getFeaturedProducts,
-  newArrivals,
-} from "@/data/product";
 import { getAllCategories } from "@/data/category";
 import HomePageClient from "@/components/layout/homepage-client";
 import { getBlogPosts } from "@/data/blog";
+import { getCollectionsWithProducts } from "@/data/collections/collectionsPage";
 import {
-  getCollectionsWithProducts,
   getFlashSaleData,
-} from "@/data/collections/collectionsPage";
+  getAllProducts,
+  getFeaturedProducts,
+  newArrivals,
+} from "@/data/fetch-all";
 
 export default async function HomePage() {
   const [
@@ -32,7 +30,7 @@ export default async function HomePage() {
 
   const collectionsForHomepage = collections.map((collection) => ({
     ...collection,
-    products: collection.products.map((poc) => poc.product),
+    products: collection.products.map((poc: any) => poc.product),
     productCount: collection.productCount,
   }));
 
@@ -42,7 +40,7 @@ export default async function HomePage() {
       initialFeatured={featuredProducts}
       initialNewArrivals={newProducts}
       initialCategories={categories}
-      flashSaleData={flashSaleData}
+      initialFlashSaleData={flashSaleData}
       blogPosts={blogPosts}
       collections={collectionsForHomepage}
     />

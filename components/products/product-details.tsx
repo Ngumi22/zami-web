@@ -19,11 +19,11 @@ import {
 import { formatCurrency } from "@/lib/utils";
 import { AddToWishlistButton } from "../admin/product-sections/add-to-wishlist-button";
 import { AddToCompareButton } from "../admin/product-sections/add-to-compare-button";
-import { AddToCartButton } from "../admin/product-sections/add-to-cart-button";
-import type { Product } from "@prisma/client";
 import Link from "next/link";
 import { ProductImageGallery } from "./product-image-gallery";
 import { BuyNowButton } from "../admin/product-sections/buy-now-button";
+import { AddToCartButton } from "../admin/product-sections/add-to-cart";
+import { ProductDetailsData } from "./product-page-client";
 
 interface VariantOption {
   label: string;
@@ -32,20 +32,10 @@ interface VariantOption {
   stock?: number;
 }
 
-interface ProductDetailsProps {
-  product: Product & {
-    reviews?: {
-      id: string;
-      rating: number;
-      comment: string;
-      customer: { name: string };
-      createdAt: Date;
-    }[];
-    mappedSpecifications?: { name: string; value: string }[];
-  };
-}
+type ProductDetailsProps = {
+  product: ProductDetailsData;
+};
 
-// Compact components
 const StarRating = ({
   rating,
   reviewCount,
@@ -256,11 +246,7 @@ const TrustBadges = () => {
   );
 };
 
-const ProductTabs = ({
-  product,
-}: {
-  product: ProductDetailsProps["product"];
-}) => (
+const ProductTabs = ({ product }: ProductDetailsProps) => (
   <Tabs defaultValue="description" className="w-full">
     <TabsList className="grid w-full grid-cols-3 h-8">
       <TabsTrigger value="description" className="text-xs">
@@ -355,20 +341,20 @@ const ProductTabs = ({
 );
 
 // Custom hook for product logic
-const useProductLogic = (product: ProductDetailsProps["product"]) => {
+const useProductLogic = (product: ProductDetailsProps) => {
   const [selectedVariants, setSelectedVariants] = useState<
     Record<string, string>
   >({});
   const [quantity, setQuantity] = useState(1);
 
   const productImages = [
-    product.mainImage,
-    ...(product.thumbnailImages || []),
+    product.product.mainImage,
+    ...(product.product.thumbnailImages || []),
   ].filter(Boolean);
 
   const variantGroups = useMemo(() => {
     const grouped: Record<string, VariantOption[]> = {};
-    for (const variant of product.variants ?? []) {
+    for (const variant of product.product.variants ?? []) {
       if (!grouped[variant.type]) grouped[variant.type] = [];
       if (!grouped[variant.type].some((v) => v.value === variant.value)) {
         grouped[variant.type].push({
@@ -380,7 +366,7 @@ const useProductLogic = (product: ProductDetailsProps["product"]) => {
       }
     }
     return grouped;
-  }, [product.variants]);
+  }, [product.product.variants]);
 
   useEffect(() => {
     const defaults: Record<string, string> = {};
@@ -395,7 +381,7 @@ const useProductLogic = (product: ProductDetailsProps["product"]) => {
   const { displayPrice, stockMessage, originalPrice } = useMemo(() => {
     const variantPriceModifier = Object.entries(selectedVariants).reduce(
       (sum, [type, value]) => {
-        const variant = product.variants?.find(
+        const variant = product.product.variants?.find(
           (v) => v.type === type && v.value === value
         );
         return sum + (variant?.priceModifier || 0);
@@ -403,9 +389,9 @@ const useProductLogic = (product: ProductDetailsProps["product"]) => {
       0
     );
 
-    let finalStock = product.stock;
+    let finalStock = product.product.stock;
     for (const [type, value] of Object.entries(selectedVariants)) {
-      const variant = product.variants?.find(
+      const variant = product.product.variants?.find(
         (v) => v.type === type && v.value === value
       );
       if (variant && typeof variant.stock === "number") {
@@ -419,16 +405,23 @@ const useProductLogic = (product: ProductDetailsProps["product"]) => {
     else if (finalStock <= 5) message = `Low stock! ${finalStock} left`;
 
     return {
-      displayPrice: product.price + variantPriceModifier,
+      displayPrice: product.product.price + variantPriceModifier,
       originalPrice:
-        variantPriceModifier !== 0 ? product.originalPrice ?? null : null,
+        variantPriceModifier !== 0
+          ? product.product.originalPrice ?? null
+          : null,
       stockMessage: message,
     };
-  }, [selectedVariants, product.variants, product.price, product.stock]);
+  }, [
+    selectedVariants,
+    product.product.variants,
+    product.product.price,
+    product.product.stock,
+  ]);
 
-  const fullName = `${product.name} ${Object.values(selectedVariants).join(
-    " "
-  )}`.trim();
+  const fullName = `${product.product.name} ${Object.values(
+    selectedVariants
+  ).join(" ")}`.trim();
 
   return {
     selectedVariants,
@@ -461,7 +454,8 @@ export function ProductDetails({ product }: ProductDetailsProps) {
     fullName,
     incrementQuantity,
     decrementQuantity,
-  } = useProductLogic(product);
+  } = useProductLogic({ product });
+
   return (
     <div className="space-y-3">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -553,9 +547,8 @@ export function ProductDetails({ product }: ProductDetailsProps) {
             <div className="grid grid-cols-2 gap-1">
               <AddToCartButton
                 product={product}
-                selectedVariants={selectedVariants}
-                quantity={quantity}
-                className="w-full h-8 text-xs font-semibold"
+                mode="full"
+                variantSelection={selectedVariants}
               />
               <AddToWishlistButton
                 product={product}

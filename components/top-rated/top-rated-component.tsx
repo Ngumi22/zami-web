@@ -1,12 +1,12 @@
 "use client";
 
-import { Product } from "@prisma/client";
-import { ProductCard } from "../admin/product-sections/product-card";
+import { ProductCardData } from "@/data/product";
+import ProductCard from "../home/card-product";
 
 export default function TopRatedComponent({
   topRated,
 }: {
-  topRated: Product[];
+  topRated: ProductCardData[];
 }) {
   return (
     <div className="flex min-h-screen flex-col">

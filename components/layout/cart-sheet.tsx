@@ -2,19 +2,19 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useCartStore } from "@/hooks/use-cart";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
 import { formatCurrency } from "@/lib/utils";
+import { useCartStore } from "@/hooks/use-cart-store";
 
 export function CartSheet() {
   const items = useCartStore((state) => state.items);
   const totalItems = items.length;
 
   const totalPrice = items.reduce(
-    (total, item) => total + item.price * item.quantity,
+    (total, item) => total + item.finalPrice * item.quantity,
     0
   );
 
@@ -44,7 +44,7 @@ export function CartSheet() {
                     <p className="text-sm text-muted-foreground">
                       Qty: {item.quantity}
                     </p>
-                    <p>{formatCurrency(item.quantity * item.price)}</p>
+                    <p>{formatCurrency(item.quantity * item.finalPrice)}</p>
                   </div>
                 </div>
               ))}
@@ -57,7 +57,10 @@ export function CartSheet() {
                 <span>Subtotal:</span>
                 <span>{formatCurrency(totalPrice)}</span>
               </div>
-              <div className="grid grid-cols-1 gap-4">
+              <div className="grid grid-cols-2 gap-4">
+                <Button variant="outline" asChild className="btn-primary">
+                  <Link href="/">Continue Shopping</Link>
+                </Button>
                 <Button asChild variant="outline">
                   <Link href="/cart">View Cart</Link>
                 </Button>

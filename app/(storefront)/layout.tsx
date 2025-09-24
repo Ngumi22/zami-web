@@ -1,13 +1,13 @@
 import type React from "react";
 import type { Metadata } from "next";
 import { Jost } from "next/font/google";
-import { Toaster } from "@/components/ui/toaster";
 import "../globals.css";
 import { SiteFooter } from "@/components/layout/footer";
 import Header from "@/components/layout/header-server";
 import BottomNav from "@/components/layout/mobile/bottom-nav";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { Providers } from "../providers";
+import { Toaster } from "sonner";
 
 const jost = Jost({ subsets: ["latin"] });
 
@@ -65,11 +65,11 @@ export default function RootLayout({
           <Providers>
             <Header />
             {children}
-            <Toaster />
             <SiteFooter />
             <BottomNav />
           </Providers>
         </NuqsAdapter>
+        <Toaster />
       </body>
     </html>
   );

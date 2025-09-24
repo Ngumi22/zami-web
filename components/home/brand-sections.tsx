@@ -1,12 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { Brand, Product, Category } from "@prisma/client";
-import { ProductCard } from "../admin/product-sections/product-card";
-
-type ProductWithBrand = Product & {
-  brand?: Brand;
-};
+import { Brand, Category } from "@prisma/client";
+import { ProductCardData } from "@/data/fetch-all";
+import ProductCard from "./card-product";
 
 interface BrandConfig {
   name: string;
@@ -16,7 +13,7 @@ interface BrandConfig {
 }
 
 interface BrandProductsGridProps {
-  products: ProductWithBrand[];
+  products: ProductCardData[];
   brands: BrandConfig[];
   categories: Category[];
   maxProductsPerBrand?: number;
@@ -34,7 +31,7 @@ export function BrandProductsGrid({
   const brandSections = brands.map((brandConfig) => {
     const brandProducts = products
       .filter((product) =>
-        product.brand?.name
+        product.brand
           .toLowerCase()
           .includes(brandConfig.filterKey.toLowerCase())
       )
@@ -73,7 +70,7 @@ export function BrandProductsGrid({
 
 interface BrandSectionProps {
   brandName: string;
-  products: ProductWithBrand[];
+  products: ProductCardData[];
   categories: Category[];
   description: string;
   showViewAll: boolean;
@@ -114,8 +111,8 @@ function BrandSection({
     const categoryCounts: Record<string, number> = {};
 
     products.forEach((product) => {
-      if (product.categoryId) {
-        const parentSlug = getParentCategorySlug(product.categoryId);
+      if (product.category.name) {
+        const parentSlug = getParentCategorySlug(product.category.name);
         if (parentSlug) {
           categoryCounts[parentSlug] = (categoryCounts[parentSlug] || 0) + 1;
         }

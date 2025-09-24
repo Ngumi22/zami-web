@@ -1,13 +1,12 @@
 "use client";
 
-import { Product } from "@prisma/client";
-import ProductGrid from "../products/product-grid";
-import { ProductCard } from "../admin/product-sections/product-card";
+import { ProductCardData } from "@/data/fetch-all";
+import ProductCard from "../home/card-product";
 
 export default function NewArrivals({
   newArrivals,
 }: {
-  newArrivals: Product[];
+  newArrivals: ProductCardData[];
 }) {
   return (
     <div className="md:container flex min-h-screen flex-col my-8">

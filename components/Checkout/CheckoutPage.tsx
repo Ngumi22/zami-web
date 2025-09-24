@@ -3,7 +3,7 @@
 import type React from "react";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { redirect, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useCartStore } from "@/hooks/use-cart";
+import { useCartStore } from "@/hooks/use-cart-store";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -24,6 +24,9 @@ import {
   Loader2,
 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
+import { checkoutFromCart } from "@/lib/order-creation";
+import { getCurrentCustomer } from "@/lib/auth/customer-auth";
+import { authClient } from "@/lib/auth/auth.client";
 
 export default function CheckoutPageComponent() {
   const router = useRouter();
@@ -34,7 +37,7 @@ export default function CheckoutPageComponent() {
   const [activeTab, setActiveTab] = useState("information");
 
   const subtotal = items.reduce(
-    (total, item) => total + item.price * item.quantity,
+    (total, item) => total + item.finalPrice * item.quantity,
     0
   );
   const shipping = subtotal > 100000 ? 0 : 9;
@@ -112,7 +115,6 @@ export default function CheckoutPageComponent() {
     });
   };
 
-  // Handle tab navigation
   const handleContinueToShipping = (e: React.FormEvent) => {
     e.preventDefault();
     setActiveTab("shipping");
@@ -123,20 +125,34 @@ export default function CheckoutPageComponent() {
     setActiveTab("payment");
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    // Payment processing
-    setTimeout(() => {
-      clearCart();
-      router.push(
-        "/checkout/confirmation?order=ORD-" +
-          Math.floor(100000 + Math.random() * 900000)
-      );
-    }, 1500);
-  };
+    try {
+      const customer = await getCurrentCustomer();
 
+      if (!customer) {
+        redirect("/admin/login");
+      }
+
+      const result = await checkoutFromCart(items, customer);
+
+      if (result.success) {
+        clearCart();
+        router.push(
+          `/checkout/confirmation?order=${result.order?.orderNumber}`
+        );
+      } else {
+        alert(result.error || "Something went wrong during checkout");
+      }
+    } catch (error) {
+      console.error("Checkout failed:", error);
+      alert("Checkout failed. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
   if (items.length === 0) {
     return (
       <div className="flex min-h-screen flex-col">
@@ -670,7 +686,7 @@ export default function CheckoutPageComponent() {
                         <div className="flex justify-between">
                           <h3 className="font-medium">{item.name}</h3>
                           <p className="font-medium">
-                            {formatCurrency(item.price * item.quantity)}
+                            {formatCurrency(item.finalPrice * item.quantity)}
                           </p>
                         </div>
                         <div className="flex items-center text-sm text-muted-foreground">

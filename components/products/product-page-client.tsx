@@ -6,7 +6,30 @@ import { FrequentlyBoughtTogether } from "@/components/products/frequently-bough
 import { useEffect } from "react";
 import { notFound } from "next/navigation";
 import { useSingleProductData } from "@/lib/hooks";
-import { Product } from "@prisma/client";
+
+// types/product.ts
+import type { Product, ProductVariant } from "@prisma/client";
+
+export type ProductDetailsData = Product & {
+  hasVariants: boolean;
+  brand: string;
+  priceRange?: { min: number; max: number };
+  category: {
+    name: string;
+    slug: string;
+    parent: { name: string; slug: string } | null;
+  };
+  collection: string | null;
+  variants: ProductVariant[];
+  reviews?: {
+    id: string;
+    rating: number;
+    comment: string;
+    customer: { name: string };
+    createdAt: Date;
+  }[];
+  mappedSpecifications?: { name: string; value: string }[];
+};
 
 export default function ProductPageClient({
   slug,
@@ -74,7 +97,7 @@ export default function ProductPageClient({
 
             <div className="lg:w-3/4 order-1 lg:order-2">
               <div className="p-4 lg:p-6">
-                <ProductDetails product={product} />
+                <ProductDetails product={product as ProductDetailsData} />
               </div>
             </div>
           </div>

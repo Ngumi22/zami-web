@@ -1,10 +1,186 @@
 "use server";
 
 import prisma from "@/lib/prisma";
-import { Product } from "@prisma/client";
+import { Product, ProductVariant } from "@prisma/client";
 import { mapSpecifications } from "@/lib/utils";
 import { cacheTags } from "@/lib/cache-keys";
 import { unstable_cache as cache } from "next/cache";
+import { Prisma } from "@prisma/client";
+
+export type ProductCardData = {
+  id: string;
+  slug: string;
+  name: string;
+  mainImage: string;
+  price: number;
+  originalPrice: number | null;
+  brand: string;
+  stock: number;
+  hasVariants: boolean;
+  priceRange?: { min: number; max: number };
+  category: {
+    name: string;
+    slug: string;
+    parent: {
+      name: string;
+      slug: string;
+    } | null;
+  };
+  collection: string | null;
+  variants: ProductVariant[];
+};
+
+export type ProductFilterOptions = {
+  brand?: string;
+  category?: string;
+  collection?: string;
+  isNew?: boolean;
+  isBestSeller?: boolean;
+  // Add other simple filters here as needed, like `isFeatured`, etc.
+};
+
+export async function getProductsForCard(
+  options: {
+    limit?: number;
+    offset?: number;
+    filters?: ProductFilterOptions;
+  } = {}
+): Promise<ProductCardData[]> {
+  const { limit = 12, offset = 0, filters = {} } = options;
+
+  return cache(
+    async () => {
+      try {
+        const where: Prisma.ProductWhereInput = {};
+        const orderBy: Prisma.ProductOrderByWithRelationInput[] = [];
+
+        if (filters.brand) {
+          where.brand = { name: filters.brand };
+        }
+        if (filters.category) {
+          where.category = { name: filters.category };
+        }
+        if (filters.collection) {
+          where.collections = {
+            some: {
+              collection: {
+                name: filters.collection,
+              },
+            },
+          };
+        }
+
+        if (filters.isBestSeller) {
+          orderBy.push({ sales: "desc" });
+        }
+        if (filters.isNew) {
+          orderBy.push({ createdAt: "desc" });
+        }
+
+        if (orderBy.length === 0) {
+          orderBy.push({ createdAt: "desc" });
+        }
+
+        const productsFromDb = await prisma.product.findMany({
+          take: limit,
+          skip: offset,
+          where,
+          orderBy,
+          select: {
+            id: true,
+            slug: true,
+            name: true,
+            mainImage: true,
+            price: true,
+            originalPrice: true,
+            stock: true,
+            variants: {
+              select: {
+                id: true,
+                name: true,
+                type: true,
+                value: true,
+                priceModifier: true,
+                stock: true,
+                sku: true,
+              },
+            },
+            brand: { select: { name: true } },
+            category: {
+              include: {
+                parent: {
+                  select: {
+                    name: true,
+                    slug: true,
+                  },
+                },
+              },
+            },
+
+            collections: {
+              take: 1,
+              select: { collection: { select: { name: true } } },
+            },
+          },
+        });
+
+        return productsFromDb.map((p) => {
+          const hasVariants = p.variants.length > 0;
+
+          let price = p.price;
+          let priceRange: { min: number; max: number } | undefined;
+
+          if (hasVariants) {
+            const prices = p.variants.map(
+              (v) => p.price + (v.priceModifier ?? 0)
+            );
+            priceRange = {
+              min: Math.min(...prices),
+              max: Math.max(...prices),
+            };
+            price = priceRange.min;
+          }
+
+          return {
+            id: p.id,
+            slug: p.slug,
+            name: p.name,
+            mainImage: p.mainImage,
+            price,
+            originalPrice: p.originalPrice,
+            stock: p.stock,
+            brand: p.brand.name,
+            hasVariants,
+            priceRange,
+            category: {
+              name: p.category.parent?.name || p.category.name,
+              slug: p.category.parent?.slug || p.category.slug,
+              parent: p.category.parent
+                ? {
+                    name: p.category.parent.name,
+                    slug: p.category.parent.slug,
+                  }
+                : null,
+            },
+            collection: p.collections[0]?.collection.name ?? null,
+            variants: p.variants,
+          };
+        });
+      } catch (error) {
+        console.error(
+          "Database Error: Failed to fetch products for cards.",
+          error
+        );
+        return [];
+      }
+    },
+    ["products", JSON.stringify(options)],
+    {
+      tags: ["products"],
+      revalidate: 3600,
+    }
+  )();
+}
 
 export async function getAllProducts(limit?: number) {
   const products = await prisma.product.findMany({
@@ -109,8 +285,8 @@ export const getProductBySlug = cache(async (slug: string) => {
       },
     },
     cacheStrategy: {
-      ttl: 60 * 60 * 24 * 7, // 7 days
-      swr: 60 * 60 * 24 * 2, // 2 days
+      ttl: 60 * 60 * 24 * 7,
+      swr: 60 * 60 * 24 * 2,
       tags: [cacheTags.productBySlug(slug)],
     },
   });

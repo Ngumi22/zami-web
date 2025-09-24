@@ -1,15 +1,38 @@
 "use server";
 
+import { cache } from "react";
 import prisma from "@/lib/prisma";
 import type { Prisma } from "@prisma/client";
-import { CategorySpecificationType, Category } from "@prisma/client";
-import { ProductCardData } from "../fetch-all";
-import { unstable_cache as cache } from "next/cache";
+import { CategorySpecificationType } from "@prisma/client";
+import type { ProductVariant } from "@prisma/client";
+
+export type ProductCardData = {
+  id: string;
+  slug: string;
+  name: string;
+  mainImage: string;
+  price: number;
+  originalPrice: number | null;
+  brand: string;
+  stock: number;
+  hasVariants: boolean;
+  priceRange?: { min: number; max: number };
+  category: {
+    name: string;
+    slug: string;
+    parent: {
+      name: string;
+      slug: string;
+    } | null;
+  };
+  collection: string | null;
+  variants: ProductVariant[];
+};
 
 export interface GetProductsParams {
   category?: string;
-  subcategories?: string[];
-  brands?: string[];
+  subcategories?: string[] | string;
+  brands?: string[] | string;
   specifications?: Record<string, string[]>;
   search?: string;
   sort?: string;
@@ -23,68 +46,6 @@ export interface ProductsResponse {
   products: ProductCardData[];
   totalProducts: number;
 }
-
-export interface FilterData {
-  maxPrice: number;
-  minPrice: number;
-  subcategories: Category[];
-  brands: string[];
-  specifications: SpecificationFilter[];
-}
-
-export interface SpecificationFilter {
-  id: string;
-  name: string;
-  type: CategorySpecificationType;
-  options: string[];
-  unit?: string;
-}
-
-export const getCachedCategories = cache(
-  async (): Promise<Category[]> => {
-    return prisma.category.findMany({
-      where: { parentId: null },
-      include: {
-        children: true,
-      },
-    });
-  },
-  ["categories"],
-  { tags: ["categories"] }
-);
-
-const CACHE_TAG = "brands";
-const CACHE_DURATION = 60 * 30;
-
-export const getCachedBrands = cache(
-  async () => {
-    try {
-      const brands = await prisma.brand.findMany({
-        where: {
-          isActive: true,
-        },
-        select: {
-          id: true,
-          name: true,
-          slug: true,
-          logo: true,
-        },
-        orderBy: {
-          name: "asc",
-        },
-      });
-      return brands;
-    } catch (error) {
-      console.error("Error fetching brands:", error);
-      return [];
-    }
-  },
-  ["get-cached-brands"],
-  {
-    tags: [CACHE_TAG],
-    revalidate: CACHE_DURATION,
-  }
-);
 
 export async function getDescendantCategoryIds(
   slug: string
@@ -129,93 +90,6 @@ export async function getDescendantCategoryIds(
   return allIds;
 }
 
-export const getFilterData = cache(
-  async (categorySlug: string): Promise<FilterData> => {
-    const allDescendantIds = await getDescendantCategoryIds(categorySlug);
-
-    if (allDescendantIds.length === 0) {
-      return {
-        minPrice: 0,
-        maxPrice: 100,
-        subcategories: [],
-        brands: [],
-        specifications: [],
-      };
-    }
-
-    const [products, mainCategory, availableSubcategories] = await Promise.all([
-      prisma.product.findMany({
-        where: { categoryId: { in: allDescendantIds } },
-        select: {
-          price: true,
-          brand: { select: { name: true } },
-          specifications: true,
-        },
-      }),
-      prisma.category.findUnique({
-        where: { slug: categorySlug },
-        select: { specifications: true },
-      }),
-      prisma.category.findMany({
-        where: { parentId: allDescendantIds[0] },
-      }),
-    ]);
-
-    const prices = products.map((p) => p.price);
-    const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
-    const maxPrice = prices.length > 0 ? Math.max(...prices) : 100;
-
-    const availableBrands = Array.from(
-      new Set(
-        products
-          .filter((product) => product.brand)
-          .map((product) => product.brand!.name)
-      )
-    );
-
-    const specOptionsMap = new Map<string, Set<string>>();
-    products.forEach((product) => {
-      const specs = product.specifications as Record<string, any>;
-      if (specs) {
-        for (const [key, value] of Object.entries(specs)) {
-          if (
-            value !== null &&
-            value !== undefined &&
-            String(value).trim() !== ""
-          ) {
-            if (!specOptionsMap.has(key)) {
-              specOptionsMap.set(key, new Set<string>());
-            }
-            specOptionsMap.get(key)!.add(String(value));
-          }
-        }
-      }
-    });
-
-    const categorySpecs = (mainCategory?.specifications || []) as any[];
-    const availableSpecifications: SpecificationFilter[] = categorySpecs
-      .map((specDef) => {
-        const options = specOptionsMap.get(specDef.id) || new Set();
-        return {
-          id: specDef.id,
-          name: specDef.name,
-          type: specDef.type,
-          unit: specDef.unit ?? undefined,
-          options: Array.from(options).sort(),
-        };
-      })
-      .filter((spec) => spec.options.length > 0);
-
-    return {
-      minPrice,
-      maxPrice,
-      subcategories: availableSubcategories,
-      brands: availableBrands,
-      specifications: availableSpecifications,
-    };
-  }
-);
-
 export const getProducts = cache(
   async (params: GetProductsParams): Promise<ProductsResponse> => {
     const {
@@ -230,10 +104,6 @@ export const getProducts = cache(
       priceMin,
       priceMax,
     } = params;
-
-    // Log the category and selected specifications for debugging
-    console.log(`Fetching products for category: ${categorySlug}`);
-    console.log("Selected specifications:", selectedSpecifications);
 
     if (!categorySlug) {
       return { products: [], totalProducts: 0 };
@@ -282,7 +152,6 @@ export const getProducts = cache(
     if (Object.keys(priceFilter).length > 0) {
       matchStage.$and.push({ price: priceFilter });
     }
-
     const escapedSearch = search?.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
     if (search) {
@@ -387,16 +256,6 @@ export const getProducts = cache(
         },
       },
       {
-        $addFields: {
-          parentCategoryId: {
-            $getField: {
-              field: "parentId",
-              input: { $arrayElemAt: ["$categoryData", 0] },
-            },
-          },
-        },
-      },
-      {
         $lookup: {
           from: "Collection",
           localField: "collectionId",
@@ -407,7 +266,7 @@ export const getProducts = cache(
       {
         $lookup: {
           from: "ProductVariant",
-          localField: "_id",
+          localField: "id",
           foreignField: "productId",
           as: "variantsData",
         },
@@ -415,7 +274,7 @@ export const getProducts = cache(
       {
         $lookup: {
           from: "Category",
-          localField: "parentCategoryId",
+          localField: "categoryData.parentId",
           foreignField: "_id",
           as: "parentCategoryData",
         },
@@ -436,41 +295,30 @@ export const getProducts = cache(
                 originalPrice: 1,
                 mainImage: 1,
                 stock: 1,
-                hasVariants: {
-                  $gt: [
-                    {
-                      $size: "$variantsData",
-                    },
-                    0,
-                  ],
-                },
+                hasVariants: 1,
                 priceRange: 1,
                 brand: { $arrayElemAt: ["$brandData.name", 0] },
                 category: {
-                  $ifNull: [
-                    {
-                      name: {
-                        $ifNull: [
-                          { $arrayElemAt: ["$parentCategoryData.name", 0] },
-                          { $arrayElemAt: ["$categoryData.name", 0] },
+                  name: { $arrayElemAt: ["$categoryData.name", 0] },
+                  slug: { $arrayElemAt: ["$categoryData.slug", 0] },
+                  parent: {
+                    $cond: {
+                      if: {
+                        $ne: [
+                          { $arrayElemAt: ["$parentCategoryData", 0] },
+                          null,
                         ],
                       },
-                      slug: {
-                        $ifNull: [
-                          { $arrayElemAt: ["$parentCategoryData.slug", 0] },
-                          { $arrayElemAt: ["$categoryData.slug", 0] },
-                        ],
+                      then: {
+                        name: { $arrayElemAt: ["$parentCategoryData.name", 0] },
+                        slug: { $arrayElemAt: ["$parentCategoryData.slug", 0] },
                       },
+                      else: null,
                     },
-                    {
-                      name: "Uncategorized",
-                      slug: "uncategorized",
-                    },
-                  ],
+                  },
                 },
                 collection: { $arrayElemAt: ["$collectionData.name", 0] },
                 variants: "$variantsData",
-                specifications: "$specifications",
               },
             },
           ],

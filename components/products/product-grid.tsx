@@ -3,11 +3,11 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { memo } from "react";
 import { cn } from "@/lib/utils";
-import { ProductCard } from "@/components/admin/product-sections/product-card";
-import { Product } from "@prisma/client";
+import { ProductCardData } from "@/data/product";
+import ProductCard from "../home/card-product";
 
 interface ProductGridProps {
-  products: Product[];
+  products: ProductCardData[];
   viewMode: 1 | 2 | 3 | 4 | 5;
   isLoading: boolean;
 }

@@ -7,8 +7,8 @@ import { cn } from "@/lib/utils";
 import { MobileSearch } from "./mobile-search";
 import { useWishlistStore } from "@/hooks/use-wishlist";
 import { useCompareStore } from "@/hooks/use-compare";
-import { useCartStore } from "@/hooks/use-cart";
 import { Category, Product } from "@prisma/client";
+import { useCartStore } from "@/hooks/use-cart-store";
 
 interface MBottomNavigationProps {
   categories: Category[];
@@ -23,7 +23,7 @@ export function BottomNavigation({
 
   const wishlistItems = useWishlistStore((state) => state.items);
   const compareItems = useCompareStore((state) => state.items);
-  const cartItems = useCartStore((state) => state.items);
+  const cartItemCount = useCartStore((s) => s.cartCount);
 
   if (
     pathname.startsWith("/admin") ||
@@ -120,7 +120,7 @@ export function BottomNavigation({
       label: "My Cart",
       icon: BagIcon,
       isActive: pathname === "/cart",
-      badge: cartItems.length > 0 ? cartItems.length : undefined,
+      badge: cartItemCount,
     },
   ];
 

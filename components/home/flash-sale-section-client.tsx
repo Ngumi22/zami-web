@@ -2,11 +2,12 @@
 
 import { useState, useEffect, useMemo, useCallback } from "react";
 import type { Product } from "@prisma/client";
-import { ProductCard } from "../admin/product-sections/product-card";
 import Link from "next/link";
+import ProductCard from "./card-product";
+import { ProductCardData } from "@/data/fetch-all";
 
 interface FlashSaleClientProps {
-  products?: Product[];
+  products?: ProductCardData[];
   saleEndDate: Date;
   collectionName?: string;
   maxVisibleProducts?: number;

@@ -7,7 +7,6 @@ import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { MegaMenu } from "./mega-menu/mega-menu";
 import { MobileMenu } from "./mobile/mobile-menu";
-import { useCartStore } from "@/hooks/use-cart";
 import { useCompareStore } from "@/hooks/use-compare";
 import { useWishlistStore } from "@/hooks/use-wishlist";
 import { InstantSearch } from "../search/search";
@@ -15,6 +14,7 @@ import type { Brand, Category, Product } from "@prisma/client";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { CartSheet } from "./cart-sheet";
 import { BagIcon, CompareIcon, UserIcon, WishlistIcon } from "./Static/icons";
+import { useCartStore } from "@/hooks/use-cart-store";
 
 interface SiteHeaderProps {
   categories: Category[];
@@ -28,7 +28,7 @@ export function SiteHeader({
   popularBrands,
 }: SiteHeaderProps) {
   const pathname = usePathname();
-  const cartItemCount = useCartStore((state) => state.items.length);
+  const cartItemCount = useCartStore((s) => s.cartCount);
   const compareItems = useCompareStore((state) => state.items);
   const wishItems = useWishlistStore((state) => state.items);
 

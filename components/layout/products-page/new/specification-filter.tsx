@@ -17,6 +17,7 @@ interface SpecificationFilter {
   id: string;
   name: string;
   type: CategorySpecificationType;
+  unit?: string;
   options: string[];
 }
 
@@ -164,7 +165,7 @@ export default function SpecificationFilter({
                       <label
                         htmlFor={`${spec.name}-${option}`}
                         className="text-xs text-muted-foreground cursor-pointer transition-colors duration-400 hover:text-foreground">
-                        {option}
+                        {option} {spec.unit ? spec.unit : null}
                       </label>
                     </div>
                   ))}

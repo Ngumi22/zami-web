@@ -10,6 +10,7 @@ body {
   font-weight: 400;
   font-style: normal;
   font-size: 12px;
+  color: #010101;
 }
 
 /* Add to your global CSS or use a CSS-in-JS solution */
@@ -268,4 +269,8 @@ html.prevent-scroll {
 
 .ProseMirror ol {
   @apply list-decimal ml-5;
+}
+
+.btn-primary {
+  @apply bg-black text-white hover:bg-white hover:border hover:border-black hover:text-black;
 }

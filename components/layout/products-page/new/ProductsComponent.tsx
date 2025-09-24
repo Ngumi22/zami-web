@@ -2,13 +2,13 @@
 
 import { useTransition } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ProductCard } from "@/components/admin/product-sections/product-card";
-import { Product } from "@prisma/client";
+import { ProductCardData } from "@/data/fetch-all";
+import ProductCard from "@/components/home/card-product";
 
 export default function ProductsComponent({
   products,
 }: {
-  products: Product[];
+  products: ProductCardData[];
 }) {
   const [isLoading] = useTransition();
 

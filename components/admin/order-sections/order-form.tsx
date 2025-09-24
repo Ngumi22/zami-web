@@ -147,7 +147,7 @@ export default function OrderForm({ order }: OrderFormProps) {
         setErrors({});
 
         // Prepare form data
-        formData.set("customerId", customerId);
+        formData.set("customerId", customerId ?? "");
         formData.set("customerName", customerName);
         formData.set("customerEmail", customerEmail);
         formData.set("status", status);
@@ -290,7 +290,7 @@ export default function OrderForm({ order }: OrderFormProps) {
                 </Label>
                 <Input
                   id="customerId"
-                  value={customerId}
+                  value={customerId ?? ""}
                   onChange={(e) => setCustomerId(e.target.value)}
                   className={errors.customerId ? "border-destructive" : ""}
                   required

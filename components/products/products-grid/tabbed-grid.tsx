@@ -5,10 +5,11 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Loader2 } from "lucide-react";
 import { Product } from "@prisma/client";
+import { ProductCardData } from "@/data/product";
 
 export interface TabData {
   label: string;
-  products: Product[];
+  products: ProductCardData[];
 }
 
 export interface ProductGridProps {

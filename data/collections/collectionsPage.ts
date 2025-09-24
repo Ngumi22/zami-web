@@ -423,6 +423,7 @@ export async function getFlashSaleData() {
     return null;
   }
 }
+
 export async function getProductsByCollection(
   collectionSlug: string,
   params: Omit<GetProductsParams, "collection">

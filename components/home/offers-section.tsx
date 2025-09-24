@@ -5,11 +5,12 @@ import { useState, useRef, useMemo, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { Category, Product } from "@prisma/client";
-import { ProductCard } from "../admin/product-sections/product-card";
+import { Category } from "@prisma/client";
+import { ProductCardData } from "@/data/fetch-all";
+import ProductCard from "./card-product";
 
 interface SpecialOffersProps {
-  products: Product[];
+  products: ProductCardData[];
   categories: Category[];
   className?: string;
 }
@@ -24,7 +25,7 @@ export function SpecialOffers({
   }, [categories]);
 
   const calculateDiscountPercentage = useCallback(
-    (product: Product): number => {
+    (product: ProductCardData): number => {
       if (!product.originalPrice || product.originalPrice <= product.price) {
         return 0;
       }
@@ -64,7 +65,7 @@ export function SpecialOffers({
 
       const discountedProducts = products
         .filter((product) => {
-          if (!allCategoryIds.includes(product.categoryId)) return false;
+          if (!allCategoryIds.includes(product.category.name)) return false;
           const discountPercentage = calculateDiscountPercentage(product);
           return discountPercentage > 0;
         })

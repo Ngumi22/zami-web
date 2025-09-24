@@ -2,19 +2,23 @@
 
 import { useState } from "react";
 import { MessageCircle, Loader2 } from "lucide-react";
-import { ProductCardActionButton } from "./product-card-action-button";
+import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { formatCurrency } from "@/lib/utils";
 import { WhatsappPhoneNumber } from "@/lib/constants";
 import type { Product } from "@prisma/client";
-import type { CartItem } from "@/hooks/use-cart";
+import type { CartItem } from "@/hooks/use-cart-store"; // ✅ FIX: use CartItem, not CartReadyProduct
 
 type BuyNowButtonProps = {
   product?: Product;
   selectedVariants?: Record<string, string>;
   quantity?: number;
 
-  cartItems?: CartItem[];
-
+  cartItems?: CartItem[]; // ✅ FIX: must be CartItem[]
   className?: string;
 };
 
@@ -44,16 +48,15 @@ export function BuyNowButton({
     } x${quantity} — ${formatCurrency(total)}`;
   };
 
-  // Build message lines for all cart items
+  // ✅ FIX: use variantName & quantity from CartItem
   const formatCart = () =>
     (cartItems || [])
       .map((item, i) => {
-        const vt = Object.entries(item.variants || {})
-          .map(([k, v]) => `${k}: ${v}`)
-          .join(", ");
-        return `${i + 1}. ${item.name}${vt ? ` (${vt})` : ""} x${
-          item.quantity
-        } — ${formatCurrency(item.price * item.quantity)}`;
+        return `${i + 1}. ${item.name}${
+          item.variantName ? ` (${item.variantName})` : ""
+        } x${item.quantity} — ${formatCurrency(
+          item.finalPrice * item.quantity
+        )}`;
       })
       .join("\n");
 
@@ -64,7 +67,6 @@ export function BuyNowButton({
     if (cartItems && cartItems.length) {
       body = `Hi! I'm interested in buying these items:\n${formatCart()}`;
     } else if (product) {
-      // basic validations
       if (product.stock < 1) {
         alert("Sorry, this product is out of stock.");
         setLoading(false);
@@ -88,20 +90,26 @@ export function BuyNowButton({
     (!!cartItems && cartItems.length === 0) ||
     (!cartItems && (!product || product.stock < 1));
 
+  const label = cartItems ? "Order on WhatsApp" : "Buy Now";
+
   return (
-    <ProductCardActionButton
-      icon={
-        loading ? (
-          <Loader2 className="h-4 w-4 animate-spin" />
-        ) : (
-          <MessageCircle className="h-4 w-4" />
-        )
-      }
-      label={cartItems ? "Order on WhatsApp" : "Buy Now"}
-      onClick={handleClick}
-      disabled={isDisabled}
-      variant="outline"
-      className={className}
-    />
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          onClick={handleClick}
+          disabled={isDisabled}
+          variant="outline"
+          className={className}>
+          {loading ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <MessageCircle className="h-4 w-4" />
+          )}
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent>
+        <p>{label}</p>
+      </TooltipContent>
+    </Tooltip>
   );
 }

@@ -1,8 +1,8 @@
 "use client";
 
+import { toast } from "sonner";
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
-import { toast } from "@/components/ui/use-toast";
 
 // Key generator
 export function generateCartKey(
@@ -62,10 +62,8 @@ export const useCartStore = create<CartStore>()(
         if (existing) {
           const newQty = existing.quantity + newItem.quantity;
           if (newQty > existing.stock) {
-            toast({
-              title: "Not enough stock",
+            toast("Not enough stock", {
               description: `Only ${existing.stock} of ${existing.name} available.`,
-              variant: "destructive",
             });
             return { success: false, message: "Stock exceeded" };
           }
@@ -76,8 +74,7 @@ export const useCartStore = create<CartStore>()(
             ),
           });
 
-          toast({
-            title: "Cart Updated",
+          toast("Cart Updated", {
             description: `${newItem.name} quantity increased.`,
           });
 
@@ -85,18 +82,15 @@ export const useCartStore = create<CartStore>()(
         }
 
         if (newItem.quantity > newItem.stock) {
-          toast({
-            title: "Not enough stock",
+          toast("Not enough stock", {
             description: `Only ${newItem.stock} of ${newItem.name} available.`,
-            variant: "destructive",
           });
           return { success: false };
         }
 
         set({ items: [...get().items, newItem] });
 
-        toast({
-          title: "Item Added",
+        toast("Item Added", {
           description: `${newItem.name} was added to your cart.`,
         });
 
@@ -108,8 +102,7 @@ export const useCartStore = create<CartStore>()(
           items: get().items.filter((i) => i.key !== key),
         });
 
-        toast({
-          title: "Item Removed",
+        toast("Item Removed", {
           description: "The item was removed from your cart.",
         });
       },
@@ -130,10 +123,8 @@ export const useCartStore = create<CartStore>()(
             ),
           });
 
-          toast({
-            title: "Stock limit reached",
+          toast("Stock limit reached", {
             description: `Only ${item.stock} of ${item.name} available.`,
-            variant: "destructive",
           });
 
           return {
@@ -153,7 +144,7 @@ export const useCartStore = create<CartStore>()(
 
       clearCart: () => {
         set({ items: [] });
-        toast({ title: "Cart cleared" });
+        toast("Cart cleared");
       },
 
       isInCart: (productId, variants = {}) => {

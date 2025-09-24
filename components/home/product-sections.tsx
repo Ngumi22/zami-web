@@ -1,8 +1,8 @@
 "use client";
 
 import { ProductCarousel, ProductCarouselItem } from "./product-carousel";
-import { ProductCard } from "../admin/product-sections/product-card";
-import { Brand, Category, Product } from "@prisma/client";
+
+import { Brand, Category } from "@prisma/client";
 import { PromotionalBanner } from "./promotional-banner";
 import Image from "next/image";
 import Link from "next/link";
@@ -11,6 +11,8 @@ import { categoryIcons } from "@/lib/constants";
 import { useMemo } from "react";
 
 import ProductGrid from "../products/products-grid/products-grid";
+import { ProductCardData } from "@/data/fetch-all";
+import ProductCard from "./card-product";
 
 function buildCategoryDescendantsMap(categories: Category[]) {
   const childrenMap = new Map<string, string[]>();
@@ -130,7 +132,7 @@ export function CategoryProductsSection({
   categories,
 }: {
   category: string;
-  products: Product[];
+  products: ProductCardData[];
   categories: Category[];
 }) {
   const descendantsMap = buildCategoryDescendantsMap(categories);
@@ -144,7 +146,9 @@ export function CategoryProductsSection({
     matchedCategory.id,
   ];
 
-  const filtered = products.filter((p) => descendantIds.includes(p.categoryId));
+  const filtered = products.filter((p) =>
+    descendantIds.includes(p.category.name)
+  );
 
   if (filtered.length === 0) return null;
 
@@ -172,8 +176,8 @@ export function TabbedProducts({
   featured,
   newArrivals,
 }: {
-  featured: Product[];
-  newArrivals: Product[];
+  featured: ProductCardData[];
+  newArrivals: ProductCardData[];
 }) {
   return (
     <ProductGrid
@@ -197,11 +201,11 @@ export function TabbedBrands({
   products,
 }: {
   brands: Brand[];
-  products: Product[];
+  products: ProductCardData[];
 }) {
   const tabs = brands.map((brand) => ({
     label: brand.name,
-    products: products.filter((product) => product.brandId === brand.id),
+    products: products.filter((product) => product.brand === brand.id),
   }));
 
   return (
@@ -241,7 +245,11 @@ export function BrandsSection({
   );
 }
 
-export function SpecialOfferCarousel({ products }: { products: Product[] }) {
+export function SpecialOfferCarousel({
+  products,
+}: {
+  products: ProductCardData[];
+}) {
   const discountedProducts = products
     .filter((p) => p.originalPrice && p.originalPrice > p.price)
     .map((product) => {
@@ -275,7 +283,11 @@ export function SpecialOfferCarousel({ products }: { products: Product[] }) {
   );
 }
 
-export function DiscountedProducts({ products }: { products: Product[] }) {
+export function DiscountedProducts({
+  products,
+}: {
+  products: ProductCardData[];
+}) {
   const discountedProducts = useMemo(() => {
     return products
       .filter((product) => {
