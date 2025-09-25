@@ -233,10 +233,7 @@ export function OrdersTabs({ initialOrders, stats }: OrdersTabsProps) {
                     value={tab.id}
                     className="flex flex-col sm:flex-row items-center justify-center sm:justify-between gap-0 sm:gap-1 md:gap-2 px-1 md:px-3 py-2 text-xs sm:text-sm font-medium data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700">
                     <div className="flex items-center gap-1">
-                      {/* Always show icon */}
                       {tab.icon}
-
-                      {/* Show short/full label conditionally */}
                       <span className="hidden sm:inline md:hidden">
                         {tab.label.split(" ")[0]}
                       </span>
@@ -249,7 +246,6 @@ export function OrdersTabs({ initialOrders, stats }: OrdersTabsProps) {
                     </Badge>
                   </TabsTrigger>
                 </TooltipTrigger>
-                {/* Tooltip only useful on small screens */}
                 <TooltipContent side="bottom" className="sm:hidden">
                   {tab.label}
                 </TooltipContent>

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { DataTable } from "../data-table";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { Order, OrderStatus } from "@prisma/client";
+import { toast } from "sonner";
 
 interface OrdersTableProps {
   orders: Order[];
@@ -51,7 +52,9 @@ export function OrdersTable({
       },
     };
 
-    const config = statusConfig[orderStatus as keyof typeof statusConfig];
+    const config =
+      statusConfig[orderStatus as keyof typeof statusConfig] ||
+      statusConfig.pending;
     return (
       <Badge variant={config.variant} className={config.className}>
         {orderStatus.charAt(0).toUpperCase() + orderStatus.slice(1)}
@@ -113,14 +116,18 @@ export function OrdersTable({
       key: "items" as keyof Order,
       label: "Items",
       hiddenOnBreakpoints: ["sm" as const],
-      render: (value: Order["items"]) => (
+      render: (value: any) => (
         <div className="flex items-center gap-2">
           <div className="text-sm">
             <p className="font-medium">
-              {value.length} item{value.length !== 1 ? "s" : ""}
+              {value?.length} item{value?.length !== 1 ? "s" : ""}
             </p>
             <p className="text-gray-600">
-              {value.reduce((sum, item) => sum + item.quantity, 0)} units
+              {value?.reduce(
+                (sum: number, item: any) => sum + item.quantity,
+                0
+              )}{" "}
+              units
             </p>
           </div>
         </div>
@@ -137,7 +144,7 @@ export function OrdersTable({
       label: "Payment",
       sortable: true,
       hiddenOnBreakpoints: ["sm" as const, "md" as const],
-      render: (value: string, order: Order) => (
+      render: (value: any, order: Order) => (
         <div className="space-y-1">
           {getPaymentStatusBadge(value)}
           <p className="text-xs text-gray-600">{order.paymentMethod}</p>
@@ -158,11 +165,11 @@ export function OrdersTable({
       key: "shippingAddress" as keyof Order,
       label: "Location",
       hiddenOnBreakpoints: ["sm" as const, "md" as const],
-      render: (value: Order["shippingAddress"]) => (
+      render: (value: any) => (
         <div className="flex items-center gap-1 text-sm text-gray-600">
           <MapPin className="w-3 h-3" />
           <span>
-            {value.city}, {value.state}
+            {value?.city}, {value?.state}
           </span>
         </div>
       ),
@@ -222,11 +229,7 @@ export function OrdersTable({
     actions.push({
       label: "Cancel Order",
       onClick: (order: Order) => {
-        if (
-          confirm(`Are you sure you want to cancel order ${order.orderNumber}?`)
-        ) {
-          console.log("Cancel order:", order.id);
-        }
+        toast(`Cancel order ${order.id}`);
       },
       icon: <Trash2 className="w-4 h-4" />,
     });
