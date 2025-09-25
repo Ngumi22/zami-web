@@ -172,7 +172,7 @@ export async function login(
       data: {
         loginAttempts: 0,
         lockedUntil: null,
-        lastLogin: new Date(),
+        customerLastLogin: new Date(),
       },
     });
 
@@ -580,36 +580,5 @@ export async function removeFromWishlist(productId: string) {
     return { success: "Product removed from wishlist" };
   } catch (error) {
     return { error: "Failed to remove from wishlist" };
-  }
-}
-
-const forgotPasswordSchema = z.object({
-  email: z.string().email(),
-});
-
-export async function forgotPasswordAction(
-  email: string
-): Promise<ActionResponse> {
-  try {
-    const { email: validatedEmail } = forgotPasswordSchema.parse({ email });
-
-    // Use better-auth's built-in forgot password method
-    const result = await auth.api.email({
-      identity: "customer", // Or 'user' depending on your model
-      email: validatedEmail,
-    });
-
-    if (result.ok) {
-      return { success: "Password reset code sent to your email." };
-    } else {
-      // Better-auth returns a clear message on failure
-      return { error: result.message || "Failed to send reset code." };
-    }
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return { error: "Invalid email format." };
-    }
-    console.error("Forgot password error:", error);
-    return { error: "An unexpected error occurred. Please try again." };
   }
 }

@@ -48,7 +48,10 @@ export const auth = betterAuth({
       },
     },
     additionalFields: {
-      role: { type: "string" },
+      name: { type: "string" },
+      role: { type: "string", defaultValue: "ADMIN" },
+      image: { type: "string", required: false },
+      twoFactorEnabled: { type: "boolean", required: false },
     },
   },
 

@@ -98,7 +98,7 @@ export async function signUpUser({
     }
 
     await auth.api.signUpEmail({
-      body: { email, password, name, role: "ADMIN" },
+      body: { email, password, name },
     });
 
     await prisma.user.update({

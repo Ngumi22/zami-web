@@ -22,6 +22,7 @@ export async function requireAdmin() {
   }
   return user;
 }
+
 type ActionFunction<T> = (...args: any[]) => Promise<ActionResult<T>>;
 
 export function withAdminAuth<T>(action: ActionFunction<T>): ActionFunction<T> {
